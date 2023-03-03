@@ -1,6 +1,10 @@
 ## 关于这个项目
 
-在终端与 ChatGPT 聊天，回答中的 Markdown 内容渲染为富文本的精美格式，支持可选的多行提问、上键历史检索、tokens 统计功能。
+70 行代码实现在终端与 ChatGPT 聊天
+
+回答中的 Markdown 内容渲染为富文本的精美格式
+
+支持上键历史检索、可选的多行提问、tokens 统计
 
 ![example](README.assets/small.gif)
 
@@ -51,7 +55,7 @@ python3 chat.py
 在聊天中，使用退出词可以结束本次会话，退出词有：
 
 ```py
-['再见', 'bye', '结束', 'end', '退出', 'exit']
+['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit']
 ```
 
 退出词将作为一个问题发送给 ChatGPT，在 GPT 回答后退出。
@@ -63,11 +67,11 @@ python3 chat.py
 ## 项目结构
 
 ```
-├── README.md           # 项目说明文档
-├── chat.py             # 项目主要代码
+├── README.md           # 说明文档
+├── chat.py             # 项目代码
 ├── requirements.txt    # 依赖包列表
-├── chat.log						# 聊天后生成的对话日志
-└── .env								# 密钥存储文件
+├── chat.log            # 聊天后生成的对话日志
+└── .env                # 密钥存储文件
 ```
 
 ## 许可证

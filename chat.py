@@ -60,7 +60,7 @@ try:
             reply = chatGPT.send(message)
         console.print("ChatGPT: ", end='', style="bold cyan")
         console.print(Markdown(reply["content"]), new_line_start=True)
-        if message.lower() in ['再见', 'bye', '结束', 'end', '退出', 'exit']:
+        if message.lower() in ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit']:
             break
 except (EOFError, KeyboardInterrupt):
     print("\nExiting...")
