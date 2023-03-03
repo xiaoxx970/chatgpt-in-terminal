@@ -59,7 +59,10 @@ try:
         with console.status("[bold cyan]ChatGPT is thinking...") as status:
             reply = chatGPT.send(message)
         console.print("ChatGPT: ", end='', style="bold cyan")
-        console.print(Markdown(reply["content"]), new_line_start=True)
+        if "-raw" in sys.argv:
+            print(reply["content"])
+        else:
+            console.print(Markdown(reply["content"]), new_line_start=True)
         if message.lower() in ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit']:
             break
 except (EOFError, KeyboardInterrupt):
