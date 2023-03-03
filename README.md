@@ -1,6 +1,6 @@
 ## 关于这个项目
 
-在终端与 ChatGPT 聊天，包含美化的 Markdown 格式输出、上键历史检索、tokens 统计功能。
+在终端与 ChatGPT 聊天，回答中的 Markdown 内容渲染为富文本的精美格式，支持可选的多行提问、上键历史检索、tokens 统计功能。
 
 ![example](README.assets/small.gif)
 
@@ -21,7 +21,7 @@
    OPENAI_API_KEY=你的API_KEY
    ```
 
-   OpenAI 的密钥可在主页右上角点 `View API keys` 打开的页面中生成
+   OpenAI 的密钥可在主页右上角点击 `View API keys` 打开的页面中生成
 
    ![image-20230303233352970](README.assets/image-20230303233352970.png)
 
@@ -58,7 +58,7 @@ python3 chat.py
 
 也可使用 `Ctrl-C` 或者 `Ctrl-D` 立即退出
 
-退出后将显示本次聊天所使用的 tokens 统计，目前价格为 $0.002 / 1K tokens
+退出后将显示本次聊天所使用的 tokens 统计，目前价格为: $0.002 / 1K tokens，免费版速率限制为: 20次 / min
 
 ## 项目结构
 
