@@ -4,7 +4,9 @@ import os
 import sys
 import openai
 import logging
-import readline
+import platform
+if platform.system() in {"Linux", "Darwin"}:  # "Darwin"是 macOS 的系统名
+    import readline
 from rich.console import Console
 from rich.markdown import Markdown
 from dotenv import load_dotenv

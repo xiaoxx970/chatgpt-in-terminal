@@ -1,94 +1,98 @@
-## 关于这个项目
+# Chat with GPT in terminal
 
-70 行代码实现在终端与 ChatGPT 聊天
+[![English badge](https://img.shields.io/badge/%E8%8B%B1%E6%96%87-English-blue)](./README.md)[![简体中文 badge](https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-Simplified%20Chinese-blue)](./README.zh-CN.md)[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg)](https://github.com/RichardLitt/standard-readme)
 
-回答中的 Markdown 内容渲染为富文本的精美格式
+This project implements a ChatGPT chatbot in the terminal. 
 
-支持上键历史检索、可选的多行提问、tokens 统计
+- The Markdown content in the responses is rendered as beautiful rich text
+
+- Historical questions can be retrieved via the up/down arrow
+- Optional multi-line queries
+- Token counting
 
 ![example](README.assets/small.gif)
 
-使用最新的 [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) 模型，也就是 ChatGPT 所使用的模型（并非前一代的 `text-davinci-003` 模型）。
+The latest [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) model is used, which is the model used by ChatGPT (rather than the previous generation `text-davinci-003` model).
 
-## 安装
+## Install
 
-1. 克隆 Repo 并进入目录
+1. Clone the repo and navigate to the directory:
 
    ```shell
    git clone https://github.com/xiaoxx970/chatgpt-in-terminal.git
    cd ./chatgpt-in-terminal
    ```
 
-2. 在项目根目录下的 `.env` 文件中写入 OPENAI_API_KEY 变量，内容如下
+2. In the `.env` file at the root of the project, write the OPENAI_API_KEY variable, as follows:
 
    ```
-   OPENAI_API_KEY=你的API_KEY
+   OPENAI_API_KEY=your-API-KEY
    ```
 
-   OpenAI 的密钥可在主页右上角点击 `View API keys` 打开的页面中生成
+   OpenAI's key can be generated on the page that opens when you click `View API keys` in the top right corner of the main page.
 
    ![image-20230303233352970](README.assets/image-20230303233352970.png)
 
-3. 通过 requirements.txt 安装依赖
+3. Install dependencies via requirements.txt:
 
    ```shell
    pip3 install -r requirements.txt
    ```
 
-## 如何使用
+## Usage
 
-使用以下命令进行运行：
+Run the following command to start the bot:
 
 ```shell
 python3 chat.py
 ```
 
-### 多行模式
+### Multi-line mode
 
-如果问题需要多行输入，以 `-m` 参数运行：
+If the question requires multi-line input, run with the `-m` parameter:
 
 ```shell
 python3 chat.py -m
 ```
 
-多行模式下按回车切换下一行，如果在空行回车则提交问题
+In multi-line mode, press Enter to move to the next line, and if you press Enter on a blank line, the question will be submitted.
 
-### Raw 模式
+### Raw mode
 
-如果想要原始而不经过 Markdown 渲染的回答，以 `-raw` 参数运行：
+If you want the answer not rendered by Markdown, run with the `-raw` parameter:
 
 ```shell
 python3 chat.py -raw
 ```
 
-> 多行模式与 raw 模式可以同时使用
+> Multi-line and raw modes can be used simultaneously.
 
-### 退出词
+### Exit word
 
-在聊天中，使用退出词可以结束本次会话，退出词有：
+In the chat, you can end the session with an exit word, which can be:
 
-```py
+```python
 ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit']
 ```
 
-退出词将作为一个问题发送给 ChatGPT，在 GPT 回答后退出。
+The exit word will be sent as a question to ChatGPT, and the bot will exit after GPT provides an answer.
 
-也可使用 `Ctrl-C` 或者 `Ctrl-D` 立即退出
+You can also use `Ctrl-C` or `Ctrl-D` to exit immediately.
 
-退出后将显示本次聊天所使用的 tokens 统计
+After exiting, the bot will display the token count used in the chat.
 
-> 目前价格为: $0.002 / 1K tokens，免费版速率限制为: 20次 / min
+> Currently priced at: $0.002 / 1K tokens, the free version has a speed limit of: 20 times / min.
 
-## 项目结构
+## Project structure
 
 ```
-├── README.md           # 说明文档
-├── chat.py             # 项目代码
-├── requirements.txt    # 依赖包列表
-├── chat.log            # 聊天后生成的对话日志
-└── .env                # 密钥存储文件
+├── README.md           # Documentation file
+├── chat.py             # Project code
+├── requirements.txt    # List of dependencies
+├── chat.log            # Log file generated after chatting
+└── .env                # Key storage file
 ```
 
-## 许可证
+## License
 
-该项目遵守[MIT许可证](LICENSE)。
+This project is licensed under the [MIT License](https://chat.openai.com/LICENSE).
