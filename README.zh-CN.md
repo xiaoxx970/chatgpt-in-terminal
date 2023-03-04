@@ -11,7 +11,7 @@
 
 支持上键历史检索、可选的多行提问、tokens 统计
 
-获取到API KEY之后支持国内网络运行
+~~获取到API KEY之后支持国内网络运行~~
 
 ![example](README.assets/small.gif)
 
