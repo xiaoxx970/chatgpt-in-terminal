@@ -62,7 +62,9 @@ In multi-line mode, press Enter to move to the next line, and if you press Enter
 
 ### Raw mode
 
-If you want the answer not rendered by Markdown, run with the `-raw` parameter:
+If you want answers that are not rendered with Markdown, run with the `-raw` parameter:
+
+(the conversation record in its original format is also stored in `chat.log`.)
 
 ```shell
 python3 chat.py -raw

@@ -64,6 +64,8 @@ python3 chat.py -m
 
 如果想要原始而不经过 Markdown 渲染的回答，以 `-raw` 参数运行：
 
+（在 `chat.log` 中同样存有原始格式的对话记录）
+
 ```shell
 python3 chat.py -raw
 ```
