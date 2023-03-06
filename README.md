@@ -50,9 +50,12 @@ Run the following command to start the bot:
 python3 chat.py
 ```
 
+The conversation record in its original format will be stored in `chat.log`.
+
 ### Multi-line mode
 
-If the question requires multi-line input, run with the `-m` parameter:
+If the question requires multi-line input, run the
+command with the `-m` parameter:
 
 ```shell
 python3 chat.py -m
@@ -62,9 +65,8 @@ In multi-line mode, press Enter to move to the next line, and if you press Enter
 
 ### Raw mode
 
-If you want answers that are not rendered with Markdown, run with the `-raw` parameter:
-
-(the conversation record in its original format is also stored in `chat.log`.)
+If you would like answers that are not rendered with Markdown, run the
+command with the `-raw` parameter:
 
 ```shell
 python3 chat.py -raw

@@ -15,30 +15,16 @@ from dotenv import load_dotenv
 # 从 .env 文件中读取 OPENAI_API_KEY
 load_dotenv()
 api_key = os.environ.get("OPENAI_API_KEY")
+if not api_key:
+    api_key = input("OpenAI API Key: ")
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
-logging.basicConfig(filename='chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s', datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO, encoding="UTF-8")
+logging.basicConfig(filename='chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
+                    datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO, encoding="UTF-8")
 log = logging.getLogger("chat")
 
+
 class CHATGPT:
-    """
-    This class provides a way to interact with the OpenAI GPT-3.5-Turbo API to generate chatbot responses.
-
-    Args:
-            api_key (str): The OpenAI API key to use for authentication.
-
-    Attributes:
-        messages (list): A list of message objects sent between the user and chatbot.
-        total_tokens (int): The total number of API tokens used by the chatbot.
-
-    Methods:
-        send(message):
-            Sends the given message to the OpenAI GPT-3.5-Turbo API and returns the chatbot's response.
-
-        get_total_tokens():
-            Returns the total number of API tokens used by the chatbot.
-    """
-
     def __init__(self, api_key: str):
         openai.api_key = api_key
         self.messages = [
@@ -46,15 +32,6 @@ class CHATGPT:
         self.total_tokens = 0
 
     def send(self, message: str):
-        """
-        Sends the given message to the OpenAI GPT-3.5-Turbo API and returns the chatbot's response.
-
-        Args:
-            message (str): The message to send to the chatbot.
-
-        Returns:
-            str: The chatbot's response to the given message.
-        """
         self.messages.append({"role": "user", "content": message})
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -67,26 +44,10 @@ class CHATGPT:
         return reply
 
     def get_total_tokens(self):
-        """
-        Returns:
-            int: The total number of API tokens used by the chatbot.
-        """
         return self.total_tokens
 
 
 def multi_input(prompt: str):
-    """
-    Accepts multiple lines of text input from the user and concatenates them into a single string.
-
-    Args: 
-        prompt (str): Prompt text for the user input.
-
-    Returns: 
-        str: string contains all the input text concatenated together.
-
-    Note: If user input a blank line, the function will stop accepting further input
-    and return the concatenated text entered so far. 
-    """
     lines = []
     while True:
         line = input(prompt)
@@ -112,7 +73,7 @@ try:
         # 发送消息后显示动画等待
         with console.status("[bold cyan]ChatGPT is thinking...") as status:
             reply = chatGPT.send(message)
-        
+
         log.info(f"ChatGPT: {reply['content']}")
         # 输出回复
         console.print("ChatGPT: ", end='', style="bold cyan")
