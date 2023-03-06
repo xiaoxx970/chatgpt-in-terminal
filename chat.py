@@ -19,7 +19,7 @@ if not api_key:
     api_key = input("OpenAI API Key: ")
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
-logging.basicConfig(filename='chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
+logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO, encoding="UTF-8")
 log = logging.getLogger("chat")
 
