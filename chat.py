@@ -89,5 +89,6 @@ try:
 except (EOFError, KeyboardInterrupt):
     print("\nExiting...")
 finally:
+    log.info(f"Total tokens used: {chatGPT.get_total_tokens()}")
     console.print(
         f"[bright_magenta]Total tokens used: [bold]{chatGPT.get_total_tokens()}")

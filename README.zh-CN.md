@@ -13,9 +13,11 @@
 
 ~~获取到API KEY之后支持国内网络运行~~
 
+> 注意，终端需能正常访问外网（配置代理的环境变量）才能运行代码，如系统已开启代理但没有配置终端代理，API 请求就会从国内 IP 发起，可能导致账号停用 ([#2](https://github.com/xiaoxx970/chatgpt-in-terminal/issues/2))
+
 ![example](README.assets/small.gif)
 
-使用最新的 [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) 模型，也就是 ChatGPT 所使用的模型（并非前一代的 `text-davinci-003` 模型）。
+使用最新的 [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) 模型，也就是 ChatGPT(免费版) 所使用的模型（并非前一代的 `text-davinci-003` 模型）。
 
 ## 安装
 
@@ -32,9 +34,11 @@
    OPENAI_API_KEY=你的API_KEY
    ```
 
-   OpenAI 的密钥可在主页右上角点击 `View API keys` 打开的页面中生成
+   OpenAI 的密钥可在主页右上角点击 `View API keys` 打开的页面中生成，直达链接：https://platform.openai.com/account/api-keys
 
    ![image-20230303233352970](README.assets/image-20230303233352970.png)
+
+   > 如果不配置 `.env` 文件，也可在运行时直接输入API KEY，单次生效
 
 3. 通过 requirements.txt 安装依赖
 

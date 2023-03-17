@@ -15,7 +15,7 @@ This project implements a ChatGPT chatbot in the terminal.
 
 ![example](README.assets/small.gif)
 
-The latest [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) model is used, which is the model used by ChatGPT (rather than the previous generation `text-davinci-003` model).
+The latest [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) model is used, which is the model used by ChatGPT free version (rather than the previous generation `text-davinci-003` model).
 
 ## Install
 
@@ -32,9 +32,11 @@ The latest [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-com
    OPENAI_API_KEY=your-API-KEY
    ```
 
-   OpenAI's key can be generated on the page that opens when you click `View API keys` in the top right corner of the main page.
+   OpenAI's key can be generated on the page that opens when you click `View API keys` in the top right corner of the main page, direct link: https://platform.openai.com/account/api-keys.
 
    ![image-20230303233352970](README.assets/image-20230303233352970.png)
+
+   > If you don't configure the .env file, you can also directly input the API KEY at runtime, which will only take effect for that single run.
 
 3. Install dependencies via requirements.txt:
 
