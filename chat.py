@@ -4,10 +4,12 @@ import os
 import sys
 import openai
 import logging
-import platform
-if platform.system() in {"Linux", "Darwin"}:
-    # 用于支持Linux/MacOS终端下input()函数的历史回朔和修改操作
-    import readline
+import json
+from prompt_toolkit import prompt, PromptSession, print_formatted_text
+from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.shortcuts import confirm
+from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.markdown import Markdown
 from dotenv import load_dotenv
@@ -16,7 +18,7 @@ from dotenv import load_dotenv
 load_dotenv()
 api_key = os.environ.get("OPENAI_API_KEY")
 if not api_key:
-    api_key = input("OpenAI API Key: ")
+    api_key = prompt("OpenAI API Key: ")
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
 logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
@@ -33,10 +35,14 @@ class CHATGPT:
 
     def send(self, message: str):
         self.messages.append({"role": "user", "content": message})
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=self.messages
-        )
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=self.messages
+            )
+        except KeyboardInterrupt:
+            self.messages.pop()
+            raise
         log.debug(f"Response: {response}")
         self.total_tokens += response["usage"]["total_tokens"]
         reply = response["choices"][0]["message"]
@@ -47,48 +53,120 @@ class CHATGPT:
         return self.total_tokens
 
 
-def multi_input(prompt: str):
+def multi_input(prompt: str, session):
     lines = []
     while True:
-        line = input(prompt)
+        line = session.prompt(prompt)
         if not line:
             break
         lines.append(line)
     return '\n'.join(lines)
 
 
+def save_chat_history(chatGPT, filename):
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(chatGPT.messages, f, ensure_ascii=False, indent=4)
+    print_formatted_text(FormattedText(
+        [("class:info", f"Chat history saved to {filename}")]))
+
+
 chatGPT = CHATGPT(api_key)
 console = Console()
 try:
-    console.print("Hi, welecome to chat with gpt.", style="dim")
+    print_formatted_text(FormattedText(
+        [("class:info", "Hi, welcome to chat with GPT.")]))
+
+    style = Style.from_dict({
+        'info': 'fg:#808080',
+        'exiting': 'bold fg:#ff0000',
+        'prompt': 'bold',
+    })
+
+    session = PromptSession()
+
+    raw_mode = False
+    multi_line_mode = False
+
+    commands = WordCompleter([
+        '/raw', '/multi', '/tokens', '/resend', '/save', '/undo'
+    ])
+
     while True:
-        # 运行参数中带有“-m”，则使用多行输入函数
-        message = "-m" in sys.argv and multi_input("> ") or input("> ")
+        try:
+            message = session.prompt(FormattedText(
+                [('class:prompt', '> ')]), completer=commands, complete_while_typing=True)
 
-        # 如果没有发送任何消息，就继续显示“> ”
-        if not message:
+            if message.startswith('/'):
+                command = message.strip().lower()
+
+                if command == '/raw':
+                    raw_mode = not raw_mode
+                    print_formatted_text(FormattedText(
+                        [("class:info", "Raw mode toggled.")]))
+
+                elif command == '/multi':
+                    multi_line_mode = not multi_line_mode
+                    print_formatted_text(FormattedText(
+                        [("class:info", "Multi-line mode toggled.")]))
+
+                elif command == '/tokens':
+                    print_formatted_text(FormattedText(
+                        [("class:info", f"Total tokens used: {chatGPT.get_total_tokens()}")]))
+
+                elif command == '/resend':
+                    reply = chatGPT.messages[-1]
+                    log.info(f"ChatGPT: {reply['content']}")
+                    console.print("ChatGPT: ", end='', style="bold cyan")
+                    if raw_mode:
+                        print(reply["content"])
+                    else:
+                        console.print(
+                            Markdown(reply["content"]), new_line_start=True)
+
+                elif command == '/save':
+                    save_chat_history(chatGPT, 'chat_history.json')
+
+                elif command == '/undo':
+                    if len(chatGPT.messages) > 2:
+                        chatGPT.messages.pop()
+                        chatGPT.messages.pop()
+                        print_formatted_text(FormattedText(
+                            [("class:info", "Last question and answer removed.")]))
+                    else:
+                        print_formatted_text(FormattedText(
+                            [("class:info", "Nothing to undo.")]))
+
+            else:
+                if not message:
+                    continue
+
+                log.info(f"> {message}")
+
+                if multi_line_mode:
+                    message = multi_input("> ", session)
+
+                with console.status("[bold cyan]ChatGPT is thinking...") as status:
+                    reply = chatGPT.send(message)
+
+                log.info(f"ChatGPT: {reply['content']}")
+                console.print("ChatGPT: ", end='', style="bold cyan")
+                if raw_mode:
+                    print(reply["content"])
+                else:
+                    console.print(
+                        Markdown(reply["content"]), new_line_start=True)
+
+                if message.lower() in ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit']:
+                    break
+
+        except KeyboardInterrupt:
             continue
-
-        log.info(f"> {message}")
-        # 发送消息后显示动画等待
-        with console.status("[bold cyan]ChatGPT is thinking...") as status:
-            reply = chatGPT.send(message)
-
-        log.info(f"ChatGPT: {reply['content']}")
-        # 输出回复
-        console.print("ChatGPT: ", end='', style="bold cyan")
-        if "-raw" in sys.argv:
-            print(reply["content"])
-        else:
-            console.print(Markdown(reply["content"]), new_line_start=True)
-
-        # 退出词判断
-        if message.lower() in ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit']:
+        except EOFError:
+            print_formatted_text(FormattedText(
+                [("class:exiting", "\nExiting...")]))
             break
 
-except (EOFError, KeyboardInterrupt):
-    print("\nExiting...")
 finally:
     log.info(f"Total tokens used: {chatGPT.get_total_tokens()}")
-    console.print(
-        f"[bright_magenta]Total tokens used: [bold]{chatGPT.get_total_tokens()}")
+print_formatted_text(FormattedText(
+    [("class:info", f"Total tokens used: {chatGPT.get_total_tokens()}")]))
