@@ -303,7 +303,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
-    parser.add_argument('--load', type=str, help='Load chat history from file')
+    parser.add_argument('--load', metavar='FILE', type=str, help='Load chat history from file')
     parser.add_argument('-m', '--multi', action='store_true',
                         help='Enable multi-line mode')
     parser.add_argument('-r', '--raw', action='store_true',
