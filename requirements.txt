@@ -1,4 +1,4 @@
-openai>=0.27.0
+requests
 rich>=13.3.1
-python-dotenv>=1.0.0
+python-dotenv
 prompt_toolkit

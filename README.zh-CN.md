@@ -76,9 +76,15 @@ python3 chat.py
 
 - `/last`：显示最后一条回复
 
-- `/save [filename_or_path]`：将聊天记录保存到指定的 JSON 文件中。如果未提供文件名或路径，则使用默认文件名 `chat_history_年-月-日_时:分:秒.json`
+- `/save [filename_or_path]`：将聊天记录保存到指定的 JSON 文件中
+
+  > 如果未提供文件名或路径，则提示使用默认文件名 `chat_history_年-月-日_时:分:秒.json`
 
 - `/system [new_prompt]`：修改系统提示语
+
+- `/timeout [new_timeout]`：修改 API 超时时间
+
+  > 超时默认20s，也可通过 `.env` 文件中的 `OPENAI_API_TIMEOUT=` 配置默认超时
 
 - `/undo`：删除上一个问题和回答
 
@@ -128,7 +134,6 @@ options:
 
 感谢以下项目为本脚本提供强大的支持：
 
-- [openai](https://github.com/openai/openai-python)：OpenAI 的官方 Python 客户端库
 - [rich](https://github.com/Textualize/rich)：用于在终端中输出富文本
 - [python-dotenv](https://github.com/theskumar/python-dotenv)：用于从 `.env` 文件加载环境变量
 - [prompt_toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit)：命令行输入处理库

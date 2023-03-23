@@ -74,11 +74,20 @@ Original chat logs will be saved to `chat.log`
 
 - `/last`: Show the last reply
 
-- `/save [filename_or_path]`: Save the chat history to the specified JSON file. If no filename or path is provided, the default filename `chat_history_YEAR-MONTH-DAY_HOUR:MINUTE:SECOND.json` will be used.
+- `/save [filename_or_path]`: Save the chat history to the specified JSON file
+
+  > If no filename or path is provided, the default filename `chat_history_YEAR-MONTH-DAY_HOUR:MINUTE:SECOND.json` is prompted on input.
 
 - `/system [new_prompt]`: Modify the system prompt
+
+- `/timeout [new_timeout]`: Modify API timeout.
+
+  > The default timeout is 20 seconds, it can also be configured by setting `OPENAI_API_TIMEOUT=` in the `.env` file.
+  
 - `/undo`: Delete the previous question and answer
+
 - `/help`: Display available commands
+
 - `/exit`: Exit the application
 
 ### Available Arguments
@@ -123,7 +132,6 @@ Upon exit, the token count for the chat session will be displayed.
 
 Thanks to the following projects for providing strong support for this script:
 
-- [openai](https://github.com/openai/openai-python): Official Python client library for OpenAI
 - [rich](https://github.com/Textualize/rich): For rendering rich text in the terminal
 - [python-dotenv](https://github.com/theskumar/python-dotenv): For loading environment variables from `.env` file
 - [prompt_toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit): Command-line input processing library

@@ -7,7 +7,7 @@ import os
 import sys
 from datetime import datetime
 
-import openai
+import requests
 from dotenv import load_dotenv
 from prompt_toolkit import PromptSession, prompt
 from prompt_toolkit.completion import Completer, Completion
@@ -30,9 +30,10 @@ style = Style.from_dict({
 
 
 class ChatSettings:
-    def __init__(self):
+    def __init__(self, timeout: int):
         self.raw_mode = False
         self.multi_line_mode = False
+        self.timeout = timeout
 
     def toggle_raw_mode(self):
         self.raw_mode = not self.raw_mode
@@ -46,44 +47,65 @@ class ChatSettings:
                 f"[dim]Multi-line mode enabled, press [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] to submit.")
         else:
             console.print(f"[dim]Multi-line mode disabled.")
+    
+    def set_timeout(self, timeout):
+        try:
+            self.timeout = float(timeout)
+        except ValueError:
+            console.print("[red]Input must be a number")
+            return
+        console.print(f"[dim]API timeout set to [green]{timeout}s[/].")
 
 
 class CHATGPT:
     def __init__(self, api_key: str):
-        openai.api_key = api_key
+        self.api_key = api_key
+        self.endpoint = "https://api.openai.com/v1/chat/completions"
+        self.headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
         self.messages = [
             {"role": "system", "content": "You are a helpful assistant."}]
         self.total_tokens = 0
         self.current_tokens = 0
 
-    def send(self, message: str):
+    def send(self, message: str, timeout: float):
         self.messages.append({"role": "user", "content": message})
+        data = {
+            "model": "gpt-3.5-turbo",
+            "messages": self.messages
+        }
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=self.messages
-            )
+            response = requests.post(self.endpoint, headers=self.headers, data=json.dumps(data), timeout=timeout)
+            response.raise_for_status()
         except KeyboardInterrupt:
             self.messages.pop()
             console.print("[bold cyan]Aborted.")
             raise
-        except openai.error.OpenAIError as e:
+        except requests.exceptions.ReadTimeout as e:
             self.messages.pop()
-            console.print(f"[bold red]Error: {str(e)}")
+            console.print(f"[red]Error: API read timed out ({timeout}s). You can retry or increase the timeout.", highlight=False)
+            # log.exception(e)
+            return None
+        except requests.exceptions.RequestException as e:
+            self.messages.pop()
+            console.print(f"[red]Error: {str(e)}")
             log.exception(e)
             return None
         except Exception as e:
             self.messages.pop()
             console.print(
-                f"[bold red]Error: {str(e)}. Check log for more information")
+                f"[red]Error: {str(e)}. Check log for more information")
             log.exception(e)
             self.save_chat_history(
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.json')
             raise EOFError
-        log.debug(f"Response: {response}")
-        self.current_tokens = response["usage"]["total_tokens"]
+        response_json = response.json()
+        log.debug(f"Response: {response_json}")
+        self.current_tokens = response_json["usage"]["total_tokens"]
         self.total_tokens += self.current_tokens
-        reply = response["choices"][0]["message"]
+        reply = response_json["choices"][0]["message"]
         self.messages.append(reply)
         return reply
 
@@ -109,7 +131,7 @@ class CHATGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/tokens', '/last', '/save', '/system', '/undo', '/help', '/exit'
+        '/raw', '/multi', '/tokens', '/last', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
     ]
 
     def get_completions(self, document, complete_event):
@@ -172,6 +194,18 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         else:
             console.print("[dim]No cahnge.")
 
+    elif command.startswith('/timeout'):
+        args = command.split()
+        if len(args) > 1:
+            new_timeout = args[1]
+        else:
+            new_timeout = prompt(
+                "Set OpenAI API timeout: ", default=str(settings.timeout), style=style)
+        if new_timeout != str(settings.timeout):
+            settings.set_timeout(new_timeout)
+        else:
+            console.print("[dim]No cahnge.")
+
     elif command == '/undo':
         if len(chatGPT.messages) > 2:
             answer = chatGPT.messages.pop()
@@ -195,6 +229,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
     /last                    - Display last ChatGPT's reply
     /save \[filename_or_path] - Save the chat history to a file
     /system \[new_prompt]     - Modify the system prompt
+    /timeout \[new_timeout]   - Modify the api timeout
     /undo                    - Undo the last question and remove its answer
     /help                    - Show this help message
     /exit                    - Exit the application''')
@@ -235,9 +270,10 @@ def main(args):
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         api_key = prompt("OpenAI API Key: ")
+    api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "20"))
 
     chatGPT = CHATGPT(api_key)
-    chat_settings = ChatSettings()
+    chat_settings = ChatSettings(api_timeout)
 
     # 绑定回车事件，达到自定义多行模式的效果
     key_bindings = create_key_bindings(chat_settings)
@@ -280,7 +316,7 @@ def main(args):
 
                     log.info(f"> {message}")
                     with console.status("[bold cyan]ChatGPT is thinking...") as status:
-                        reply = chatGPT.send(message)
+                        reply = chatGPT.send(message, chat_settings.timeout)
 
                     if reply:
                         log.info(f"ChatGPT: {reply['content']}")
