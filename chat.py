@@ -1,30 +1,51 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import argparse
+import json
+import logging
 import os
 import sys
-import openai
-import logging
-import json
-import argparse
 from datetime import datetime
-from prompt_toolkit import prompt, PromptSession
-from prompt_toolkit.keys import Keys
-from prompt_toolkit.key_binding import KeyBindings
+
+import openai
+from dotenv import load_dotenv
+from prompt_toolkit import PromptSession, prompt
 from prompt_toolkit.completion import Completer, Completion
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.markdown import Markdown
-from dotenv import load_dotenv
-
-# 从 .env 文件中读取 OPENAI_API_KEY
-load_dotenv()
-api_key = os.environ.get("OPENAI_API_KEY")
-if not api_key:
-    api_key = prompt("OpenAI API Key: ")
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
 logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO, encoding="UTF-8")
 log = logging.getLogger("chat")
+
+console = Console()
+
+style = Style.from_dict({
+    "prompt": "ansigreen",  # 将提示符设置为绿色
+})
+
+
+class ChatSettings:
+    def __init__(self):
+        self.raw_mode = False
+        self.multi_line_mode = False
+
+    def toggle_raw_mode(self):
+        self.raw_mode = not self.raw_mode
+        console.print(
+            f"[dim]Raw mode {'enabled' if self.raw_mode else 'disabled'}, use `/last` to display the last answer.")
+
+    def toggle_multi_line_mode(self):
+        self.multi_line_mode = not self.multi_line_mode
+        if self.multi_line_mode:
+            console.print(
+                f"[dim]Multi-line mode enabled, press [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] to submit.")
+        else:
+            console.print(f"[dim]Multi-line mode disabled.")
 
 
 class CHATGPT:
@@ -46,6 +67,19 @@ class CHATGPT:
             self.messages.pop()
             console.print("[bold cyan]Aborted.")
             raise
+        except openai.error.OpenAIError as e:
+            self.messages.pop()
+            console.print(f"[bold red]Error: {str(e)}")
+            log.exception(e)
+            return None
+        except Exception as e:
+            self.messages.pop()
+            console.print(
+                f"[bold red]Error: {str(e)}. Check log for more information")
+            log.exception(e)
+            self.save_chat_history(
+                f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.json')
+            raise EOFError
         log.debug(f"Response: {response}")
         self.current_tokens = response["usage"]["total_tokens"]
         self.total_tokens += self.current_tokens
@@ -86,128 +120,75 @@ class CustomCompleter(Completer):
                     yield Completion(command, start_position=-len(text))
 
 
-key_bindings = KeyBindings()
-
-
-@key_bindings.add(Keys.Enter, eager=True)
-def _(event):
-    buffer = event.current_buffer
-    text = buffer.text.strip()
-    if text.startswith('/') or not multi_line_mode:
-        buffer.validate_and_handle()
-    else:
-        buffer.insert_text('\n')
-
-
-def print_message(message):
+def print_message(message, settings: ChatSettings):
+    '''打印单条来自 ChatGPT 或用户的消息'''
     role = message["role"]
     content = message["content"]
     if role == "user":
         print(f"> {content}")
-    else:
+    elif role == "assistant":
         console.print("ChatGPT: ", end='', style="bold cyan")
-        if raw_mode:
+        if settings.raw_mode:
             print(content)
         else:
             console.print(Markdown(content), new_line_start=True)
 
 
-chatGPT = CHATGPT(api_key)
-console = Console()
+def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
+    '''处理斜杠(/)命令'''
+    if command == '/raw':
+        settings.toggle_raw_mode()
+    elif command == '/multi':
+        settings.toggle_multi_line_mode()
 
-parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
-parser.add_argument('--load', type=str, help='Load chat history from file')
-
-args = parser.parse_args()
-
-raw_mode = False
-multi_line_mode = False
-
-try:
-    console.print(
-        "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]\help[/]` to display available commands.")
-
-    if args.load:
-        with open(args.load, 'r', encoding='utf-8') as f:
-            chat_history = json.load(f)
-        chatGPT.messages = chat_history
-        for message in chatGPT.messages[1:]:
-            print_message(message)
+    elif command == '/tokens':
         console.print(
-            f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
+            f"[dim]Total tokens: {chatGPT.total_tokens}")
+        console.print(
+            f"[dim]Current tokens: {chatGPT.current_tokens}[/]/[black]4097")
 
-    session = PromptSession()
-    commands = CustomCompleter()
+    elif command == '/last':
+        reply = chatGPT.messages[-1]
+        print_message(reply, settings)
 
-    while True:
-        try:
-            message = session.prompt(
-                '> ', completer=commands, complete_while_typing=True, key_bindings=key_bindings)
+    elif command.startswith('/save'):
+        args = command.split()
+        if len(args) > 1:
+            filename = args[1]
+        else:
+            date_filename = f'./chat_history_{datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.json'
+            filename = prompt("Save to: ", default=date_filename, style=style)
+        chatGPT.save_chat_history(filename)
 
-            if message.startswith('/'):
-                command = message.strip().lower()
+    elif command.startswith('/system'):
+        args = command.split()
+        if len(args) > 1:
+            new_content = ' '.join(args[1:])
+        else:
+            new_content = prompt(
+                "System prompt: ", default=chatGPT.messages[0]['content'], style=style)
+        if new_content != chatGPT.messages[0]['content']:
+            chatGPT.modify_system_prompt(new_content)
+        else:
+            console.print("[dim]No cahnge.")
 
-                if command == '/raw':
-                    raw_mode = not raw_mode
-                    console.print(
-                        f"[dim]Raw mode {'enabled' if raw_mode else 'disabled'}, use `/last` to display the last answer.")
+    elif command == '/undo':
+        if len(chatGPT.messages) > 2:
+            answer = chatGPT.messages.pop()
+            question = chatGPT.messages.pop()
+            truncated_question = question['content'].split('\n')[0]
+            if len(question['content']) > len(truncated_question):
+                truncated_question += "..."
+            console.print(
+                f"[dim]Last question: '{truncated_question}' and it's answer has been removed.")
+        else:
+            console.print("[dim]Nothing to undo.")
 
-                elif command == '/multi':
-                    multi_line_mode = not multi_line_mode
-                    if multi_line_mode:
-                        console.print(
-                            f"[dim]Multi-line mode enabled, press [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] to submit.")
-                    else:
-                        console.print(f"[dim]Multi-line mode disabled.")
+    elif command == '/exit':
+        raise EOFError
 
-                elif command == '/tokens':
-                    console.print(
-                        f"[dim]Total tokens: {chatGPT.total_tokens}")
-                    console.print(
-                        f"[dim]Current tokens: {chatGPT.current_tokens}[/]/[black]4097")
-
-                elif command == '/last':
-                    reply = chatGPT.messages[-1]
-                    log.info(f"ChatGPT: {reply['content']}")
-                    print_message(reply)
-
-                elif command == '/save':
-                    args = command.split()
-                    if len(args) > 1:
-                        filename = args[1]
-                    else:
-                        now = datetime.now()
-                        filename = f'{sys.path[0]}/chat_history_{now.strftime("%Y-%m-%d_%H:%M:%S")}.json'
-                    chatGPT.save_chat_history(filename)
-
-                elif command.startswith('/system'):
-                    args = command.split()
-                    if len(args) > 1:
-                        new_content = ' '.join(args[1:])
-                    else:
-                        console.print(
-                            f"[dim]Current system prompt: '{chatGPT.messages[0]['content']}'", )
-                        new_content = prompt("New system prompt: ")
-                    chatGPT.modify_system_prompt(new_content)
-
-                elif command == '/undo':
-                    if len(chatGPT.messages) > 2:
-                        answer = chatGPT.messages.pop()
-                        question = chatGPT.messages.pop()
-                        truncated_question = question['content'].split('\n')[0]
-                        if len(question['content']) > len(truncated_question):
-                            truncated_question += "..."
-                        console.print(
-                            f"[dim]Last question: '{truncated_question}' and it's answer has been removed.")
-                    else:
-                        console.print("[dim]Nothing to undo.")
-
-                elif command == '/exit':
-                    console.print("Exiting...")
-                    break
-
-                else:
-                    console.print('''[bold]Available commands:[/]
+    else:
+        console.print('''[bold]Available commands:[/]
     /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)
     /multi                   - Toggle multi-line mode (allow multi-line input)
     /tokens                  - Show total tokens and current tokens used
@@ -218,28 +199,115 @@ try:
     /help                    - Show this help message
     /exit                    - Exit the application''')
 
-            else:
-                if not message:
-                    continue
 
-                log.info(f"> {message}")
+def load_chat_history(file_path):
+    '''从 file_path 加载聊天记录'''
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            chat_history = json.load(f)
+        return chat_history
+    except FileNotFoundError:
+        console.print(f"[bright_red]File not found: {file_path}")
+    except json.JSONDecodeError:
+        console.print(f"[bright_red]Invalid JSON format in file: {file_path}")
+    return None
 
-                with console.status("[bold cyan]ChatGPT is thinking...") as status:
-                    reply = chatGPT.send(message)
 
-                log.info(f"ChatGPT: {reply['content']}")
-                print_message(reply)
+def create_key_bindings(settings: ChatSettings):
+    '''自定义回车事件绑定，实现斜杠命令的提交忽略多行模式'''
+    key_bindings = KeyBindings()
 
-                if message.lower() in ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit', 'quit']:
-                    break
+    @key_bindings.add(Keys.Enter, eager=True)
+    def _(event):
+        buffer = event.current_buffer
+        text = buffer.text.strip()
+        if text.startswith('/') or not settings.multi_line_mode:
+            buffer.validate_and_handle()
+        else:
+            buffer.insert_text('\n')
 
-        except KeyboardInterrupt:
-            continue
-        except EOFError:
-            console.print("Exiting...")
-            break
+    return key_bindings
 
-finally:
-    log.info(f"Total tokens used: {chatGPT.total_tokens}")
-console.print(
-    f"[bright_magenta]Total tokens used: [bold]{chatGPT.total_tokens}")
+
+def main(args):
+    # 从 .env 文件中读取 OPENAI_API_KEY
+    load_dotenv()
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        api_key = prompt("OpenAI API Key: ")
+
+    chatGPT = CHATGPT(api_key)
+    chat_settings = ChatSettings()
+
+    # 绑定回车事件，达到自定义多行模式的效果
+    key_bindings = create_key_bindings(chat_settings)
+
+    try:
+        console.print(
+            "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]\help[/]` to display available commands.")
+
+        if args.multi:
+            chat_settings.toggle_multi_line_mode()
+
+        if args.raw:
+            chat_settings.toggle_raw_mode()
+
+        if args.load:
+            chat_history = load_chat_history(args.load)
+            if chat_history:
+                chatGPT.messages = chat_history
+                for message in chatGPT.messages:
+                    print_message(message, chat_settings)
+                console.print(
+                    f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
+
+        session = PromptSession()
+
+        # 自定义命令补全，保证输入‘/’后继续显示补全
+        commands = CustomCompleter()
+
+        while True:
+            try:
+                message = session.prompt(
+                    '> ', completer=commands, complete_while_typing=True, key_bindings=key_bindings)
+
+                if message.startswith('/'):
+                    command = message.strip().lower()
+                    handle_command(command, chatGPT, chat_settings)
+                else:
+                    if not message:
+                        continue
+
+                    log.info(f"> {message}")
+                    with console.status("[bold cyan]ChatGPT is thinking...") as status:
+                        reply = chatGPT.send(message)
+
+                    if reply:
+                        log.info(f"ChatGPT: {reply['content']}")
+                        print_message(reply, chat_settings)
+
+                    if message.lower() in ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit', 'quit']:
+                        break
+
+            except KeyboardInterrupt:
+                continue
+            except EOFError:
+                console.print("Exiting...")
+                break
+
+    finally:
+        log.info(f"Total tokens used: {chatGPT.total_tokens}")
+    console.print(
+        f"[bright_magenta]Total tokens used: [bold]{chatGPT.total_tokens}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
+    parser.add_argument('--load', type=str, help='Load chat history from file')
+    parser.add_argument('-m', '--multi', action='store_true',
+                        help='Enable multi-line mode')
+    parser.add_argument('-r', '--raw', action='store_true',
+                        help='Enable raw mode')
+    args = parser.parse_args()
+
+    main(args)
