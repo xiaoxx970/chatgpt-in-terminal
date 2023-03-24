@@ -78,7 +78,14 @@ class CHATGPT:
         }
         try:
             response = requests.post(self.endpoint, headers=self.headers, data=json.dumps(data), timeout=timeout)
-            response.raise_for_status()
+            if response.status_code == 400:
+                error_msg = response.json()['error']['message']
+                self.messages.pop()
+                console.print(f"[red]Error: {error_msg}")
+                log.error(error_msg)
+                return None
+            else:
+                response.raise_for_status()
         except KeyboardInterrupt:
             self.messages.pop()
             console.print("[bold cyan]Aborted.")
