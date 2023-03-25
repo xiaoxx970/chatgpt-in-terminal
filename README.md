@@ -1,105 +1,149 @@
-# Chat with GPT in terminal
+## Chat with GPT in Terminal
 
 [![English badge](https://img.shields.io/badge/%E8%8B%B1%E6%96%87-English-blue)](./README.md)
 [![简体中文 badge](https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-Simplified%20Chinese-blue)](./README.zh-CN.md)
 [![Platform badge](https://img.shields.io/badge/Platform-MacOS%7CWindows%7CLinux-green)]()
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg)](https://github.com/RichardLitt/standard-readme)
 
-This project implements a ChatGPT chatbot in the terminal. 
+This project enables chatting with ChatGPT in the terminal.
 
-- The Markdown content in the responses is rendered as beautiful rich text
+Markdown content in answers is rendered as beautifully formatted rich text.
 
-- Historical questions can be retrieved via the up/down arrow
-- Optional multi-line queries
-- Token counting
+Supports history retrieval with the up arrow key, optional multi-line questions, and tokens counting.
+
+Slash (/) commands are available in the chat box to toggle multi-line submit mode, undo the last question and answer, modify the system prompt and more.
+
+Supports saving chat messages to a JSON file and loading them from the file.
 
 ![example](README.assets/small.gif)
 
-The latest [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) model is used, which is the model used by ChatGPT free version (rather than the previous generation `text-davinci-003` model).
+Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) model, which is the same model used by ChatGPT (Free Edition).
 
-## Install
+## Installation
 
-1. Clone the repo and navigate to the directory:
+1. Clone the repo and enter the directory
 
    ```shell
    git clone https://github.com/xiaoxx970/chatgpt-in-terminal.git
    cd ./chatgpt-in-terminal
    ```
+   
+2. Write the OPENAI_API_KEY variable in the `.env` file in the project root directory, as follows
 
-2. In the `.env` file at the root of the project, write the OPENAI_API_KEY variable, as follows:
-
+   ```shell
+   OPENAI_API_KEY=your_API_KEY
    ```
-   OPENAI_API_KEY=your-API-KEY
-   ```
-
-   OpenAI's key can be generated on the page that opens when you click `View API keys` in the top right corner of the main page, direct link: https://platform.openai.com/account/api-keys.
-
+   
+   OpenAI keys can be generated from the top-right corner of the homepage by clicking `View API keys`. Direct link: https://platform.openai.com/account/api-keys
+   
    ![image-20230303233352970](README.assets/image-20230303233352970.png)
-
-   > If you don't configure the .env file, you can also directly input the API KEY at runtime, which will only take effect for that single run.
-
-3. Install dependencies via requirements.txt:
+   
+   > If you don't configure the `.env` file, you can also input the API KEY directly when running, which is valid for a single session.
+   
+3. Install dependencies through requirements.txt
 
    ```shell
    pip3 install -r requirements.txt
    ```
 
-## Usage
+## How to Use
 
-Run the following command to start the bot:
+Run with the following command:
 
 ```shell
 python3 chat.py
 ```
 
-The conversation record in its original format will be stored in `chat.log`.
+Original chat logs will be saved to `chat.log`
 
-### Multi-line mode
+### Available Commands
 
-If the question requires multi-line input, run the
-command with the `-m` parameter:
+- `/raw`: Display raw text in replies instead of rendered Markdown format
+
+  > After switching, use the `/last` command to reprint the last reply
+
+- `/multi`: Enable or disable multi-line mode, allowing users to enter multi-line text
+
+  > In multi-line mode, use [[Esc]] + [[Enter]] to submit the question
+  >
+  > If pasting multi-line text, single-line mode can also paste properly
+
+- `/tokens`: Display the API token count and token length for the current conversation
+
+  > GPT-3.5 has a token limit of 4097; use this command to check if you're approaching the limit
+
+- `/last`: Show the last reply
+
+- `/save [filename_or_path]`: Save the chat history to the specified JSON file
+
+  > If no filename or path is provided, the default filename `chat_history_YEAR-MONTH-DAY_HOUR,MINUTE,SECOND.json` is prompted on input.
+
+- `/system [new_prompt]`: Modify the system prompt
+
+- `/timeout [new_timeout]`: Modify API timeout.
+
+  > The default timeout is 20 seconds, it can also be configured by setting `OPENAI_API_TIMEOUT=` in the `.env` file.
+  
+- `/undo`: Delete the previous question and answer
+
+- `/help`: Display available commands
+
+- `/exit`: Exit the application
+
+### Available Arguments
 
 ```shell
-python3 chat.py -m
+options:
+  -h, --help   show this help message and exit
+  --load FILE  Load chat history from file
+  -m, --multi  Enable multi-line mode
+  -r, --raw    Enable raw mode
 ```
 
-In multi-line mode, press Enter to move to the next line, and if you press Enter on a blank line, the question will be submitted.
+> Multi-line mode and raw mode can be used simultaneously
 
-### Raw mode
+### Exit Words
 
-If you would like answers that are not rendered with Markdown, run the
-command with the `-raw` parameter:
-
-```shell
-python3 chat.py -raw
-```
-
-> Multi-line and raw modes can be used simultaneously.
-
-### Exit word
-
-In the chat, you can end the session with an exit word, which can be:
+In the chat, use exit words to end the current session. Exit words include:
 
 ```python
-['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit']
+['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit', 'quit']
 ```
 
-The exit word will be sent as a question to ChatGPT, and the bot will exit after GPT provides an answer.
+Exit words will be sent as a question to ChatGPT, and the application will exit after GPT replies.
 
-You can also use `Ctrl-C` or `Ctrl-D` to exit immediately.
+You can also use `Ctrl-D` or `/exit` to exit immediately.
 
-After exiting, the bot will display the token count used in the chat.
+Upon exit, the token count for the chat session will be displayed.
 
-> Currently priced at: $0.002 / 1K tokens, the free version has a speed limit of: 20 times / min.
+> Current price: $0.002 / 1K tokens, Free Edition rate limit: 20 requests / min
 
-## Project structure
+## Changelog
 
-```
-├── README.md           # Documentation file
+### 2023-03-23
+
+- Added slash (/) command functionality
+- Added `--load` runtime argument to load previously saved chat history
+- Modified program structure and interaction methods, changing the original `input()` function to the `prompt_toolkit` library's input interface, supporting multi-line input, command-line completion, and other features.
+- Improved error handling mechanisms, added chat history backup, logging, and other features, enhancing the program's reliability and fault tolerance.
+- Refactored code logic and function structure, improving modularity and readability.
+
+## Dependencies
+
+Thanks to the following projects for providing strong support for this script:
+
+- [rich](https://github.com/Textualize/rich): For rendering rich text in the terminal
+- [python-dotenv](https://github.com/theskumar/python-dotenv): For loading environment variables from `.env` file
+- [prompt_toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit): Command-line input processing library
+
+## Project Structure
+
+```bash
+├── README.md           # Documentation
 ├── chat.py             # Project code
-├── requirements.txt    # List of dependencies
-├── chat.log            # Log file generated after chatting
-└── .env                # Key storage file
+├── requirements.txt    # Dependency package list
+├── chat.log            # Chat log generated after chatting
+└── .env                # API key storage file
 ```
 
 ## License
