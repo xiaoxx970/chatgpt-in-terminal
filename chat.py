@@ -106,7 +106,7 @@ class CHATGPT:
                 f"[red]Error: {str(e)}. Check log for more information")
             log.exception(e)
             self.save_chat_history(
-                f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.json')
+                f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
         response_json = response.json()
         log.debug(f"Response: {response_json}")
@@ -185,7 +185,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         if len(args) > 1:
             filename = args[1]
         else:
-            date_filename = f'./chat_history_{datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.json'
+            date_filename = f'./chat_history_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json'
             filename = prompt("Save to: ", default=date_filename, style=style)
         chatGPT.save_chat_history(filename)
 

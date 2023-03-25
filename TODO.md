@@ -38,4 +38,4 @@
 
 测试
 
-- [ ] prompt_toolkit兼容性
+- [x] prompt_toolkit兼容性

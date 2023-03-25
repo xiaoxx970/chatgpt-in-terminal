@@ -78,7 +78,7 @@ python3 chat.py
 
 - `/save [filename_or_path]`：将聊天记录保存到指定的 JSON 文件中
 
-  > 如果未提供文件名或路径，则提示使用默认文件名 `chat_history_年-月-日_时:分:秒.json`
+  > 如果未提供文件名或路径，则提示使用默认文件名 `chat_history_年-月-日_时,分,秒.json`
 
 - `/system [new_prompt]`：修改系统提示语
 

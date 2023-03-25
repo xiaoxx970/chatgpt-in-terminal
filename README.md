@@ -76,7 +76,7 @@ Original chat logs will be saved to `chat.log`
 
 - `/save [filename_or_path]`: Save the chat history to the specified JSON file
 
-  > If no filename or path is provided, the default filename `chat_history_YEAR-MONTH-DAY_HOUR:MINUTE:SECOND.json` is prompted on input.
+  > If no filename or path is provided, the default filename `chat_history_YEAR-MONTH-DAY_HOUR,MINUTE,SECOND.json` is prompted on input.
 
 - `/system [new_prompt]`: Modify the system prompt
 
