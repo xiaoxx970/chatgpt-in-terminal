@@ -274,9 +274,14 @@ def create_key_bindings(settings: ChatSettings):
 def main(args):
     # 从 .env 文件中读取 OPENAI_API_KEY
     load_dotenv()
-    api_key = os.environ.get("OPENAI_API_KEY")
+    if args.key:
+        api_key = os.environ.get(args.key)
+    else:
+        api_key = os.environ.get("OPENAI_API_KEY")
+    # if 'key' arg triggered, load the api key from .env with the given key-name;
+    # otherwise load the api key with the key-name "OPENAI_API_KEY"
     if not api_key:
-        api_key = prompt("OpenAI API Key: ")
+        api_key = prompt("OpenAI API Key not found, please input: ")
     api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "20"))
 
     chatGPT = CHATGPT(api_key)
@@ -347,6 +352,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
     parser.add_argument('--load', metavar='FILE', type=str, help='Load chat history from file')
+    parser.add_argument('--key', type=str, help='choose the API key to load')
     parser.add_argument('-m', '--multi', action='store_true',
                         help='Enable multi-line mode')
     parser.add_argument('-r', '--raw', action='store_true',
