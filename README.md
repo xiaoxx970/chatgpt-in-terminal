@@ -94,10 +94,11 @@ Original chat logs will be saved to `chat.log`
 
 ```shell
 options:
-  -h, --help   show this help message and exit
-  --load FILE  Load chat history from file
-  -m, --multi  Enable multi-line mode
-  -r, --raw    Enable raw mode
+  -h, --help     Show this help message and exit
+  --load FILE    Load chat history from file
+  --key API_KEY  Select which API key in .env file to use
+  -m, --multi    Enable multi-line mode
+  -r, --raw      Enable raw mode
 ```
 
 > Multi-line mode and raw mode can be used simultaneously
@@ -119,6 +120,10 @@ Upon exit, the token count for the chat session will be displayed.
 > Current price: $0.002 / 1K tokens, Free Edition rate limit: 20 requests / min
 
 ## Changelog
+
+### 2023-03-27
+
+- Added `--key` runtime argument to select which API key in the `.env` file to use.
 
 ### 2023-03-23
 

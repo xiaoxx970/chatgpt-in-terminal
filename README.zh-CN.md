@@ -96,10 +96,11 @@ python3 chat.py
 
 ```shell
 options:
-  -h, --help   show this help message and exit
-  --load FILE  Load chat history from file
-  -m, --multi  Enable multi-line mode
-  -r, --raw    Enable raw mode
+  -h, --help     Show this help message and exit
+  --load FILE    Load chat history from file
+  --key API_KEY  Select which API key in .env file to use
+  -m, --multi    Enable multi-line mode
+  -r, --raw      Enable raw mode
 ```
 
 > 多行模式与 raw 模式可以同时使用
@@ -121,6 +122,10 @@ options:
 > 目前价格为: $0.002 / 1K tokens，免费版速率限制为: 20次 / min
 
 ## Changelog
+
+### 2023-03-27
+
+- 增加 `--key` 运行参数，用于选择使用哪一个储存在 `.env` 文件中的API key
 
 ### 2023-03-23
 
