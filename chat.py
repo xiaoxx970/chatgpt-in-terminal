@@ -292,7 +292,7 @@ def main(args):
 
     try:
         console.print(
-            "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]\help[/]` to display available commands.")
+            "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
 
         if args.multi:
             chat_settings.toggle_multi_line_mode()
