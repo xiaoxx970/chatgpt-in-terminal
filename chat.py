@@ -63,7 +63,7 @@ class ChatSettings:
         except ValueError:
             console.print("[red]Input must be a string")
             return
-        console.print(f"[dim]Model set to [green]{model}[/]")
+        console.print(f"[dim]Model set to [green]'{model}'[/]")
 
 
 class CHATGPT:
@@ -147,7 +147,7 @@ class CHATGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/tokens', '/module', '/last', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
+        '/raw', '/multi', '/tokens', '/model', '/last', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
     ]
 
     def get_completions(self, document, complete_event):
@@ -182,10 +182,20 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
     elif command == '/tokens':
         console.print(
             f"[dim]Total tokens: {chatGPT.total_tokens}")
-        console.print(
-            f"[dim]Current tokens: {chatGPT.current_tokens}[/]/[black]4097")
 
-    elif command.startswith('/module'):
+        if   "gpt-4-32k" in settings.model:     tokens_limit = 32768
+        elif "gpt-4" in settings.model:         tokens_limit = 8192
+        elif "gpt-3.5-turbo" in settings.model: tokens_limit = 4096
+        else: tokens_limit = -1
+
+        console.print(
+            f"[dim]Current tokens: {chatGPT.current_tokens}[/]/[black]{tokens_limit}")
+
+# here: tokens count may be wrong because of the support of changing AI models, because gpt-4 API allows max 8192 tokens (gpt-4-32k up to 32768)
+# one possible solution is: there are only 6 models under '/v1/chat/completions' now, and with if-elif-else all cases can be enumerated
+# but that means, when the model list is updated, here needs to be updated too
+
+    elif command.startswith('/model'):
         args = command.split()
         if len(args) > 1:
             settings.change_model(args[1])
@@ -249,6 +259,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
     /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)
     /multi                   - Toggle multi-line mode (allow multi-line input)
     /tokens                  - Show total tokens and current tokens used
+    /model \[model_name]      - Change AI model
     /last                    - Display last ChatGPT's reply
     /save \[filename_or_path] - Save the chat history to a file
     /system \[new_prompt]     - Modify the system prompt
@@ -300,8 +311,15 @@ def main(args):
         api_key = prompt("OpenAI API Key not found, please input: ")
     api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "20"))
 
+    if args.model:
+        api_model = args.model
+    else:
+        api_model = "gpt-3.5-turbo"
+    # if 'model' arg triggered, set the AI model in use to the given one;
+    # otherwise use 'gpt-3.5-turbo' as default
+
     chatGPT = CHATGPT(api_key)
-    chat_settings = ChatSettings(api_timeout, "gpt-3.5-turbo")
+    chat_settings = ChatSettings(api_timeout, api_model)
 
     # 绑定回车事件，达到自定义多行模式的效果
     key_bindings = create_key_bindings(chat_settings)
@@ -369,6 +387,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
     parser.add_argument('--load', metavar='FILE', type=str, help='Load chat history from file')
     parser.add_argument('--key', type=str, help='choose the API key to load')
+    parser.add_argument('--model', type=str, help='choose the AI model to use')
     parser.add_argument('-m', '--multi', action='store_true',
                         help='Enable multi-line mode')
     parser.add_argument('-r', '--raw', action='store_true',
