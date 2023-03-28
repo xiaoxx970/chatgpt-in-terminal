@@ -2,3 +2,6 @@
 chat.log
 .env
 chat*.json
+
+*.code-workspace
+# ignore vscode workspace file
