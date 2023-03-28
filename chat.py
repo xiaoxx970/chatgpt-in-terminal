@@ -30,10 +30,11 @@ style = Style.from_dict({
 
 
 class ChatSettings:
-    def __init__(self, timeout: int):
+    def __init__(self, timeout: int, model: str):
         self.raw_mode = False
         self.multi_line_mode = False
         self.timeout = timeout
+        self.model = model
 
     def toggle_raw_mode(self):
         self.raw_mode = not self.raw_mode
@@ -56,6 +57,14 @@ class ChatSettings:
             return
         console.print(f"[dim]API timeout set to [green]{timeout}s[/].")
 
+    def change_model(self, model):
+        try:
+            self.model = str(model)
+        except ValueError:
+            console.print("[red]Input must be a string")
+            return
+        console.print(f"[dim]Model set to [green]{model}[/]")
+
 
 class CHATGPT:
     def __init__(self, api_key: str):
@@ -70,10 +79,10 @@ class CHATGPT:
         self.total_tokens = 0
         self.current_tokens = 0
 
-    def send(self, message: str, timeout: float):
+    def send(self, message: str, timeout: float, model: str):
         self.messages.append({"role": "user", "content": message})
         data = {
-            "model": "gpt-3.5-turbo",
+            "model": model,
             "messages": self.messages
         }
         try:
@@ -138,7 +147,7 @@ class CHATGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/tokens', '/last', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
+        '/raw', '/multi', '/tokens', '/module', '/last', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
     ]
 
     def get_completions(self, document, complete_event):
@@ -175,6 +184,13 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
             f"[dim]Total tokens: {chatGPT.total_tokens}")
         console.print(
             f"[dim]Current tokens: {chatGPT.current_tokens}[/]/[black]4097")
+
+    elif command.startswith('/module'):
+        args = command.split()
+        if len(args) > 1:
+            settings.change_model(args[1])
+        else:
+            console.print(f"[dim]Model using now: [green]'{settings.model}'[/]")
 
     elif command == '/last':
         reply = chatGPT.messages[-1]
@@ -285,7 +301,7 @@ def main(args):
     api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "20"))
 
     chatGPT = CHATGPT(api_key)
-    chat_settings = ChatSettings(api_timeout)
+    chat_settings = ChatSettings(api_timeout, "gpt-3.5-turbo")
 
     # 绑定回车事件，达到自定义多行模式的效果
     key_bindings = create_key_bindings(chat_settings)
@@ -328,7 +344,7 @@ def main(args):
 
                     log.info(f"> {message}")
                     with console.status("[bold cyan]ChatGPT is thinking...") as status:
-                        reply = chatGPT.send(message, chat_settings.timeout)
+                        reply = chatGPT.send(message, chat_settings.timeout, chat_settings.model)
 
                     if reply:
                         log.info(f"ChatGPT: {reply['content']}")
