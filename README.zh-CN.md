@@ -19,7 +19,7 @@
 
 ![example](README.assets/small.gif)
 
-使用 [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) 模型，也就是 ChatGPT(免费版) 所使用的模型。
+默认使用 [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) 模型，也就是 ChatGPT(免费版) 所使用的模型。
 
 ## 安装
 
@@ -72,7 +72,11 @@ python3 chat.py
 
 - `/tokens`：显示已用的 API token 数统计和本次对话的 token 长度
 
-  > GPT-3.5的对话token限制为4097，可通过此命令实时查看是否接近限制
+  > GPT-3.5的对话token限制为4096，可通过此命令实时查看是否接近限制
+
+- `/model`：显示或选择使用的模型
+
+  > 默认支持 `gpt-4`，`gpt-4-32k`，`gpt-3.5-turbo`，其余的模型需要在代码内更改 API endpoint
 
 - `/last`：显示最后一条回复
 
@@ -99,6 +103,7 @@ options:
   -h, --help     Show this help message and exit
   --load FILE    Load chat history from file
   --key API_KEY  Select which API key in .env file to use
+  --model MODEL  Choose which AI model to use
   -m, --multi    Enable multi-line mode
   -r, --raw      Enable raw mode
 ```
@@ -119,9 +124,13 @@ options:
 
 退出后将显示本次聊天所使用的 tokens 统计
 
-> 目前价格为: $0.002 / 1K tokens，免费版速率限制为: 20次 / min
+> 目前价格为: $0.002 / 1K tokens，免费版速率限制为: 20次 / min (`gpt-3.5-turbo`)
 
 ## Changelog
+
+### 2023-03-28
+
+- 增加 `--model` 运行参数和 `/model` 命令，用于选择 / 更改使用的模型
 
 ### 2023-03-27
 
