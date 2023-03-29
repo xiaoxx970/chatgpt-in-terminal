@@ -17,7 +17,7 @@ Supports saving chat messages to a JSON file and loading them from the file.
 
 ![example](README.assets/small.gif)
 
-Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) model, which is the same model used by ChatGPT (Free Edition).
+Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) model, which is the same model used by ChatGPT (Free Edition), as default.
 
 ## Installation
 
@@ -70,7 +70,11 @@ Original chat logs will be saved to `chat.log`
 
 - `/tokens`: Display the API token count and token length for the current conversation
 
-  > GPT-3.5 has a token limit of 4097; use this command to check if you're approaching the limit
+  > GPT-3.5 has a token limit of 4096; use this command to check if you're approaching the limit
+
+- `/model`: Show or change the Model in use
+
+  > `gpt-4` , `gpt-4-32k` , `gpt-3.5-turbo` are supported by default. when using other models you need to change the API endpoint in code.
 
 - `/last`: Show the last reply
 
@@ -94,10 +98,12 @@ Original chat logs will be saved to `chat.log`
 
 ```shell
 options:
-  -h, --help   show this help message and exit
-  --load FILE  Load chat history from file
-  -m, --multi  Enable multi-line mode
-  -r, --raw    Enable raw mode
+  -h, --help     Show this help message and exit
+  --load FILE    Load chat history from file
+  --key API_KEY  Select which API key in .env file to use
+  --model MODEL  Choose which AI model to use
+  -m, --multi    Enable multi-line mode
+  -r, --raw      Enable raw mode
 ```
 
 > Multi-line mode and raw mode can be used simultaneously
@@ -116,9 +122,17 @@ You can also use `Ctrl-D` or `/exit` to exit immediately.
 
 Upon exit, the token count for the chat session will be displayed.
 
-> Current price: $0.002 / 1K tokens, Free Edition rate limit: 20 requests / min
+> Current price: $0.002 / 1K tokens, Free Edition rate limit: 20 requests / min (`gpt-3.5-turbo`)
 
 ## Changelog
+
+### 2023-03-28
+
+- Add `--model` runtime argument and `/model` command to choose / change AI models.
+
+### 2023-03-27
+
+- Added `--key` runtime argument to select which API key in the `.env` file to use.
 
 ### 2023-03-23
 
