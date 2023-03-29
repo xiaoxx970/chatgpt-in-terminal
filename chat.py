@@ -16,6 +16,7 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
 logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
@@ -47,7 +48,7 @@ class ChatSettings:
                 f"[dim]Multi-line mode enabled, press [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] to submit.")
         else:
             console.print(f"[dim]Multi-line mode disabled.")
-    
+
     def set_timeout(self, timeout):
         try:
             self.timeout = float(timeout)
@@ -78,7 +79,8 @@ class CHATGPT:
             "messages": self.messages
         }
         try:
-            response = requests.post(self.endpoint, headers=self.headers, data=json.dumps(data), timeout=timeout)
+            response = requests.post(
+                self.endpoint, headers=self.headers, data=json.dumps(data), timeout=timeout)
             # 匹配4xx错误，显示服务器返回的具体原因
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
@@ -94,7 +96,8 @@ class CHATGPT:
             raise
         except requests.exceptions.ReadTimeout as e:
             self.messages.pop()
-            console.print(f"[red]Error: API read timed out ({timeout}s). You can retry or increase the timeout.", highlight=False)
+            console.print(
+                f"[red]Error: API read timed out ({timeout}s). You can retry or increase the timeout.", highlight=False)
             # log.exception(e)
             return None
         except requests.exceptions.RequestException as e:
@@ -124,6 +127,23 @@ class CHATGPT:
         console.print(
             f"[dim]Chat history saved to: [bright_magenta]{filename}", highlight=False)
 
+    def get_credit_usage(self):
+        url = 'https://api.openai.com/dashboard/billing/credit_grants'
+        try:
+            response = requests.get(url, headers=self.headers)
+        except requests.exceptions.RequestException as e:
+            console.print(f"[red]Error: {str(e)}")
+            log.exception(e)
+            return None
+        except Exception as e:
+            console.print(
+                f"[red]Error: {str(e)}. Check log for more information")
+            log.exception(e)
+            self.save_chat_history(
+                f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
+            raise EOFError
+        return response.json()
+
     def modify_system_prompt(self, new_content):
         if self.messages[0]['role'] == 'system':
             old_content = self.messages[0]['content']
@@ -136,7 +156,7 @@ class CHATGPT:
         else:
             console.print(
                 f"[dim]No system prompt found in messages.")
-    
+
     def modify_model(self, new_model: str):
         old_model = self.model
         if not new_model:
@@ -144,12 +164,13 @@ class CHATGPT:
                 f"[dim]Empty input, the model remains '{old_model}'.")
             return
         self.model = str(new_model)
-        console.print(f"[dim]Model has been set from '{old_model}' to '{new_model}'.")
+        console.print(
+            f"[dim]Model has been set from '{old_model}' to '{new_model}'.")
 
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/tokens', '/model', '/last', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
+        '/raw', '/multi', '/tokens', '/usage', '/model', '/last', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
     ]
 
     available_models = [
@@ -204,13 +225,27 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         # here: tokens count may be wrong because of the support of changing AI models, because gpt-4 API allows max 8192 tokens (gpt-4-32k up to 32768)
         # one possible solution is: there are only 6 models under '/v1/chat/completions' now, and with if-elif-else all cases can be enumerated
         # but that means, when the model list is updated, here needs to be updated too
-        if   "gpt-4-32k" in chatGPT.model:     tokens_limit = 32768
-        elif "gpt-4" in chatGPT.model:         tokens_limit = 8192
-        elif "gpt-3.5-turbo" in chatGPT.model: tokens_limit = 4096
-        else: tokens_limit = -1
+        if "gpt-4-32k" in chatGPT.model:
+            tokens_limit = 32768
+        elif "gpt-4" in chatGPT.model:
+            tokens_limit = 8192
+        elif "gpt-3.5-turbo" in chatGPT.model:
+            tokens_limit = 4096
+        else:
+            tokens_limit = -1
 
         console.print(
             f"[dim]Current tokens: {chatGPT.current_tokens}[/]/[black]{tokens_limit}")
+
+    elif command == '/usage':
+        with console.status("Getting credit usage...") as status:
+            credit_usage = chatGPT.get_credit_usage()
+        if not credit_usage:
+            return
+        console.print(Panel(f"[bold blue]Total Granted:[/]\t${credit_usage.get('total_granted')}\n"
+                            f"[bold yellow]Used:[/]\t\t${credit_usage.get('total_used')}\n"
+                            f"[bold green]Available:[/]\t${credit_usage.get('total_available')}",
+                            title=credit_usage.get('object'), title_align='left', width=35))
 
     elif command.startswith('/model'):
         args = command.split()
@@ -344,7 +379,7 @@ def main(args):
     try:
         console.print(
             "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
-        
+
         if args.model:
             chatGPT.modify_model(args.model)
 
@@ -405,7 +440,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
-    parser.add_argument('--load', metavar='FILE', type=str, help='Load chat history from file')
+    parser.add_argument('--load', metavar='FILE', type=str,
+                        help='Load chat history from file')
     parser.add_argument('--key', type=str, help='choose the API key to load')
     parser.add_argument('--model', type=str, help='choose the AI model to use')
     parser.add_argument('-m', '--multi', action='store_true',
