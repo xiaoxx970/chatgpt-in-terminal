@@ -79,7 +79,8 @@ class CHATGPT:
         }
         try:
             response = requests.post(self.endpoint, headers=self.headers, data=json.dumps(data), timeout=timeout)
-            if response.status_code == 400:
+            # 匹配4xx错误，显示服务器返回的具体原因
+            if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
                 self.messages.pop()
                 console.print(f"[red]Error: {error_msg}")
@@ -151,12 +152,28 @@ class CustomCompleter(Completer):
         '/raw', '/multi', '/tokens', '/model', '/last', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
     ]
 
+    available_models = [
+        "gpt-3.5-turbo",
+        "gpt-3.5-turbo-0301",
+        "gpt-4",
+        "gpt-4-0314",
+        "gpt-4-32k",
+        "gpt-4-32k-0314",
+    ]
+
     def get_completions(self, document, complete_event):
         text = document.text_before_cursor
         if text.startswith('/'):
-            for command in self.commands:
-                if command.startswith(text):
-                    yield Completion(command, start_position=-len(text))
+            # Check if it's a /model command
+            if text.startswith('/model '):
+                model_prefix = text[7:]
+                for model in self.available_models:
+                    if model.startswith(model_prefix):
+                        yield Completion(model, start_position=-len(model_prefix))
+            else:
+                for command in self.commands:
+                    if command.startswith(text):
+                        yield Completion(command, start_position=-len(text))
 
 
 def print_message(message, settings: ChatSettings):
@@ -187,9 +204,9 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         # here: tokens count may be wrong because of the support of changing AI models, because gpt-4 API allows max 8192 tokens (gpt-4-32k up to 32768)
         # one possible solution is: there are only 6 models under '/v1/chat/completions' now, and with if-elif-else all cases can be enumerated
         # but that means, when the model list is updated, here needs to be updated too
-        if   "gpt-4-32k" in settings.model:     tokens_limit = 32768
-        elif "gpt-4" in settings.model:         tokens_limit = 8192
-        elif "gpt-3.5-turbo" in settings.model: tokens_limit = 4096
+        if   "gpt-4-32k" in chatGPT.model:     tokens_limit = 32768
+        elif "gpt-4" in chatGPT.model:         tokens_limit = 8192
+        elif "gpt-3.5-turbo" in chatGPT.model: tokens_limit = 4096
         else: tokens_limit = -1
 
         console.print(
@@ -198,7 +215,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
     elif command.startswith('/model'):
         args = command.split()
         if len(args) > 1:
-            chatGPT.modify_model(args[1])
+            new_model = args[1]
         else:
             new_model = prompt(
                 "OpenAI API model: ", default=chatGPT.model, style=style)
@@ -365,7 +382,7 @@ def main(args):
 
                     log.info(f"> {message}")
                     with console.status("[bold cyan]ChatGPT is thinking...") as status:
-                        reply = chatGPT.send(message, chat_settings.timeout, chat_settings.model)
+                        reply = chatGPT.send(message, chat_settings.timeout)
 
                     if reply:
                         log.info(f"ChatGPT: {reply['content']}")
