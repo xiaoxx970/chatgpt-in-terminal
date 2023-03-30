@@ -72,6 +72,8 @@ Original chat logs will be saved to `chat.log`
 
   > GPT-3.5 has a token limit of 4096; use this command to check if you're approaching the limit
 
+- `/usage`: Display the API credits summary
+
 - `/model`: Show or change the Model in use
 
   > `gpt-4` , `gpt-4-32k` , `gpt-3.5-turbo` are supported by default. when using other models you need to change the API endpoint in code.

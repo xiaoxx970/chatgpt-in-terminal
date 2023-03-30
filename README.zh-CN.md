@@ -74,6 +74,8 @@ python3 chat.py
 
   > GPT-3.5的对话token限制为4096，可通过此命令实时查看是否接近限制
 
+- `/usage`：显示已用的 API 的账号余额
+
 - `/model`：显示或选择使用的模型
 
   > 默认支持 `gpt-4`，`gpt-4-32k`，`gpt-3.5-turbo`，其余的模型需要在代码内更改 API endpoint
