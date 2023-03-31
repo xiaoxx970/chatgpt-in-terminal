@@ -4,9 +4,11 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
 from datetime import datetime
 
+import pyperclip
 import requests
 from dotenv import load_dotenv
 from prompt_toolkit import PromptSession, prompt
@@ -170,7 +172,7 @@ class CHATGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/tokens', '/usage', '/last', '/model', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
+        '/raw', '/multi', '/tokens', '/usage', '/last', '/code', '/model', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
     ]
 
     available_models = [
@@ -209,6 +211,49 @@ def print_message(message, settings: ChatSettings):
             print(content)
         else:
             console.print(Markdown(content), new_line_start=True)
+
+def copy_code(message, settings: ChatSettings):
+    '''Copy the code in ChatGPT's last reply to Clipboard'''
+    role = message["role"]
+    content = message["content"]
+    if role == "user":
+        console.print("[red]Cannot copy codes from user")
+    elif role == "assistant":
+        code_list = re.findall(r'```[\s\S]*?```', content)
+        if len(code_list) == 0:
+            console.print("[dim]No code found")
+            return
+    
+        if len(code_list) == 1:
+            selected_code = code_list[0]
+        # if there's only one code, just copy it
+        else:
+            console.print("[dim]There are more than one code in ChatGPT's last reply")
+            code_num = 0
+            for codes in code_list:
+                code_num += 1
+                console.print(f"[yellow]Code {code_num}:")
+                console.print(Markdown(codes))
+                
+            select_code_in = prompt(
+                "Please select which code to copy: ", style=style
+            )
+            # get the number of the selected code
+            try:
+                selected_code = code_list[int(select_code_in)-1]
+            except ValueError:
+                console.print("[red]Input must be an Integer")
+                return
+            except IndexError:
+                console.print(f"[red]Index out of range: You should input an Integer between 1 and {code_num}")
+                # code_num here is the amount of all codes
+                return
+
+        bpos = selected_code.find('\n')
+        epos = selected_code.rfind('```')
+        pyperclip.copy(''.join(selected_code[bpos+1:epos-1]))
+        # erase code begin and end sign
+        console.print("[dim]Code copied to Clipboard")    
 
 
 def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
@@ -254,11 +299,15 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         if new_model != chatGPT.model:
             chatGPT.modify_model(new_model)
         else:
-            console.print("[dim]No cahnge.")
+            console.print("[dim]No change.")
 
     elif command == '/last':
         reply = chatGPT.messages[-1]
         print_message(reply, settings)
+
+    elif command == '/code':
+        reply = chatGPT.messages[-1]
+        copy_code(reply, settings)
 
     elif command.startswith('/save'):
         args = command.split()
@@ -315,6 +364,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
     /tokens                  - Show total tokens and current tokens used
     /usage                   - Show total credits and current credits used
     /last                    - Display last ChatGPT's reply
+    /code                    - Copy the code in ChatGPT's last reply to Clipboard
     /save \[filename_or_path] - Save the chat history to a file
     /model \[model_name]      - Change AI model
     /system \[new_prompt]     - Modify the system prompt
