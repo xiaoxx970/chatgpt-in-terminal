@@ -126,9 +126,8 @@ class CHATGPT:
         if chat_settings.stream_mode:
             reply = ""
             client = sseclient.SSEClient(response)
-            try:
-                with Live(console=console, auto_refresh=False, vertical_overflow='visible') as live:
-                    live.console.print("ChatGPT: ",end='', style="bold cyan")
+            with Live(console=console, auto_refresh=False, vertical_overflow='visible') as live:
+                try:
                     for event in client.events():
                         if event.data == '[DONE]':
                             break
@@ -141,9 +140,10 @@ class CHATGPT:
                             else:
                                 reply_console = Group(Text("ChatGPT: ", end='', style="bold cyan"), Markdown(reply))
                             live.update(reply_console, refresh=True)
-            except KeyboardInterrupt:
-                console.print("[bold cyan]Aborted.")
-                raise
+                except KeyboardInterrupt:
+                    live.update(Text("Aborted.", style="bold cyan"), refresh=True)
+                    self.messages.append({'role': 'assistant', 'content': reply})
+                    return
             self.messages.append({'role': 'assistant', 'content': reply})
             return
         else:
@@ -429,8 +429,9 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
 
     elif command == '/undo':
         if len(chatGPT.messages) > 2:
-            answer = chatGPT.messages.pop()
             question = chatGPT.messages.pop()
+            if question['role'] == "assistant":
+                question = chatGPT.messages.pop()
             truncated_question = question['content'].split('\n')[0]
             if len(question['content']) > len(truncated_question):
                 truncated_question += "..."
