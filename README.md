@@ -80,6 +80,8 @@ Original chat logs will be saved to `chat.log`
 
 - `/last`: Show the last reply
 
+- `/code`: Copy the code in last reply to Clipboard
+
 - `/save [filename_or_path]`: Save the chat history to the specified JSON file
 
   > If no filename or path is provided, the default filename `chat_history_YEAR-MONTH-DAY_HOUR,MINUTE,SECOND.json` is prompted on input.

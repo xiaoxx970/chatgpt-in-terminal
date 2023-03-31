@@ -82,6 +82,8 @@ python3 chat.py
 
 - `/last`：显示最后一条回复
 
+- `/code`：将最后一条回复内的代码复制至剪切板
+
 - `/save [filename_or_path]`：将聊天记录保存到指定的 JSON 文件中
 
   > 如果未提供文件名或路径，则提示使用默认文件名 `chat_history_年-月-日_时,分,秒.json`
