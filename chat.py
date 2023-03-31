@@ -230,8 +230,8 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
             tokens_limit = 4096
         else:
             tokens_limit = -1
-        console.print(Panel(f"[dim blue]Total Tokens:[/]\t{chatGPT.total_tokens}\n"
-                            f"[dim green]Current Tokens:[/]\t{chatGPT.current_tokens}/[black]{tokens_limit}",
+        console.print(Panel(f"[bold bright_magenta]Total Tokens:[/]\t{chatGPT.total_tokens}\n"
+                            f"[bold green]Current Tokens:[/]\t{chatGPT.current_tokens}/[bold]{tokens_limit}",
                             title='token_summary', title_align='left', width=35, style='dim'))
 
     elif command == '/usage':
@@ -239,9 +239,9 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
             credit_usage = chatGPT.get_credit_usage()
         if not credit_usage:
             return
-        console.print(Panel(f"[dim blue]Total Granted:[/]\t${credit_usage.get('total_granted')}\n"
-                            f"[dim yellow]Used:[/]\t\t${credit_usage.get('total_used')}\n"
-                            f"[dim green]Available:[/]\t${credit_usage.get('total_available')}",
+        console.print(Panel(f"[bold blue]Total Granted:[/]\t${credit_usage.get('total_granted')}\n"
+                            f"[bold bright_yellow]Used:[/]\t\t${credit_usage.get('total_used')}\n"
+                            f"[bold green]Available:[/]\t${credit_usage.get('total_available')}",
                             title=credit_usage.get('object'), title_align='left', width=35, style='dim'))
 
     elif command.startswith('/model'):
