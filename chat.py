@@ -328,7 +328,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         if new_content != chatGPT.messages[0]['content']:
             chatGPT.modify_system_prompt(new_content)
         else:
-            console.print("[dim]No cahnge.")
+            console.print("[dim]No change.")
 
     elif command.startswith('/timeout'):
         args = command.split()
@@ -340,7 +340,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         if new_timeout != str(settings.timeout):
             settings.set_timeout(new_timeout)
         else:
-            console.print("[dim]No cahnge.")
+            console.print("[dim]No change.")
 
     elif command == '/undo':
         if len(chatGPT.messages) > 2:
