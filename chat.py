@@ -19,6 +19,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import ValidationError, Validator
+from rich import print as rprint
 from rich.console import Console, Group
 from rich.live import Live
 from rich.markdown import Markdown
@@ -37,32 +38,38 @@ style = Style.from_dict({
 })
 
 
-class ChatSettings:
-    def __init__(self):
-        self.raw_mode = False
-        self.multi_line_mode = False
-        self.stream_mode = True
+class ChatMode:
+    raw_mode = False
+    multi_line_mode = False
+    stream_mode = True
 
-    def toggle_raw_mode(self):
-        self.raw_mode = not self.raw_mode
+    @classmethod
+    def toggle_raw_mode(cls):
+        cls.raw_mode = not cls.raw_mode
         console.print(
-            f"[dim]Raw mode {'enabled' if self.raw_mode else 'disabled'}, use `/last` to display the last answer.")
+            f"[dim]Raw mode {'enabled' if cls.raw_mode else 'disabled'}, use `/last` to display the last answer.")
 
-    def toggle_stream_mode(self):
-        self.stream_mode = not self.stream_mode
-        console.print(
-            f"[dim]Stream mode {'enabled' if self.stream_mode else 'disabled'}.")
+    @classmethod
+    def toggle_stream_mode(cls):
+        cls.stream_mode = not cls.stream_mode
+        if cls.stream_mode:
+            console.print(
+                f"[dim]Stream mode enabled, the answer will start outputting as soon as the first response arrives.")
+        else:
+            console.print(
+                f"[dim]Stream mode disabled, the answer is being displayed after the server finishes responding.")
 
-    def toggle_multi_line_mode(self):
-        self.multi_line_mode = not self.multi_line_mode
-        if self.multi_line_mode:
+    @classmethod
+    def toggle_multi_line_mode(cls):
+        cls.multi_line_mode = not cls.multi_line_mode
+        if cls.multi_line_mode:
             console.print(
                 f"[dim]Multi-line mode enabled, press [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] to submit.")
         else:
             console.print(f"[dim]Multi-line mode disabled.")
 
 
-class CHATGPT:
+class ChatGPT:
     def __init__(self, api_key: str, timeout: int):
         self.api_key = api_key
         self.endpoint = "https://api.openai.com/v1/chat/completions"
@@ -77,43 +84,88 @@ class CHATGPT:
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
 
-    def send(self, message: str, chat_settings: ChatSettings):
-        self.messages.append({"role": "user", "content": message})
-        data = {
-            "model": self.model,
-            "messages": self.messages,
-            "stream": chat_settings.stream_mode
-        }
+    def send_request(self, data):
         try:
-            with console.status("[bold cyan]ChatGPT is thinking...") as status:
+            with console.status("[bold cyan]ChatGPT is thinking..."):
                 response = requests.post(
-                    self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=chat_settings.stream_mode)
+                    self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=ChatMode.stream_mode)
             # 匹配4xx错误，显示服务器返回的具体原因
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
-                self.messages.pop()
                 console.print(f"[red]Error: {error_msg}")
                 log.error(error_msg)
                 return None
-            else:
-                response.raise_for_status()
+
+            response.raise_for_status()
+            return response
         except KeyboardInterrupt:
-            self.messages.pop()
             console.print("[bold cyan]Aborted.")
             raise
         except requests.exceptions.ReadTimeout as e:
-            self.messages.pop()
             console.print(
                 f"[red]Error: API read timed out ({self.timeout}s). You can retry or increase the timeout.", highlight=False)
-            # log.exception(e)
             return None
         except requests.exceptions.RequestException as e:
-            self.messages.pop()
             console.print(f"[red]Error: {str(e)}")
             log.exception(e)
             return None
+
+    def process_stream_response(self, response):
+        reply = ""
+        client = sseclient.SSEClient(response)
+        with Live(console=console, auto_refresh=False) as live:
+            try:
+                if ChatMode.raw_mode:
+                    rprint("[bold cyan]ChatGPT: ", end='')
+                for event in client.events():
+                    if event.data == '[DONE]':
+                        break
+                    part = json.loads(event.data)
+                    if "content" in part["choices"][0]["delta"]:
+                        content = part["choices"][0]["delta"]["content"]
+                        reply += content
+                        if ChatMode.raw_mode:
+                            rprint(content, end="", flush=True),
+                        else:
+                            reply_console = Group(
+                                Text("ChatGPT: ", end='', style="bold cyan"), Markdown(reply))
+                            live.update(reply_console, refresh=True)
+            except KeyboardInterrupt:
+                live.update(Text("Aborted.", style="bold cyan"), refresh=True)
+            finally:
+                return {'role': 'assistant', 'content': reply}
+
+    def process_response(self, response) -> dict[str, any]:
+        if ChatMode.stream_mode:
+            return self.process_stream_response(response)
+        else:
+            response_json = response.json()
+            log.debug(f"Response: {response_json}")
+            reply_message = response_json["choices"][0]["message"]
+            print_message(reply_message)
+            return reply_message
+
+    def handle(self, message: str):
+        try:
+            self.messages.append({"role": "user", "content": message})
+            data = {
+                "model": self.model,
+                "messages": self.messages,
+                "stream": ChatMode.stream_mode
+            }
+            response = self.send_request(data)
+            if response is None:
+                self.messages.pop()
+                return
+
+            reply_message = self.process_response(response)
+            if reply_message is not None:
+                log.info(f"ChatGPT: {reply_message['content']}")
+                self.messages.append(reply_message)
+                self.current_tokens = count_token(self.messages)
+                self.total_tokens += self.current_tokens
+
         except Exception as e:
-            self.messages.pop()
             console.print(
                 f"[red]Error: {str(e)}. Check log for more information")
             log.exception(e)
@@ -121,37 +173,7 @@ class CHATGPT:
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
 
-        self.current_tokens = count_token(self.messages)
-        self.total_tokens += self.current_tokens
-        if chat_settings.stream_mode:
-            reply = ""
-            client = sseclient.SSEClient(response)
-            with Live(console=console, auto_refresh=False, vertical_overflow='visible') as live:
-                try:
-                    for event in client.events():
-                        if event.data == '[DONE]':
-                            break
-                        part = json.loads(event.data)
-                        if "content" in part["choices"][0]["delta"]:
-                            content = part["choices"][0]["delta"]["content"]
-                            reply += content
-                            if chat_settings.raw_mode:
-                                reply_console = Group(Text("ChatGPT: ", end='', style="bold cyan"), Text(reply))
-                            else:
-                                reply_console = Group(Text("ChatGPT: ", end='', style="bold cyan"), Markdown(reply))
-                            live.update(reply_console, refresh=True)
-                except KeyboardInterrupt:
-                    live.update(Text("Aborted.", style="bold cyan"), refresh=True)
-                    self.messages.append({'role': 'assistant', 'content': reply})
-                    return
-            self.messages.append({'role': 'assistant', 'content': reply})
-            return
-        else:
-            response_json = response.json()
-            log.debug(f"Response: {response_json}")
-            reply_message = response_json["choices"][0]["message"]
-            self.messages.append(reply_message)
-            return reply_message
+        return reply_message
 
     def save_chat_history(self, filename):
         with open(f"{filename}", 'w', encoding='utf-8') as f:
@@ -247,13 +269,15 @@ class CustomCompleter(Completer):
                     if command.startswith(text):
                         yield Completion(command, start_position=-len(text))
 
+
 def count_token(messages: list):
     '''计算 messages 占用的 token
     `cl100k_base` 编码适用于: gpt-4, gpt-3.5-turbo, text-embedding-ada-002'''
     encoding = tiktoken.get_encoding("cl100k_base")
     length = 0
     for message in messages:
-        length += len(encoding.encode(f"role: {message['role']}, content: {message['content']}"))
+        length += len(encoding.encode(
+            f"role: {message['role']}, content: {message['content']}"))
     return length
 
 class NumberValidator(Validator):
@@ -264,7 +288,7 @@ class NumberValidator(Validator):
                                   cursor_position=len(text))
 
 
-def print_message(message, settings: ChatSettings):
+def print_message(message):
     '''打印单条来自 ChatGPT 或用户的消息'''
     role = message["role"]
     content = message["content"]
@@ -272,7 +296,7 @@ def print_message(message, settings: ChatSettings):
         print(f"> {content}")
     elif role == "assistant":
         console.print("ChatGPT: ", end='', style="bold cyan")
-        if settings.raw_mode:
+        if ChatMode.raw_mode:
             print(content)
         else:
             console.print(Markdown(content), new_line_start=True)
@@ -325,14 +349,14 @@ def copy_code(message, select_code_idx: int = None):
     console.print("[dim]Code copied to Clipboard")
 
 
-def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
+def handle_command(command: str, chatGPT: ChatGPT):
     '''处理斜杠(/)命令'''
     if command == '/raw':
-        settings.toggle_raw_mode()
+        ChatMode.toggle_raw_mode()
     elif command == '/multi':
-        settings.toggle_multi_line_mode()
+        ChatMode.toggle_multi_line_mode()
     elif command == '/stream':
-        settings.toggle_stream_mode()
+        ChatMode.toggle_stream_mode()
 
     elif command == '/tokens':
         # here: tokens count may be wrong because of the support of changing AI models, because gpt-4 API allows max 8192 tokens (gpt-4-32k up to 32768)
@@ -374,7 +398,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
 
     elif command == '/last':
         reply = chatGPT.messages[-1]
-        print_message(reply, settings)
+        print_message(reply)
 
     elif command.startswith('/copy'):
         args = command.split()
@@ -421,8 +445,8 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
             new_timeout = args[1]
         else:
             new_timeout = prompt(
-                "OpenAI API timeout: ", default=str(settings.timeout), style=style)
-        if new_timeout != str(settings.timeout):
+                "OpenAI API timeout: ", default=str(ChatMode.timeout), style=style)
+        if new_timeout != str(ChatMode.timeout):
             chatGPT.set_timeout(new_timeout)
         else:
             console.print("[dim]No change.")
@@ -447,7 +471,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         console.print('''[bold]Available commands:[/]
     /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)
     /multi                   - Toggle multi-line mode (allow multi-line input)
-    /stream                  - Toggle stream output mode (more time saved)
+    /stream                  - Toggle stream output mode (flow print the answer)
     /tokens                  - Show total tokens and current tokens used
     /usage                   - Show total credits and current credits used
     /last                    - Display last ChatGPT's reply
@@ -475,7 +499,7 @@ def load_chat_history(file_path):
     return None
 
 
-def create_key_bindings(settings: ChatSettings):
+def create_key_bindings():
     '''自定义回车事件绑定，实现斜杠命令的提交忽略多行模式'''
     key_bindings = KeyBindings()
 
@@ -483,7 +507,7 @@ def create_key_bindings(settings: ChatSettings):
     def _(event):
         buffer = event.current_buffer
         text = buffer.text.strip()
-        if text.startswith('/') or not settings.multi_line_mode:
+        if text.startswith('/') or not ChatMode.multi_line_mode:
             buffer.validate_and_handle()
         else:
             buffer.insert_text('\n')
@@ -506,71 +530,64 @@ def main(args):
 
     api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "20"))
 
-    chatGPT = CHATGPT(api_key, api_timeout)
-    chat_settings = ChatSettings()
+    chat_gpt = ChatGPT(api_key, api_timeout)
+
+    console.print(
+        "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
+
+    if args.model:
+        chat_gpt.set_model(args.model)
+
+    if args.multi:
+        ChatMode.toggle_multi_line_mode()
+
+    if args.raw:
+        ChatMode.toggle_raw_mode()
+
+    if args.load:
+        chat_history = load_chat_history(args.load)
+        if chat_history:
+            chat_gpt.messages = chat_history
+            for message in chat_gpt.messages:
+                print_message(message)
+            console.print(
+                f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
+
+    session = PromptSession()
+
+    # 自定义命令补全，保证输入‘/’后继续显示补全
+    commands = CustomCompleter()
 
     # 绑定回车事件，达到自定义多行模式的效果
-    key_bindings = create_key_bindings(chat_settings)
+    key_bindings = create_key_bindings()
 
-    try:
-        console.print(
-            "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
+    while True:
+        try:
+            message = session.prompt(
+                '> ', completer=commands, complete_while_typing=True, key_bindings=key_bindings)
 
-        if args.model:
-            chatGPT.set_model(args.model)
+            if message.startswith('/'):
+                command = message.strip().lower()
+                handle_command(command, chat_gpt)
+            else:
+                if not message:
+                    continue
 
-        if args.multi:
-            chat_settings.toggle_multi_line_mode()
+                log.info(f"> {message}")
+                chat_gpt.handle(message)
 
-        if args.raw:
-            chat_settings.toggle_raw_mode()
+                if message.lower() in ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit', 'quit']:
+                    break
 
-        if args.load:
-            chat_history = load_chat_history(args.load)
-            if chat_history:
-                chatGPT.messages = chat_history
-                for message in chatGPT.messages:
-                    print_message(message, chat_settings)
-                console.print(
-                    f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
+        except KeyboardInterrupt:
+            continue
+        except EOFError:
+            console.print("Exiting...")
+            break
 
-        session = PromptSession()
-
-        # 自定义命令补全，保证输入‘/’后继续显示补全
-        commands = CustomCompleter()
-
-        while True:
-            try:
-                message = session.prompt(
-                    '> ', completer=commands, complete_while_typing=True, key_bindings=key_bindings)
-
-                if message.startswith('/'):
-                    command = message.strip().lower()
-                    handle_command(command, chatGPT, chat_settings)
-                else:
-                    if not message:
-                        continue
-
-                    log.info(f"> {message}")
-                    reply = chatGPT.send(message, chat_settings)
-
-                    if reply:
-                        log.info(f"ChatGPT: {reply['content']}")
-                        print_message(reply, chat_settings)
-
-                    if message.lower() in ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit', 'quit']:
-                        break
-
-            except KeyboardInterrupt:
-                continue
-            except EOFError:
-                console.print("Exiting...")
-                break
-
-    finally:
-        log.info(f"Total tokens used: {chatGPT.total_tokens}")
+    log.info(f"Total tokens used: {chat_gpt.total_tokens}")
     console.print(
-        f"[bright_magenta]Total tokens used: [bold]{chatGPT.total_tokens}")
+        f"[bright_magenta]Total tokens used: [bold]{chat_gpt.total_tokens}")
 
 
 if __name__ == "__main__":
