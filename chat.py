@@ -240,9 +240,9 @@ def copy_code(message, select_code_idx: int = None):
         console.print("[dim]No code found")
         return
 
-    if len(code_list) == 1:
+    if len(code_list) == 1 and select_code_idx is None:
         selected_code = code_list[0]
-        # if there's only one code, just copy it
+        # if there's only one code, and select_code_idx not given, just copy it
     else:
         if select_code_idx is None:
             console.print(
@@ -259,16 +259,22 @@ def copy_code(message, select_code_idx: int = None):
         try:
             selected_code = code_list[int(select_code_idx)-1]
         except ValueError:
-            console.print("[red]Input must be an Integer")
+            console.print("[red]Code index must be an Integer")
             return
         except IndexError:
-            console.print(
-                f"[red]Index out of range: You should input an Integer between 1 and {code_num}")
-            # code_num here is the amount of all codes
+            if len(code_list) == 1:
+                console.print(
+                    "[red]Index out of range: There is only one code in ChatGPT's last reply")
+            else:
+                console.print(
+                    f"[red]Index out of range: You should input an Integer in range 1 ~ {len(code_list)}")
+                # show idx range
+                # use len(code_list) instead of code_num as the max of idx 
+                # in order to avoid error 'UnboundLocalError: local variable 'code_num' referenced before assignment' when inputing select_code_idx directly
             return
 
-    bpos = selected_code.find('\n')
-    epos = selected_code.rfind('```')
+    bpos = selected_code.find('\n')    # code begin pos.
+    epos = selected_code.rfind('```')  # code end pos.
     pyperclip.copy(''.join(selected_code[bpos+1:epos-1]))
     # erase code begin and end sign
     console.print("[dim]Code copied to Clipboard")
@@ -327,11 +333,16 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         args = command.split()
         if len(args) > 1:
             reply = chatGPT.messages[-1]
-            if args[1] == 'code':
+            if args[1] == 'all':
+                pyperclip.copy(reply["content"])
+                console.print("[dim]Last reply copied to Clipboard")
+            elif args[1] == 'code':
                 if len(args) > 2:
                     copy_code(reply, args[2])
                 else:
                     copy_code(reply)
+            else:
+                console.print("[red]Undefined argument. Use `[bright_magenta]/help[/]` to see available commands.")
 
     elif command.startswith('/save'):
         args = command.split()
@@ -388,7 +399,8 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
     /tokens                  - Show total tokens and current tokens used
     /usage                   - Show total credits and current credits used
     /last                    - Display last ChatGPT's reply
-    /code                    - Copy the code in ChatGPT's last reply to Clipboard
+    /copy all                - Copy the full ChatGPT's last reply (raw) to Clipboard
+    /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
     /save \[filename_or_path] - Save the chat history to a file
     /model \[model_name]      - Change AI model
     /system \[new_prompt]     - Modify the system prompt
