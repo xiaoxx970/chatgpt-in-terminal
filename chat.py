@@ -127,9 +127,8 @@ class ChatGPT:
                         if ChatMode.raw_mode:
                             rprint(content, end="", flush=True),
                         else:
-                            reply_console = Group(
-                                Text("ChatGPT: ", end='', style="bold cyan"), Markdown(reply))
-                            live.update(reply_console, refresh=True)
+                            live.update(Group(
+                                Text("ChatGPT: ", end='', style="bold cyan"), Markdown(reply)), refresh=True)
             except KeyboardInterrupt:
                 live.stop()
                 console.print("Aborted.", style="bold cyan")
@@ -281,6 +280,7 @@ def count_token(messages: list):
             f"role: {message['role']}, content: {message['content']}"))
     return length
 
+
 class NumberValidator(Validator):
     def validate(self, document):
         text = document.text
@@ -339,7 +339,7 @@ def copy_code(message, select_code_idx: int = None):
                 console.print(
                     f"[red]Index out of range: You should input an Integer in range 1 ~ {len(code_list)}")
                 # show idx range
-                # use len(code_list) instead of code_num as the max of idx 
+                # use len(code_list) instead of code_num as the max of idx
                 # in order to avoid error 'UnboundLocalError: local variable 'code_num' referenced before assignment' when inputing select_code_idx directly
             return
 
@@ -414,7 +414,8 @@ def handle_command(command: str, chatGPT: ChatGPT):
                 else:
                     copy_code(reply)
             else:
-                console.print("[dim]Nothing to undo. Available copy command: `[bright_magenta]/copy code \[index][/]` or `[bright_magenta]/copy all[/]`")
+                console.print(
+                    "[dim]Nothing to undo. Available copy command: `[bright_magenta]/copy code \[index][/]` or `[bright_magenta]/copy all[/]`")
         else:
             pyperclip.copy(reply["content"])
             console.print("[dim]Last reply copied to Clipboard")
