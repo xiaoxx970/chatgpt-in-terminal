@@ -528,7 +528,7 @@ def main(args):
     if not api_key:
         api_key = prompt("OpenAI API Key not found, please input: ")
 
-    api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "20"))
+    api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "30"))
 
     chat_gpt = ChatGPT(api_key, api_timeout)
 

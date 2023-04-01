@@ -68,6 +68,10 @@ Original chat logs will be saved to `chat.log`
   >
   > If pasting multi-line text, single-line mode can also paste properly
 
+- `/stream`: disable or enable stream mode
+
+   > In stream mode, the answer will start outputting as soon as the first response arrives, which can reducing waiting time. Stream mode is on by default.
+
 - `/tokens`: Display the API token count and token length for the current conversation
 
   > GPT-3.5 has a token limit of 4096; use this command to check if you're approaching the limit
@@ -94,7 +98,7 @@ Original chat logs will be saved to `chat.log`
 
 - `/timeout [new_timeout]`: Modify API timeout.
 
-  > The default timeout is 20 seconds, it can also be configured by setting `OPENAI_API_TIMEOUT=` in the `.env` file.
+  > The default timeout is 30 seconds, it can also be configured by setting `OPENAI_API_TIMEOUT=` in the `.env` file.
   
 - `/undo`: Delete the previous question and answer
 
@@ -137,6 +141,7 @@ Upon exit, the token count for the chat session will be displayed.
 ### 2023-04-01
 
 - Add `/copy` command to copy the last reply's content to the clipboard
+- Add streaming output mode, enabled by default, use `/stream` to switch
 
 ### 2023-03-28
 
