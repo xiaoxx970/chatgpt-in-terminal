@@ -331,8 +331,8 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
 
     elif command.startswith('/copy'):
         args = command.split()
+        reply = chatGPT.messages[-1]
         if len(args) > 1:
-            reply = chatGPT.messages[-1]
             if args[1] == 'all':
                 pyperclip.copy(reply["content"])
                 console.print("[dim]Last reply copied to Clipboard")
@@ -342,7 +342,10 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
                 else:
                     copy_code(reply)
             else:
-                console.print("[red]Undefined argument. Use `[bright_magenta]/help[/]` to see available commands.")
+                console.print("[dim]Nothing to undo. Available copy command: `[bright_magenta]/copy code \[index][/]` or `[bright_magenta]/copy all[/]`")
+        else:
+            pyperclip.copy(reply["content"])
+            console.print("[dim]Last reply copied to Clipboard")
 
     elif command.startswith('/save'):
         args = command.split()
@@ -399,7 +402,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
     /tokens                  - Show total tokens and current tokens used
     /usage                   - Show total credits and current credits used
     /last                    - Display last ChatGPT's reply
-    /copy all                - Copy the full ChatGPT's last reply (raw) to Clipboard
+    /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
     /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
     /save \[filename_or_path] - Save the chat history to a file
     /model \[model_name]      - Change AI model
