@@ -1,4 +1,5 @@
 requests
 python-dotenv
+pyperclip
 rich>=13.3.1
 prompt_toolkit>=3.0

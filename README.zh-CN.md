@@ -82,6 +82,12 @@ python3 chat.py
 
 - `/last`：显示最后一条回复
 
+- `/copy` 或 `/copy all`：将最后一条回复内容复制至剪切板
+
+  - `/copy code [index]`：将最后一条回复内容中的第 `index` 块代码复制至剪切板
+
+    > 如果不指定 `index`，则终端会打印所有代码块并询问要复制的序号
+
 - `/save [filename_or_path]`：将聊天记录保存到指定的 JSON 文件中
 
   > 如果未提供文件名或路径，则提示使用默认文件名 `chat_history_年-月-日_时,分,秒.json`
@@ -129,6 +135,10 @@ options:
 > 目前价格为: $0.002 / 1K tokens，免费版速率限制为: 20次 / min (`gpt-3.5-turbo`)
 
 ## Changelog
+
+### 2023-04-01
+
+- 增加 `/copy` 命令，用于复制回复内容
 
 ### 2023-03-28
 

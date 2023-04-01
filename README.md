@@ -80,6 +80,12 @@ Original chat logs will be saved to `chat.log`
 
 - `/last`: Show the last reply
 
+- `/copy` or `/copy all`: Copy the last reply's content to the clipboard
+
+  - `/copy code [index]`: Copy the `index`-th code block from the last reply's content to the clipboard
+
+    > If `index` is not specified, the terminal will print all code blocks and ask for the number of the one to be copied
+
 - `/save [filename_or_path]`: Save the chat history to the specified JSON file
 
   > If no filename or path is provided, the default filename `chat_history_YEAR-MONTH-DAY_HOUR,MINUTE,SECOND.json` is prompted on input.
@@ -127,6 +133,10 @@ Upon exit, the token count for the chat session will be displayed.
 > Current price: $0.002 / 1K tokens, Free Edition rate limit: 20 requests / min (`gpt-3.5-turbo`)
 
 ## Changelog
+
+### 2023-04-01
+
+- Add `/copy` command to copy the last reply's content to the clipboard
 
 ### 2023-03-28
 

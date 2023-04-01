@@ -4,9 +4,11 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
 from datetime import datetime
 
+import pyperclip
 import requests
 from dotenv import load_dotenv
 from prompt_toolkit import PromptSession, prompt
@@ -14,6 +16,7 @@ from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.styles import Style
+from prompt_toolkit.validation import ValidationError, Validator
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -170,7 +173,12 @@ class CHATGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/tokens', '/usage', '/last', '/model', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
+        '/raw', '/multi', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
+    ]
+
+    copy_actions = [
+        "code",
+        "all"
     ]
 
     available_models = [
@@ -191,10 +199,24 @@ class CustomCompleter(Completer):
                 for model in self.available_models:
                     if model.startswith(model_prefix):
                         yield Completion(model, start_position=-len(model_prefix))
+            # Check if it's a /copy command
+            elif text.startswith('/copy '):
+                copy_prefix = text[6:]
+                for copy in self.copy_actions:
+                    if copy.startswith(copy_prefix):
+                        yield Completion(copy, start_position=-len(copy_prefix))
             else:
                 for command in self.commands:
                     if command.startswith(text):
                         yield Completion(command, start_position=-len(text))
+
+
+class NumberValidator(Validator):
+    def validate(self, document):
+        text = document.text
+        if not text.isdigit():
+            raise ValidationError(message="请输入一个数字！",
+                                  cursor_position=len(text))
 
 
 def print_message(message, settings: ChatSettings):
@@ -209,6 +231,53 @@ def print_message(message, settings: ChatSettings):
             print(content)
         else:
             console.print(Markdown(content), new_line_start=True)
+
+
+def copy_code(message, select_code_idx: int = None):
+    '''Copy the code in ChatGPT's last reply to Clipboard'''
+    code_list = re.findall(r'```[\s\S]*?```', message["content"])
+    if len(code_list) == 0:
+        console.print("[dim]No code found")
+        return
+
+    if len(code_list) == 1 and select_code_idx is None:
+        selected_code = code_list[0]
+        # if there's only one code, and select_code_idx not given, just copy it
+    else:
+        if select_code_idx is None:
+            console.print(
+                "[dim]There are more than one code in ChatGPT's last reply")
+            code_num = 0
+            for codes in code_list:
+                code_num += 1
+                console.print(f"[yellow]Code {code_num}:")
+                console.print(Markdown(codes))
+
+            select_code_idx = prompt(
+                "Please select which code to copy: ", style=style, validator=NumberValidator())
+            # get the number of the selected code
+        try:
+            selected_code = code_list[int(select_code_idx)-1]
+        except ValueError:
+            console.print("[red]Code index must be an Integer")
+            return
+        except IndexError:
+            if len(code_list) == 1:
+                console.print(
+                    "[red]Index out of range: There is only one code in ChatGPT's last reply")
+            else:
+                console.print(
+                    f"[red]Index out of range: You should input an Integer in range 1 ~ {len(code_list)}")
+                # show idx range
+                # use len(code_list) instead of code_num as the max of idx 
+                # in order to avoid error 'UnboundLocalError: local variable 'code_num' referenced before assignment' when inputing select_code_idx directly
+            return
+
+    bpos = selected_code.find('\n')    # code begin pos.
+    epos = selected_code.rfind('```')  # code end pos.
+    pyperclip.copy(''.join(selected_code[bpos+1:epos-1]))
+    # erase code begin and end sign
+    console.print("[dim]Code copied to Clipboard")
 
 
 def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
@@ -254,11 +323,29 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         if new_model != chatGPT.model:
             chatGPT.modify_model(new_model)
         else:
-            console.print("[dim]No cahnge.")
+            console.print("[dim]No change.")
 
     elif command == '/last':
         reply = chatGPT.messages[-1]
         print_message(reply, settings)
+
+    elif command.startswith('/copy'):
+        args = command.split()
+        reply = chatGPT.messages[-1]
+        if len(args) > 1:
+            if args[1] == 'all':
+                pyperclip.copy(reply["content"])
+                console.print("[dim]Last reply copied to Clipboard")
+            elif args[1] == 'code':
+                if len(args) > 2:
+                    copy_code(reply, args[2])
+                else:
+                    copy_code(reply)
+            else:
+                console.print("[dim]Nothing to undo. Available copy command: `[bright_magenta]/copy code \[index][/]` or `[bright_magenta]/copy all[/]`")
+        else:
+            pyperclip.copy(reply["content"])
+            console.print("[dim]Last reply copied to Clipboard")
 
     elif command.startswith('/save'):
         args = command.split()
@@ -279,7 +366,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         if new_content != chatGPT.messages[0]['content']:
             chatGPT.modify_system_prompt(new_content)
         else:
-            console.print("[dim]No cahnge.")
+            console.print("[dim]No change.")
 
     elif command.startswith('/timeout'):
         args = command.split()
@@ -291,7 +378,7 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
         if new_timeout != str(settings.timeout):
             settings.set_timeout(new_timeout)
         else:
-            console.print("[dim]No cahnge.")
+            console.print("[dim]No change.")
 
     elif command == '/undo':
         if len(chatGPT.messages) > 2:
@@ -315,6 +402,8 @@ def handle_command(command: str, chatGPT: CHATGPT, settings: ChatSettings):
     /tokens                  - Show total tokens and current tokens used
     /usage                   - Show total credits and current credits used
     /last                    - Display last ChatGPT's reply
+    /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
+    /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
     /save \[filename_or_path] - Save the chat history to a file
     /model \[model_name]      - Change AI model
     /system \[new_prompt]     - Modify the system prompt
