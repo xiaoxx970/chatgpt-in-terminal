@@ -131,7 +131,8 @@ class ChatGPT:
                                 Text("ChatGPT: ", end='', style="bold cyan"), Markdown(reply))
                             live.update(reply_console, refresh=True)
             except KeyboardInterrupt:
-                live.update(Text("Aborted.", style="bold cyan"), refresh=True)
+                live.stop()
+                console.print("Aborted.", style="bold cyan")
             finally:
                 return {'role': 'assistant', 'content': reply}
 
