@@ -552,6 +552,7 @@ def main(args):
             chat_gpt.messages = chat_history
             for message in chat_gpt.messages:
                 print_message(message)
+            chat_gpt.current_tokens = count_token(chat_gpt.messages)
             console.print(
                 f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
 
