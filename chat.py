@@ -268,7 +268,7 @@ class ChatGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/del', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/delfirst', '/help', '/exit'
     ]
 
     copy_actions = [
@@ -497,7 +497,7 @@ def handle_command(command: str, chatGPT: ChatGPT):
         else:
             console.print("[dim]Nothing to undo.")
 
-    elif command == '/del':
+    elif command == '/delfirst':
         chatGPT.delete_first_conversation()
 
     elif command == '/exit':
@@ -518,6 +518,7 @@ def handle_command(command: str, chatGPT: ChatGPT):
     /system \[new_prompt]     - Modify the system prompt
     /timeout \[new_timeout]   - Modify the api timeout
     /undo                    - Undo the last question and remove its answer
+    /delfirst                - Delete the first conversation in current chat
     /help                    - Show this help message
     /exit                    - Exit the application''')
 
