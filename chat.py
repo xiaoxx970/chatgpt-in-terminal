@@ -68,6 +68,13 @@ class ChatMode:
         else:
             console.print(f"[dim]Multi-line mode disabled.")
 
+class YesOrNoValidator(Validator):
+    def validate(self, document):
+        text = document.text
+        if text != "Y" and text != "n":
+            raise ValidationError(message="Please input 'Y' or 'n'!",
+                                  cursor_position=len(text))
+
 
 class ChatGPT:
     def __init__(self, api_key: str, timeout: int):
@@ -80,6 +87,9 @@ class ChatGPT:
         self.messages = [
             {"role": "system", "content": "You are a helpful assistant."}]
         self.model = 'gpt-3.5-turbo'
+        self.tokens_limit = 4096
+        # as default: gpt-3.5-turbo has a tokens limit as 4096
+        # when model changes, tokens will also be changed
         self.total_tokens_spent = 0
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
@@ -143,6 +153,17 @@ class ChatGPT:
             print_message(reply_message)
             return reply_message
 
+    def delete_first_conversation(self):
+        if len(self.messages) >= 3:
+            self.messages.pop(1)
+            self.messages.pop(1)
+            # delete the first request and response (never delete system preset, which means messages[0])
+            self.current_tokens = count_token(self.messages)
+            # recount current tokens
+            console.print("[dim]First conversation deleted.")
+        else:
+            console.print("[red]No conversations yet.")
+
     def handle(self, message: str):
         try:
             self.messages.append({"role": "user", "content": message})
@@ -162,6 +183,15 @@ class ChatGPT:
                 self.messages.append(reply_message)
                 self.current_tokens = count_token(self.messages)
                 self.total_tokens_spent += self.current_tokens
+
+                if self.tokens_limit - self.current_tokens in range(0, 500):
+                    console.print(f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left", new_line_start=True)
+                # approaching tokens limit (less than 500 left), show info
+                elif self.current_tokens >= self.tokens_limit:
+                    delfirst_YN = prompt(
+                        "Reached tokens limit, do you want to delete the first conversation of current chat? (Y/n): ", style=style, validator=YesOrNoValidator())
+                    if delfirst_YN == 'Y':
+                        self.delete_first_conversation()
 
         except Exception as e:
             console.print(
@@ -216,6 +246,14 @@ class ChatGPT:
                 f"[dim]Empty input, the model remains '{old_model}'.")
             return
         self.model = str(new_model)
+        if "gpt-4-32k" in self.model:
+            self.tokens_limit = 32768
+        elif "gpt-4" in self.model:
+            self.tokens_limit = 8192
+        elif "gpt-3.5-turbo" in self.model:
+            self.tokens_limit = 4096
+        else:
+            self.tokens_limit = -1
         console.print(
             f"[dim]Model has been set from '{old_model}' to '{new_model}'.")
 
@@ -230,7 +268,7 @@ class ChatGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/del', '/help', '/exit'
     ]
 
     copy_actions = [
@@ -283,7 +321,7 @@ class NumberValidator(Validator):
     def validate(self, document):
         text = document.text
         if not text.isdigit():
-            raise ValidationError(message="请输入一个数字！",
+            raise ValidationError(message="Please input an Integer!",
                                   cursor_position=len(text))
 
 
@@ -361,16 +399,11 @@ def handle_command(command: str, chatGPT: ChatGPT):
         # here: tokens count may be wrong because of the support of changing AI models, because gpt-4 API allows max 8192 tokens (gpt-4-32k up to 32768)
         # one possible solution is: there are only 6 models under '/v1/chat/completions' now, and with if-elif-else all cases can be enumerated
         # but that means, when the model list is updated, here needs to be updated too
-        if "gpt-4-32k" in chatGPT.model:
-            tokens_limit = 32768
-        elif "gpt-4" in chatGPT.model:
-            tokens_limit = 8192
-        elif "gpt-3.5-turbo" in chatGPT.model:
-            tokens_limit = 4096
-        else:
-            tokens_limit = -1
+        
+        # tokens limit judge moved to ChatGPT.set_model function
+
         console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chatGPT.total_tokens_spent}\n"
-                            f"[bold green]Current Tokens:[/]\t\t{chatGPT.current_tokens}/[bold]{tokens_limit}",
+                            f"[bold green]Current Tokens:[/]\t\t{chatGPT.current_tokens}/[bold]{chatGPT.tokens_limit}",
                             title='token_summary', title_align='left', width=40, style='dim'))
 
     elif command == '/usage':
@@ -463,6 +496,9 @@ def handle_command(command: str, chatGPT: ChatGPT):
                 f"[dim]Last question: '{truncated_question}' and it's answer has been removed.")
         else:
             console.print("[dim]Nothing to undo.")
+
+    elif command == '/del':
+        chatGPT.delete_first_conversation()
 
     elif command == '/exit':
         raise EOFError
