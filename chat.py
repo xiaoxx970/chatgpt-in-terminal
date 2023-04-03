@@ -115,8 +115,7 @@ class ChatGPT:
         client = sseclient.SSEClient(response)
         with Live(console=console, auto_refresh=False) as live:
             try:
-                if ChatMode.raw_mode:
-                    rprint("[bold cyan]ChatGPT: ", end='')
+                rprint("[bold cyan]ChatGPT: ")
                 for event in client.events():
                     if event.data == '[DONE]':
                         break
@@ -127,8 +126,7 @@ class ChatGPT:
                         if ChatMode.raw_mode:
                             rprint(content, end="", flush=True),
                         else:
-                            live.update(Group(
-                                Text("ChatGPT: ", end='', style="bold cyan"), Markdown(reply)), refresh=True)
+                            live.update(Markdown(reply), refresh=True)
             except KeyboardInterrupt:
                 live.stop()
                 console.print("Aborted.", style="bold cyan")
