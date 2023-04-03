@@ -184,7 +184,7 @@ class ChatGPT:
                 self.current_tokens = count_token(self.messages)
                 self.total_tokens_spent += self.current_tokens
 
-                if self.tokens_limit - self.current_tokens in range(0, 500):
+                if self.tokens_limit - self.current_tokens in range(1, 500):
                     console.print(f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left", new_line_start=True)
                 # approaching tokens limit (less than 500 left), show info
                 elif self.current_tokens >= self.tokens_limit:
