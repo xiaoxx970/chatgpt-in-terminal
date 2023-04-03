@@ -478,8 +478,8 @@ def handle_command(command: str, chatGPT: ChatGPT):
             new_timeout = args[1]
         else:
             new_timeout = prompt(
-                "OpenAI API timeout: ", default=str(ChatMode.timeout), style=style)
-        if new_timeout != str(ChatMode.timeout):
+                "OpenAI API timeout: ", default=str(chatGPT.timeout), style=style)
+        if new_timeout != str(chatGPT.timeout):
             chatGPT.set_timeout(new_timeout)
         else:
             console.print("[dim]No change.")
