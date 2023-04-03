@@ -72,7 +72,7 @@ Original chat logs will be saved to `chat.log`
 
    > In stream mode, the answer will start outputting as soon as the first response arrives, which can reducing waiting time. Stream mode is on by default.
 
-- `/tokens`: Display the API token count and token length for the current conversation
+- `/tokens`: Display the total tokens spent and the tokens for the current conversation
 
   > GPT-3.5 has a token limit of 4096; use this command to check if you're approaching the limit
 

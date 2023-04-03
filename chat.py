@@ -80,7 +80,7 @@ class ChatGPT:
         self.messages = [
             {"role": "system", "content": "You are a helpful assistant."}]
         self.model = 'gpt-3.5-turbo'
-        self.total_tokens = 0
+        self.total_tokens_spent = 0
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
 
@@ -161,7 +161,7 @@ class ChatGPT:
                 log.info(f"ChatGPT: {reply_message['content']}")
                 self.messages.append(reply_message)
                 self.current_tokens = count_token(self.messages)
-                self.total_tokens += self.current_tokens
+                self.total_tokens_spent += self.current_tokens
 
         except Exception as e:
             console.print(
@@ -369,9 +369,9 @@ def handle_command(command: str, chatGPT: ChatGPT):
             tokens_limit = 4096
         else:
             tokens_limit = -1
-        console.print(Panel(f"[bold bright_magenta]Total Tokens:[/]\t{chatGPT.total_tokens}\n"
-                            f"[bold green]Current Tokens:[/]\t{chatGPT.current_tokens}/[bold]{tokens_limit}",
-                            title='token_summary', title_align='left', width=35, style='dim'))
+        console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chatGPT.total_tokens_spent}\n"
+                            f"[bold green]Current Tokens:[/]\t\t{chatGPT.current_tokens}/[bold]{tokens_limit}",
+                            title='token_summary', title_align='left', width=40, style='dim'))
 
     elif command == '/usage':
         with console.status("Getting credit usage...") as status:
@@ -472,7 +472,7 @@ def handle_command(command: str, chatGPT: ChatGPT):
     /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)
     /multi                   - Toggle multi-line mode (allow multi-line input)
     /stream                  - Toggle stream output mode (flow print the answer)
-    /tokens                  - Show total tokens and current tokens used
+    /tokens                  - Show the total tokens spent and the tokens for the current conversation
     /usage                   - Show total credits and current credits used
     /last                    - Display last ChatGPT's reply
     /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
@@ -586,9 +586,9 @@ def main(args):
             console.print("Exiting...")
             break
 
-    log.info(f"Total tokens used: {chat_gpt.total_tokens}")
+    log.info(f"Total tokens spent: {chat_gpt.total_tokens_spent}")
     console.print(
-        f"[bright_magenta]Total tokens used: [bold]{chat_gpt.total_tokens}")
+        f"[bright_magenta]Total tokens spent: [bold]{chat_gpt.total_tokens_spent}")
 
 
 if __name__ == "__main__":
