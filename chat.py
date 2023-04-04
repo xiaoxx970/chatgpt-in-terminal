@@ -262,7 +262,7 @@ class ChatGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/delete', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/delete', '/help', '/exit'
     ]
 
     copy_actions = [
@@ -422,6 +422,7 @@ def handle_command(command: str, chat_gpt: ChatGPT):
                             f"[bold bright_yellow]Used:[/]\t\t${credit_usage.get('total_used')}\n"
                             f"[bold green]Available:[/]\t${credit_usage.get('total_available')}",
                             title=credit_usage.get('object'), title_align='left', width=35, style='dim'))
+        console.print("[red]`[bright_magenta]/usage[/]` command is currently unavailable, it's not sure if this command will be available again or not.")
 
     elif command.startswith('/model'):
         args = command.split()
@@ -528,7 +529,6 @@ def handle_command(command: str, chat_gpt: ChatGPT):
     /multi                   - Toggle multi-line mode (allow multi-line input)
     /stream                  - Toggle stream output mode (flow print the answer)
     /tokens                  - Show the total tokens spent and the tokens for the current conversation
-    /usage                   - Show total credits and current credits used
     /last                    - Display last ChatGPT's reply
     /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
     /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
