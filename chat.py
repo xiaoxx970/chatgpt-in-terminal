@@ -80,7 +80,7 @@ class ChatGPT:
         self.messages = [
             {"role": "system", "content": "You are a helpful assistant."}]
         self.model = 'gpt-3.5-turbo'
-        self.tokens_limit = 50
+        self.tokens_limit = 4096
         # as default: gpt-3.5-turbo has a tokens limit as 4096
         # when model changes, tokens will also be changed
         self.total_tokens_spent = 0
