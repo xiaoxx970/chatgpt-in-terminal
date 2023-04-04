@@ -398,7 +398,7 @@ def copy_code(message, select_code_idx: int = None):
     console.print("[dim]Code copied to Clipboard")
 
 
-def handle_command(command: str, chatGPT: ChatGPT):
+def handle_command(command: str, chat_gpt: ChatGPT):
     '''处理斜杠(/)命令'''
     if command == '/raw':
         ChatMode.toggle_raw_mode()
@@ -414,13 +414,13 @@ def handle_command(command: str, chatGPT: ChatGPT):
         
         # tokens limit judge moved to ChatGPT.set_model function
 
-        console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chatGPT.total_tokens_spent}\n"
-                            f"[bold green]Current Tokens:[/]\t\t{chatGPT.current_tokens}/[bold]{chatGPT.tokens_limit}",
+        console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chat_gpt.total_tokens_spent}\n"
+                            f"[bold green]Current Tokens:[/]\t\t{chat_gpt.current_tokens}/[bold]{chat_gpt.tokens_limit}",
                             title='token_summary', title_align='left', width=40, style='dim'))
 
     elif command == '/usage':
         with console.status("Getting credit usage...") as status:
-            credit_usage = chatGPT.get_credit_usage()
+            credit_usage = chat_gpt.get_credit_usage()
         if not credit_usage:
             return
         console.print(Panel(f"[bold blue]Total Granted:[/]\t${credit_usage.get('total_granted')}\n"
@@ -434,19 +434,19 @@ def handle_command(command: str, chatGPT: ChatGPT):
             new_model = args[1]
         else:
             new_model = prompt(
-                "OpenAI API model: ", default=chatGPT.model, style=style)
-        if new_model != chatGPT.model:
-            chatGPT.set_model(new_model)
+                "OpenAI API model: ", default=chat_gpt.model, style=style)
+        if new_model != chat_gpt.model:
+            chat_gpt.set_model(new_model)
         else:
             console.print("[dim]No change.")
 
     elif command == '/last':
-        reply = chatGPT.messages[-1]
+        reply = chat_gpt.messages[-1]
         print_message(reply)
 
     elif command.startswith('/copy'):
         args = command.split()
-        reply = chatGPT.messages[-1]
+        reply = chat_gpt.messages[-1]
         if len(args) > 1:
             if args[1] == 'all':
                 pyperclip.copy(reply["content"])
@@ -470,7 +470,7 @@ def handle_command(command: str, chatGPT: ChatGPT):
         else:
             date_filename = f'./chat_history_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json'
             filename = prompt("Save to: ", default=date_filename, style=style)
-        chatGPT.save_chat_history(filename)
+        chat_gpt.save_chat_history(filename)
 
     elif command.startswith('/system'):
         args = command.split()
@@ -478,9 +478,9 @@ def handle_command(command: str, chatGPT: ChatGPT):
             new_content = ' '.join(args[1:])
         else:
             new_content = prompt(
-                "System prompt: ", default=chatGPT.messages[0]['content'], style=style)
-        if new_content != chatGPT.messages[0]['content']:
-            chatGPT.modify_system_prompt(new_content)
+                "System prompt: ", default=chat_gpt.messages[0]['content'], style=style)
+        if new_content != chat_gpt.messages[0]['content']:
+            chat_gpt.modify_system_prompt(new_content)
         else:
             console.print("[dim]No change.")
 
@@ -490,17 +490,17 @@ def handle_command(command: str, chatGPT: ChatGPT):
             new_timeout = args[1]
         else:
             new_timeout = prompt(
-                "OpenAI API timeout: ", default=str(chatGPT.timeout), style=style)
-        if new_timeout != str(chatGPT.timeout):
-            chatGPT.set_timeout(new_timeout)
+                "OpenAI API timeout: ", default=str(chat_gpt.timeout), style=style)
+        if new_timeout != str(chat_gpt.timeout):
+            chat_gpt.set_timeout(new_timeout)
         else:
             console.print("[dim]No change.")
 
     elif command == '/undo':
-        if len(chatGPT.messages) > 2:
-            question = chatGPT.messages.pop()
+        if len(chat_gpt.messages) > 2:
+            question = chat_gpt.messages.pop()
             if question['role'] == "assistant":
-                question = chatGPT.messages.pop()
+                question = chat_gpt.messages.pop()
             truncated_question = question['content'].split('\n')[0]
             if len(question['content']) > len(truncated_question):
                 truncated_question += "..."
@@ -513,16 +513,16 @@ def handle_command(command: str, chatGPT: ChatGPT):
         args = command.split()
         if len(args) > 1:
             if args[1] == 'first':
-                chatGPT.delete_first_conversation()
+                chat_gpt.delete_first_conversation()
             elif args[1] == 'all':
-                del chatGPT.messages[1:]
-                chatGPT.current_tokens = count_token(chatGPT.messages)
+                del chat_gpt.messages[1:]
+                chat_gpt.current_tokens = count_token(chat_gpt.messages)
                 # recount current tokens
                 console.print("[dim]Current chat deleted.")
             else:
                 console.print("[dim]Nothing to do. Avaliable delete command: `[bright_magenta]/delete first[/]` or `[bright_magenta]/delete all[/]`")
         else:
-            chatGPT.delete_first_conversation()
+            chat_gpt.delete_first_conversation()
 
     elif command == '/exit':
         raise EOFError
