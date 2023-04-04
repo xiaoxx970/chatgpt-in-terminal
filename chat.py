@@ -155,9 +155,8 @@ class ChatGPT:
 
     def delete_first_conversation(self):
         if len(self.messages) >= 3:
-            self.messages.pop(1)
-            self.messages.pop(1)
-            # delete the first request and response (never delete system preset, which means messages[0])
+            del self.messages[1:3]
+            # delete the first request and response (never delete system prompt, which means messages[0])
             self.current_tokens = count_token(self.messages)
             # recount current tokens
             console.print("[dim]First conversation deleted.")
@@ -268,11 +267,16 @@ class ChatGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/delfirst', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/delete', '/help', '/exit'
     ]
 
     copy_actions = [
         "code",
+        "all"
+    ]
+
+    delete_actions = [
+        "first",
         "all"
     ]
 
@@ -300,6 +304,14 @@ class CustomCompleter(Completer):
                 for copy in self.copy_actions:
                     if copy.startswith(copy_prefix):
                         yield Completion(copy, start_position=-len(copy_prefix))
+            
+            # Check if it's a /delete command
+            elif text.startswith('/delete '):
+                delete_prefix = text[8:]
+                for delete in self.delete_actions:
+                    if delete.startswith(delete_prefix):
+                        yield Completion(delete, start_position=-len(delete_prefix))
+
             else:
                 for command in self.commands:
                     if command.startswith(text):
@@ -446,7 +458,7 @@ def handle_command(command: str, chatGPT: ChatGPT):
                     copy_code(reply)
             else:
                 console.print(
-                    "[dim]Nothing to undo. Available copy command: `[bright_magenta]/copy code \[index][/]` or `[bright_magenta]/copy all[/]`")
+                    "[dim]Nothing to do. Available copy command: `[bright_magenta]/copy code \[index][/]` or `[bright_magenta]/copy all[/]`")
         else:
             pyperclip.copy(reply["content"])
             console.print("[dim]Last reply copied to Clipboard")
@@ -497,8 +509,20 @@ def handle_command(command: str, chatGPT: ChatGPT):
         else:
             console.print("[dim]Nothing to undo.")
 
-    elif command == '/delfirst':
-        chatGPT.delete_first_conversation()
+    elif command.startswith('/delete'):
+        args = command.split()
+        if len(args) > 1:
+            if args[1] == 'first':
+                chatGPT.delete_first_conversation()
+            elif args[1] == 'all':
+                del chatGPT.messages[1:]
+                chatGPT.current_tokens = count_token(chatGPT.messages)
+                # recount current tokens
+                console.print("[dim]Current chat deleted.")
+            else:
+                console.print("[dim]Nothing to do. Avaliable delete command: `[bright_magenta]/delete first[/]` or `[bright_magenta]/delete all[/]`")
+        else:
+            chatGPT.delete_first_conversation()
 
     elif command == '/exit':
         raise EOFError
@@ -518,7 +542,7 @@ def handle_command(command: str, chatGPT: ChatGPT):
     /system \[new_prompt]     - Modify the system prompt
     /timeout \[new_timeout]   - Modify the api timeout
     /undo                    - Undo the last question and remove its answer
-    /delfirst                - Delete the first conversation in current chat
+    /delete                  - Delete the first conversation in current chat
     /help                    - Show this help message
     /exit                    - Exit the application''')
 
