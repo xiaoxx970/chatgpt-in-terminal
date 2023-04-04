@@ -17,6 +17,7 @@ from prompt_toolkit import PromptSession, prompt
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
+from prompt_toolkit.shortcuts import confirm
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import ValidationError, Validator
 from rich import print as rprint
@@ -68,14 +69,6 @@ class ChatMode:
         else:
             console.print(f"[dim]Multi-line mode disabled.")
 
-class YesOrNoValidator(Validator):
-    def validate(self, document):
-        text = document.text
-        if text != "Y" and text != "n":
-            raise ValidationError(message="Please input 'Y' or 'n'!",
-                                  cursor_position=len(text))
-
-
 class ChatGPT:
     def __init__(self, api_key: str, timeout: int):
         self.api_key = api_key
@@ -87,7 +80,7 @@ class ChatGPT:
         self.messages = [
             {"role": "system", "content": "You are a helpful assistant."}]
         self.model = 'gpt-3.5-turbo'
-        self.tokens_limit = 4096
+        self.tokens_limit = 50
         # as default: gpt-3.5-turbo has a tokens limit as 4096
         # when model changes, tokens will also be changed
         self.total_tokens_spent = 0
@@ -187,9 +180,11 @@ class ChatGPT:
                     console.print(f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left", new_line_start=True)
                 # approaching tokens limit (less than 500 left), show info
                 elif self.current_tokens >= self.tokens_limit:
-                    delfirst_YN = prompt(
-                        "Reached tokens limit, do you want to delete the first conversation of current chat? (Y/n): ", style=style, validator=YesOrNoValidator())
-                    if delfirst_YN == 'Y':
+                    print()
+                    # writeline
+                    delfirst_YN = confirm(
+                        "Reached tokens limit, do you want to delete the first conversation of current chat?")
+                    if delfirst_YN:
                         self.delete_first_conversation()
 
         except Exception as e:
