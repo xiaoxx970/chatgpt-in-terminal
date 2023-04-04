@@ -542,7 +542,8 @@ def handle_command(command: str, chatGPT: ChatGPT):
     /system \[new_prompt]     - Modify the system prompt
     /timeout \[new_timeout]   - Modify the api timeout
     /undo                    - Undo the last question and remove its answer
-    /delete                  - Delete the first conversation in current chat
+    /delete (first)          - Delete the first conversation in current chat
+    /delete all              - Clear all messages and conversations current chat
     /help                    - Show this help message
     /exit                    - Exit the application''')
 
