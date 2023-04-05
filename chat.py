@@ -17,6 +17,7 @@ from prompt_toolkit import PromptSession, prompt
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
+from prompt_toolkit.shortcuts import confirm
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import ValidationError, Validator
 from rich import print as rprint
@@ -80,6 +81,9 @@ class ChatGPT:
         self.messages = [
             {"role": "system", "content": "You are a helpful assistant."}]
         self.model = 'gpt-3.5-turbo'
+        self.tokens_limit = 4096
+        # as default: gpt-3.5-turbo has a tokens limit as 4096
+        # when model changes, tokens will also be changed
         self.total_tokens_spent = 0
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
@@ -143,6 +147,25 @@ class ChatGPT:
             print_message(reply_message)
             return reply_message
 
+    def delete_first_conversation(self):
+        if len(self.messages) >= 3:
+            truncated_question = self.messages[1]['content'].split('\n')[0]
+            if len(self.messages[1]['content']) > len(truncated_question):
+                truncated_question += "..."
+
+            # delete the first request and response (never delete system prompt, which means messages[0])
+            del self.messages[1:3]
+
+            # recount current tokens
+            new_tokens = count_token(self.messages)
+            tokens_saved = self.current_tokens - new_tokens
+            self.current_tokens = new_tokens
+
+            console.print(
+                f"[dim]First question: '{truncated_question}' and it's answer has been deleted, saved tokens: {tokens_saved}")
+        else:
+            console.print("[red]No conversations yet.")
+
     def handle(self, message: str):
         try:
             self.messages.append({"role": "user", "content": message})
@@ -154,6 +177,13 @@ class ChatGPT:
             response = self.send_request(data)
             if response is None:
                 self.messages.pop()
+                if self.current_tokens >= self.tokens_limit:
+                    print()
+                    # writeline
+                    delfirst_YN = confirm(
+                        "Reached tokens limit, do you want me to forget earliest message of current chat?")
+                    if delfirst_YN:
+                        self.delete_first_conversation()
                 return
 
             reply_message = self.process_response(response)
@@ -162,6 +192,11 @@ class ChatGPT:
                 self.messages.append(reply_message)
                 self.current_tokens = count_token(self.messages)
                 self.total_tokens_spent += self.current_tokens
+
+                if self.tokens_limit - self.current_tokens in range(1, 500):
+                    console.print(
+                        f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left", new_line_start=True)
+                # approaching tokens limit (less than 500 left), show info
 
         except Exception as e:
             console.print(
@@ -216,6 +251,14 @@ class ChatGPT:
                 f"[dim]Empty input, the model remains '{old_model}'.")
             return
         self.model = str(new_model)
+        if "gpt-4-32k" in self.model:
+            self.tokens_limit = 32768
+        elif "gpt-4" in self.model:
+            self.tokens_limit = 8192
+        elif "gpt-3.5-turbo" in self.model:
+            self.tokens_limit = 4096
+        else:
+            self.tokens_limit = -1
         console.print(
             f"[dim]Model has been set from '{old_model}' to '{new_model}'.")
 
@@ -230,11 +273,16 @@ class ChatGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/delete', '/help', '/exit'
     ]
 
     copy_actions = [
         "code",
+        "all"
+    ]
+
+    delete_actions = [
+        "first",
         "all"
     ]
 
@@ -262,6 +310,14 @@ class CustomCompleter(Completer):
                 for copy in self.copy_actions:
                     if copy.startswith(copy_prefix):
                         yield Completion(copy, start_position=-len(copy_prefix))
+
+            # Check if it's a /delete command
+            elif text.startswith('/delete '):
+                delete_prefix = text[8:]
+                for delete in self.delete_actions:
+                    if delete.startswith(delete_prefix):
+                        yield Completion(delete, start_position=-len(delete_prefix))
+
             else:
                 for command in self.commands:
                     if command.startswith(text):
@@ -283,7 +339,7 @@ class NumberValidator(Validator):
     def validate(self, document):
         text = document.text
         if not text.isdigit():
-            raise ValidationError(message="请输入一个数字！",
+            raise ValidationError(message="Please input an Integer!",
                                   cursor_position=len(text))
 
 
@@ -348,7 +404,7 @@ def copy_code(message, select_code_idx: int = None):
     console.print("[dim]Code copied to Clipboard")
 
 
-def handle_command(command: str, chatGPT: ChatGPT):
+def handle_command(command: str, chat_gpt: ChatGPT):
     '''处理斜杠(/)命令'''
     if command == '/raw':
         ChatMode.toggle_raw_mode()
@@ -361,27 +417,24 @@ def handle_command(command: str, chatGPT: ChatGPT):
         # here: tokens count may be wrong because of the support of changing AI models, because gpt-4 API allows max 8192 tokens (gpt-4-32k up to 32768)
         # one possible solution is: there are only 6 models under '/v1/chat/completions' now, and with if-elif-else all cases can be enumerated
         # but that means, when the model list is updated, here needs to be updated too
-        if "gpt-4-32k" in chatGPT.model:
-            tokens_limit = 32768
-        elif "gpt-4" in chatGPT.model:
-            tokens_limit = 8192
-        elif "gpt-3.5-turbo" in chatGPT.model:
-            tokens_limit = 4096
-        else:
-            tokens_limit = -1
-        console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chatGPT.total_tokens_spent}\n"
-                            f"[bold green]Current Tokens:[/]\t\t{chatGPT.current_tokens}/[bold]{tokens_limit}",
+
+        # tokens limit judge moved to ChatGPT.set_model function
+
+        console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chat_gpt.total_tokens_spent}\n"
+                            f"[bold green]Current Tokens:[/]\t\t{chat_gpt.current_tokens}/[bold]{chat_gpt.tokens_limit}",
                             title='token_summary', title_align='left', width=40, style='dim'))
 
     elif command == '/usage':
         with console.status("Getting credit usage...") as status:
-            credit_usage = chatGPT.get_credit_usage()
+            credit_usage = chat_gpt.get_credit_usage()
         if not credit_usage:
             return
         console.print(Panel(f"[bold blue]Total Granted:[/]\t${credit_usage.get('total_granted')}\n"
                             f"[bold bright_yellow]Used:[/]\t\t${credit_usage.get('total_used')}\n"
                             f"[bold green]Available:[/]\t${credit_usage.get('total_available')}",
                             title=credit_usage.get('object'), title_align='left', width=35, style='dim'))
+        console.print(
+            "[red]`[bright_magenta]/usage[/]` command is currently unavailable, it's not sure if this command will be available again or not.")
 
     elif command.startswith('/model'):
         args = command.split()
@@ -389,19 +442,19 @@ def handle_command(command: str, chatGPT: ChatGPT):
             new_model = args[1]
         else:
             new_model = prompt(
-                "OpenAI API model: ", default=chatGPT.model, style=style)
-        if new_model != chatGPT.model:
-            chatGPT.set_model(new_model)
+                "OpenAI API model: ", default=chat_gpt.model, style=style)
+        if new_model != chat_gpt.model:
+            chat_gpt.set_model(new_model)
         else:
             console.print("[dim]No change.")
 
     elif command == '/last':
-        reply = chatGPT.messages[-1]
+        reply = chat_gpt.messages[-1]
         print_message(reply)
 
     elif command.startswith('/copy'):
         args = command.split()
-        reply = chatGPT.messages[-1]
+        reply = chat_gpt.messages[-1]
         if len(args) > 1:
             if args[1] == 'all':
                 pyperclip.copy(reply["content"])
@@ -413,7 +466,7 @@ def handle_command(command: str, chatGPT: ChatGPT):
                     copy_code(reply)
             else:
                 console.print(
-                    "[dim]Nothing to undo. Available copy command: `[bright_magenta]/copy code \[index][/]` or `[bright_magenta]/copy all[/]`")
+                    "[dim]Nothing to do. Available copy command: `[bright_magenta]/copy code \[index][/]` or `[bright_magenta]/copy all[/]`")
         else:
             pyperclip.copy(reply["content"])
             console.print("[dim]Last reply copied to Clipboard")
@@ -425,7 +478,7 @@ def handle_command(command: str, chatGPT: ChatGPT):
         else:
             date_filename = f'./chat_history_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json'
             filename = prompt("Save to: ", default=date_filename, style=style)
-        chatGPT.save_chat_history(filename)
+        chat_gpt.save_chat_history(filename)
 
     elif command.startswith('/system'):
         args = command.split()
@@ -433,9 +486,9 @@ def handle_command(command: str, chatGPT: ChatGPT):
             new_content = ' '.join(args[1:])
         else:
             new_content = prompt(
-                "System prompt: ", default=chatGPT.messages[0]['content'], style=style)
-        if new_content != chatGPT.messages[0]['content']:
-            chatGPT.modify_system_prompt(new_content)
+                "System prompt: ", default=chat_gpt.messages[0]['content'], style=style)
+        if new_content != chat_gpt.messages[0]['content']:
+            chat_gpt.modify_system_prompt(new_content)
         else:
             console.print("[dim]No change.")
 
@@ -445,17 +498,17 @@ def handle_command(command: str, chatGPT: ChatGPT):
             new_timeout = args[1]
         else:
             new_timeout = prompt(
-                "OpenAI API timeout: ", default=str(ChatMode.timeout), style=style)
-        if new_timeout != str(ChatMode.timeout):
-            chatGPT.set_timeout(new_timeout)
+                "OpenAI API timeout: ", default=str(chat_gpt.timeout), style=style)
+        if new_timeout != str(chat_gpt.timeout):
+            chat_gpt.set_timeout(new_timeout)
         else:
             console.print("[dim]No change.")
 
     elif command == '/undo':
-        if len(chatGPT.messages) > 2:
-            question = chatGPT.messages.pop()
+        if len(chat_gpt.messages) > 2:
+            question = chat_gpt.messages.pop()
             if question['role'] == "assistant":
-                question = chatGPT.messages.pop()
+                question = chat_gpt.messages.pop()
             truncated_question = question['content'].split('\n')[0]
             if len(question['content']) > len(truncated_question):
                 truncated_question += "..."
@@ -463,6 +516,22 @@ def handle_command(command: str, chatGPT: ChatGPT):
                 f"[dim]Last question: '{truncated_question}' and it's answer has been removed.")
         else:
             console.print("[dim]Nothing to undo.")
+
+    elif command.startswith('/delete'):
+        args = command.split()
+        if len(args) > 1:
+            if args[1] == 'first':
+                chat_gpt.delete_first_conversation()
+            elif args[1] == 'all':
+                del chat_gpt.messages[1:]
+                chat_gpt.current_tokens = count_token(chat_gpt.messages)
+                # recount current tokens
+                console.print("[dim]Current chat deleted.")
+            else:
+                console.print(
+                    "[dim]Nothing to do. Avaliable delete command: `[bright_magenta]/delete first[/]` or `[bright_magenta]/delete all[/]`")
+        else:
+            chat_gpt.delete_first_conversation()
 
     elif command == '/exit':
         raise EOFError
@@ -473,7 +542,6 @@ def handle_command(command: str, chatGPT: ChatGPT):
     /multi                   - Toggle multi-line mode (allow multi-line input)
     /stream                  - Toggle stream output mode (flow print the answer)
     /tokens                  - Show the total tokens spent and the tokens for the current conversation
-    /usage                   - Show total credits and current credits used
     /last                    - Display last ChatGPT's reply
     /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
     /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
@@ -482,6 +550,8 @@ def handle_command(command: str, chatGPT: ChatGPT):
     /system \[new_prompt]     - Modify the system prompt
     /timeout \[new_timeout]   - Modify the api timeout
     /undo                    - Undo the last question and remove its answer
+    /delete (first)          - Delete the first conversation in current chat
+    /delete all              - Clear all messages and conversations current chat
     /help                    - Show this help message
     /exit                    - Exit the application''')
 

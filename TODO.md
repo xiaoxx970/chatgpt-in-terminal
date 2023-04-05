@@ -24,7 +24,7 @@
 
 - [x] Ctrl-C中断等待，Ctrl-D退出程序
 
-- [ ] tokens上限达到后询问是否删除第一条message
+- [x] tokens上限达到后询问是否删除第一条message
 
   
 
