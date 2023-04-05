@@ -177,6 +177,13 @@ class ChatGPT:
             response = self.send_request(data)
             if response is None:
                 self.messages.pop()
+                if self.current_tokens >= self.tokens_limit:
+                    print()
+                    # writeline
+                    delfirst_YN = confirm(
+                        "Reached tokens limit, do you want me to forget earliest message of current chat?")
+                    if delfirst_YN:
+                        self.delete_first_conversation()
                 return
 
             reply_message = self.process_response(response)
@@ -190,13 +197,6 @@ class ChatGPT:
                     console.print(
                         f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left", new_line_start=True)
                 # approaching tokens limit (less than 500 left), show info
-                elif self.current_tokens >= self.tokens_limit:
-                    print()
-                    # writeline
-                    delfirst_YN = confirm(
-                        "Reached tokens limit, do you want me to forget earliest message of current chat?")
-                    if delfirst_YN:
-                        self.delete_first_conversation()
 
         except Exception as e:
             console.print(
