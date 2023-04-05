@@ -76,7 +76,7 @@ Original chat logs will be saved to `chat.log`
 
   > GPT-3.5 has a token limit of 4096; use this command to check if you're approaching the limit
 
-- `/usage`: Display the API credits summary
+- `/usage`: ~~Display the API credits summary~~ Currently unavailable
 
 - `/model`: Show or change the Model in use
 
@@ -89,6 +89,12 @@ Original chat logs will be saved to `chat.log`
   - `/copy code [index]`: Copy the `index`-th code block from the last reply's content to the clipboard
 
     > If `index` is not specified, the terminal will print all code blocks and ask for the number of the one to be copied
+
+- `/delete` or `/delete first`: delete the first question and answer in the current chat
+
+     > When the token is about to reach the upper limit, the user will be warned, and when the upper limit has been exceeded, it will be asked whether to delete the first message
+
+   - `/delete all`: delete all messages
 
 - `/save [filename_or_path]`: Save the chat history to the specified JSON file
 
@@ -137,6 +143,10 @@ Upon exit, the token count for the chat session will be displayed.
 > Current price: $0.002 / 1K tokens, Free Edition rate limit: 20 requests / min (`gpt-3.5-turbo`)
 
 ## Changelog
+
+### 2023-04-05
+
+- Add `/delete` command to delete the first question and answer in this chat to reduce token.
 
 ### 2023-04-01
 

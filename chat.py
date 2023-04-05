@@ -69,6 +69,7 @@ class ChatMode:
         else:
             console.print(f"[dim]Multi-line mode disabled.")
 
+
 class ChatGPT:
     def __init__(self, api_key: str, timeout: int):
         self.api_key = api_key
@@ -148,11 +149,20 @@ class ChatGPT:
 
     def delete_first_conversation(self):
         if len(self.messages) >= 3:
-            del self.messages[1:3]
+            truncated_question = self.messages[1]['content'].split('\n')[0]
+            if len(self.messages[1]['content']) > len(truncated_question):
+                truncated_question += "..."
+
             # delete the first request and response (never delete system prompt, which means messages[0])
-            self.current_tokens = count_token(self.messages)
+            del self.messages[1:3]
+
             # recount current tokens
-            console.print("[dim]First conversation deleted.")
+            new_tokens = count_token(self.messages)
+            tokens_saved = self.current_tokens - new_tokens
+            self.current_tokens = new_tokens
+
+            console.print(
+                f"[dim]First question: '{truncated_question}' and it's answer has been deleted, saved tokens: {tokens_saved}")
         else:
             console.print("[red]No conversations yet.")
 
@@ -177,13 +187,14 @@ class ChatGPT:
                 self.total_tokens_spent += self.current_tokens
 
                 if self.tokens_limit - self.current_tokens in range(1, 500):
-                    console.print(f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left", new_line_start=True)
+                    console.print(
+                        f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left", new_line_start=True)
                 # approaching tokens limit (less than 500 left), show info
                 elif self.current_tokens >= self.tokens_limit:
                     print()
                     # writeline
                     delfirst_YN = confirm(
-                        "Reached tokens limit, do you want to delete the first conversation of current chat?")
+                        "Reached tokens limit, do you want me to forget earliest message of current chat?")
                     if delfirst_YN:
                         self.delete_first_conversation()
 
@@ -299,7 +310,7 @@ class CustomCompleter(Completer):
                 for copy in self.copy_actions:
                     if copy.startswith(copy_prefix):
                         yield Completion(copy, start_position=-len(copy_prefix))
-            
+
             # Check if it's a /delete command
             elif text.startswith('/delete '):
                 delete_prefix = text[8:]
@@ -406,7 +417,7 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         # here: tokens count may be wrong because of the support of changing AI models, because gpt-4 API allows max 8192 tokens (gpt-4-32k up to 32768)
         # one possible solution is: there are only 6 models under '/v1/chat/completions' now, and with if-elif-else all cases can be enumerated
         # but that means, when the model list is updated, here needs to be updated too
-        
+
         # tokens limit judge moved to ChatGPT.set_model function
 
         console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chat_gpt.total_tokens_spent}\n"
@@ -422,7 +433,8 @@ def handle_command(command: str, chat_gpt: ChatGPT):
                             f"[bold bright_yellow]Used:[/]\t\t${credit_usage.get('total_used')}\n"
                             f"[bold green]Available:[/]\t${credit_usage.get('total_available')}",
                             title=credit_usage.get('object'), title_align='left', width=35, style='dim'))
-        console.print("[red]`[bright_magenta]/usage[/]` command is currently unavailable, it's not sure if this command will be available again or not.")
+        console.print(
+            "[red]`[bright_magenta]/usage[/]` command is currently unavailable, it's not sure if this command will be available again or not.")
 
     elif command.startswith('/model'):
         args = command.split()
@@ -516,7 +528,8 @@ def handle_command(command: str, chat_gpt: ChatGPT):
                 # recount current tokens
                 console.print("[dim]Current chat deleted.")
             else:
-                console.print("[dim]Nothing to do. Avaliable delete command: `[bright_magenta]/delete first[/]` or `[bright_magenta]/delete all[/]`")
+                console.print(
+                    "[dim]Nothing to do. Avaliable delete command: `[bright_magenta]/delete first[/]` or `[bright_magenta]/delete all[/]`")
         else:
             chat_gpt.delete_first_conversation()
 

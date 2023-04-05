@@ -78,7 +78,7 @@ python3 chat.py
 
   > GPT-3.5的对话token限制为4096，可通过此命令实时查看是否接近限制
 
-- `/usage`：显示已用的 API 的账号余额
+- `/usage`：~~显示已用的 API 的账号余额~~ 暂时不可用
 
 - `/model`：显示或选择使用的模型
 
@@ -91,6 +91,12 @@ python3 chat.py
   - `/copy code [index]`：将最后一条回复内容中的第 `index` 块代码复制至剪切板
 
     > 如果不指定 `index`，则终端会打印所有代码块并询问要复制的序号
+
+- `/delete` 或 `/delete first`：将当前会话第一条提问和回答内容删除
+
+    > 在会话 token 将要达到上限时会提示用户，已经超出上限时会询问是否删除第一条信息
+
+  - `/delete all`：将所有会话删除
 
 - `/save [filename_or_path]`：将聊天记录保存到指定的 JSON 文件中
 
@@ -139,6 +145,10 @@ options:
 > 目前价格为: $0.002 / 1K tokens，免费版速率限制为: 20次 / min (`gpt-3.5-turbo`)
 
 ## Changelog
+
+### 2023-04-05
+
+- 添加`/delete`命令删除本次对话中的第一个问题和答案以减少 token
 
 ### 2023-04-01
 
