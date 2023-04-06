@@ -237,6 +237,8 @@ class ChatGPT:
             self.messages[0]['content'] = new_content
             console.print(
                 f"[dim]System prompt has been modified from '{old_content}' to '{new_content}'.")
+            self.current_tokens = count_token(self.messages)
+            # recount current tokens
             if len(self.messages) > 1:
                 console.print(
                     "[dim]Note this is not a new chat, modifications to the system prompt have limited impact on answers.")
