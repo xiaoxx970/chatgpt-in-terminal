@@ -98,7 +98,7 @@ Original chat logs will be saved to `chat.log`
 
 - `/save [filename_or_path]`: Save the chat history to the specified JSON file
 
-  > If no filename or path is provided, the default filename `chat_history_YEAR-MONTH-DAY_HOUR,MINUTE,SECOND.json` is prompted on input.
+  > If no filename or path is provided, the client will generate one, and if generation fails, the filename `chat_history_YEAR-MONTH-DAY_HOUR,MINUTE,SECOND.json` is suggested on input.
 
 - `/system [new_prompt]`: Modify the system prompt
 
@@ -143,6 +143,10 @@ Upon exit, the token count for the chat session will be displayed.
 > Current price: $0.002 / 1K tokens, Free Edition rate limit: 20 requests / min (`gpt-3.5-turbo`)
 
 ## Changelog
+
+### 2023-04-09
+
+- Add filename generate function, client will suggest the summary of the first question as filename when save command executed.
 
 ### 2023-04-05
 

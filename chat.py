@@ -87,12 +87,13 @@ class ChatGPT:
         self.total_tokens_spent = 0
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
+        self.title = None
 
-    def send_request(self, data):
+    def send_request(self, data, tips = "ChatGPT is thinking...", stream = ChatMode.stream_mode):
         try:
-            with console.status("[bold cyan]ChatGPT is thinking..."):
+            with console.status(f"[bold cyan]{tips}"):
                 response = requests.post(
-                    self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=ChatMode.stream_mode)
+                    self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=stream)
             # 匹配4xx错误，显示服务器返回的具体原因
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
@@ -155,6 +156,7 @@ class ChatGPT:
 
             # delete the first request and response (never delete system prompt, which means messages[0])
             del self.messages[1:3]
+            self.title = None
 
             # recount current tokens
             new_tokens = count_token(self.messages)
@@ -178,11 +180,7 @@ class ChatGPT:
             if response is None:
                 self.messages.pop()
                 if self.current_tokens >= self.tokens_limit:
-                    print()
-                    # writeline
-                    delfirst_YN = confirm(
-                        "Reached tokens limit, do you want me to forget earliest message of current chat?")
-                    if delfirst_YN:
+                    if confirm("Reached tokens limit, do you want me to forget the earliest message of current chat?"):
                         self.delete_first_conversation()
                 return
 
@@ -207,6 +205,40 @@ class ChatGPT:
             raise EOFError
 
         return reply_message
+
+    def gen_title(self) -> str | None:
+        if len(self.messages) < 2:
+            self.title = None
+            return
+        if self.title:
+            return self.title
+        prompt = 'Generate a filename for the following content, no more than 10 words, only use filenames that work on multiple platforms, no suffix. \n\nContent: '
+        try:
+            messages = [{"role": "user", "content": prompt +
+                         self.messages[1]['content']}]
+            data = {
+                "model": "gpt-3.5-turbo",
+                "messages": messages,
+                "temperature": 0.5
+            }
+            response = self.send_request(data, tips="Generating title... [/](Ctrl-C to skip)", stream=False)
+            if response is None:
+                return
+            self.title = response.json()["choices"][0]["message"]['content']
+            log.info(f"Title generated: {self.title}")
+
+        except KeyboardInterrupt:
+            return
+
+        except Exception as e:
+            console.print(
+                f"[red]Error: {str(e)}. Check log for more information")
+            log.exception(e)
+            self.save_chat_history(
+                f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
+            raise EOFError
+
+        return self.title
 
     def save_chat_history(self, filename):
         with open(f"{filename}", 'w', encoding='utf-8') as f:
@@ -478,8 +510,13 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         if len(args) > 1:
             filename = args[1]
         else:
+            gen_filename = chat_gpt.gen_title()
+            if gen_filename:
+                gen_filename = gen_filename.replace('"','')
+                gen_filename = f"./chat_history_{gen_filename}.json"
             date_filename = f'./chat_history_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json'
-            filename = prompt("Save to: ", default=date_filename, style=style)
+            filename = prompt(
+                "Save to: ", default=gen_filename or date_filename, style=style)
         chat_gpt.save_chat_history(filename)
 
     elif command.startswith('/system'):
