@@ -74,10 +74,6 @@ class ChatMode:
 
 
 class ChatGPT:
-    threadlock_total_tokens_spent = threading.Lock()
-    threadlock_logger = threading.Lock()
-    # thread locks
-
     def __init__(self, api_key: str, timeout: int):
         self.api_key = api_key
         self.endpoint = "https://api.openai.com/v1/chat/completions"
@@ -95,6 +91,10 @@ class ChatGPT:
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
         self.title = None
+
+        self.thread_auto_gen_title_background = threading.Thread(target=self.auto_gen_title_background, name='Thread-AutoGenTitleBackground')
+        self.threadlock_total_tokens_spent = threading.Lock()
+        self.threadlock_logger = threading.Lock()
 
     def send_request(self, data, tips = "ChatGPT is thinking...", stream = ChatMode.stream_mode):
         try:
@@ -236,6 +236,10 @@ class ChatGPT:
                 self.total_tokens_spent += self.current_tokens
                 self.threadlock_total_tokens_spent.release()
 
+                if len(self.messages) == 3:
+                    self.thread_auto_gen_title_background.start()
+                # first conversation, start title generating
+
                 if self.tokens_limit - self.current_tokens in range(1, 500):
                     console.print(
                         f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left", new_line_start=True)
@@ -302,7 +306,7 @@ class ChatGPT:
 
     def gen_title_silent(self) -> Union[str, None]:
         # this is a silent sub function, only for sub thread which auto-generates title when first conversation is made and debug functions
-        # it SHOULD NOT be triggered or used by any other functions and commands
+        # it SHOULD NOT be triggered or used by any other functions or commands
         # because of the usage of this subfunction, no check for messages list length and title appearance is needed
         prompt = 'Generate a filename for the following content, no more than 10 words, only use filenames that work on multiple platforms, no suffix. \n\nContent: '
         try:
@@ -344,6 +348,20 @@ class ChatGPT:
         # count title generation tokens cost
 
         return self.title
+
+    def auto_gen_title_background(self):
+        # this is the auto title generation sub thread main function
+        # it SHOULD NOT be triggered or used by any other functions or commands
+        new_title = self.gen_title_silent()
+        if not new_title:
+            self.threadlock_logger.acquire()
+            log.error("Background Title auto-generation Failed")
+            self.threadlock_logger.release()
+            return
+        change_CLI_title(self.title)
+        self.threadlock_logger.acquire()
+        log.info(f"Background Title auto-generation result: {self.title}")
+        self.threadlock_logger.release()
 
     def save_chat_history(self, filename):
         with open(f"{filename}", 'w', encoding='utf-8') as f:
