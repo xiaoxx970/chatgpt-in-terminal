@@ -8,6 +8,7 @@ import platform
 import re
 import sys
 from datetime import datetime
+from typing import Union
 
 import pyperclip
 import requests
@@ -207,7 +208,7 @@ class ChatGPT:
 
         return reply_message
 
-    def gen_title(self) -> str | None:
+    def gen_title(self) -> Union[str, None]:
         if len(self.messages) < 2:
             self.title = None
             return
