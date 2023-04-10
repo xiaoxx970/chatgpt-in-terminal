@@ -648,16 +648,11 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         else:
             console.print("[dim]No change.")
 
-    elif command.startswith('/title'):
-        args = command.split()
-        if len(args) > 1:
-            new_title = ' '.join(args[1:])
-        else:
-            new_title = chat_gpt.gen_title()
-            if not new_title:
-                console.print("[red]Failed to generate title.")
-                return
-        # if a title is given, don't generate a new one; otherwise generate
+    elif command == '/title':
+        new_title = chat_gpt.gen_title()
+        if not new_title:
+            console.print("[red]Failed to generate title.")
+            return
         change_CLI_title(new_title)
         console.print(f"[dim]CLI Title changed to '{chat_gpt.title}'")
 
