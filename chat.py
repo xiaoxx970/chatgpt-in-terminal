@@ -7,6 +7,7 @@ import os
 import platform
 import re
 import sys
+import threading
 from datetime import datetime
 from typing import Union
 
@@ -73,6 +74,10 @@ class ChatMode:
 
 
 class ChatGPT:
+    threadlock_total_tokens_spent = threading.Lock()
+    threadlock_logger = threading.Lock()
+    # thread locks
+
     def __init__(self, api_key: str, timeout: int):
         self.api_key = api_key
         self.endpoint = "https://api.openai.com/v1/chat/completions"
@@ -100,7 +105,9 @@ class ChatGPT:
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
                 console.print(f"[red]Error: {error_msg}")
+                self.threadlock_logger.acquire()
                 log.error(error_msg)
+                self.threadlock_logger.release()
                 return None
 
             response.raise_for_status()
@@ -114,7 +121,37 @@ class ChatGPT:
             return None
         except requests.exceptions.RequestException as e:
             console.print(f"[red]Error: {str(e)}")
+            self.threadlock_logger.acquire()
             log.exception(e)
+            self.threadlock_logger.release()
+            return None
+
+    def send_request_silent(self, data):
+        # this is a silent sub function, for sending request without outputs (silently)
+        # it SHOULD NOT be triggered or used by not-silent functions
+        # it is only used by gen_title_silent now
+        try:
+            response = requests.post(
+                self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout)
+            # match 4xx error codes
+            if response.status_code // 100 == 4:
+                error_msg = response.json()['error']['message']
+                self.threadlock_logger.acquire()
+                log.error(error_msg)
+                self.threadlock_logger.release()
+                return None
+            
+            response.raise_for_status()
+            return response
+        except requests.exceptions.ReadTimeout as e:
+            self.threadlock_logger.acquire()
+            log.error("Automatic generating title failed as timeout")
+            self.threadlock_logger.release()
+            return None
+        except requests.exceptions.RequestException as e:
+            self.threadlock_logger.acquire()
+            log.exception(e)
+            self.threadlock_logger.release()
             return None
 
     def process_stream_response(self, response):
@@ -145,7 +182,9 @@ class ChatGPT:
             return self.process_stream_response(response)
         else:
             response_json = response.json()
+            self.threadlock_logger.acquire()
             log.debug(f"Response: {response_json}")
+            self.threadlock_logger.release()
             reply_message = response_json["choices"][0]["message"]
             print_message(reply_message)
             return reply_message
@@ -188,10 +227,14 @@ class ChatGPT:
 
             reply_message = self.process_response(response)
             if reply_message is not None:
+                self.threadlock_logger.acquire()
                 log.info(f"ChatGPT: {reply_message['content']}")
+                self.threadlock_logger.release()
                 self.messages.append(reply_message)
                 self.current_tokens = count_token(self.messages)
+                self.threadlock_total_tokens_spent.acquire()
                 self.total_tokens_spent += self.current_tokens
+                self.threadlock_total_tokens_spent.release()
 
                 if self.tokens_limit - self.current_tokens in range(1, 500):
                     console.print(
@@ -201,7 +244,9 @@ class ChatGPT:
         except Exception as e:
             console.print(
                 f"[red]Error: {str(e)}. Check log for more information")
+            self.threadlock_logger.acquire()
             log.exception(e)
+            self.threadlock_logger.release()
             self.save_chat_history(
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
@@ -229,7 +274,9 @@ class ChatGPT:
 
             response_json = response.json()
             self.title = response_json["choices"][0]["message"]['content']
+            self.threadlock_logger.acquire()
             log.info(f"Title generated: {self.title}")
+            self.threadlock_logger.release()
 
         except KeyboardInterrupt:
             return
@@ -237,14 +284,63 @@ class ChatGPT:
         except Exception as e:
             console.print(
                 f"[red]Error: {str(e)}. Check log for more information")
+            self.threadlock_logger.acquire()
             log.exception(e)
+            self.threadlock_logger.release()
             self.save_chat_history(
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
 
         response_message = list()
         response_message.append(response_json["choices"][0]["message"])
+        self.threadlock_total_tokens_spent.acquire()
         self.total_tokens_spent += count_token(messages) + count_token(response_message)
+        self.threadlock_total_tokens_spent.release()
+        # count title generation tokens cost
+
+        return self.title
+
+    def gen_title_silent(self) -> Union[str, None]:
+        # this is a silent sub function, only for sub thread which auto-generates title when first conversation is made and debug functions
+        # it SHOULD NOT be triggered or used by any other functions and commands
+        # because of the usage of this subfunction, no check for messages list length and title appearance is needed
+        prompt = 'Generate a filename for the following content, no more than 10 words, only use filenames that work on multiple platforms, no suffix. \n\nContent: '
+        try:
+            messages = [{"role": "user", "content": prompt +
+                         self.messages[1]['content']}]
+            data = {
+                "model": "gpt-3.5-turbo",
+                "messages": messages,
+                "temperature": 0.5
+            }
+            response = self.send_request_silent(data)
+            if response is None:
+                return
+
+            response_json = response.json()
+            self.title = response_json["choices"][0]["message"]['content']
+            # here: we don't need a lock here for self.title because: the only three places changes or uses chat_gpt.title will never operate together
+            # they are: gen_title, gen_title_silent (here), '/save' command
+            self.threadlock_logger.acquire()
+            log.info(f"Title background silent generated: {self.title}")
+            self.threadlock_logger.release()
+
+        except Exception as e:
+            console.print(
+                f"[red]Background Title auto-generation Error: {str(e)}. Check log for more information")
+            self.threadlock_logger.acquire()
+            log.exception(e)
+            self.threadlock_logger.release()
+            self.save_chat_history(
+                f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
+            raise EOFError
+            # something went wrong, just interrupt and raise EOF
+        
+        response_message = list()
+        response_message.append(response_json["choices"][0]["message"])
+        self.threadlock_total_tokens_spent.acquire()
+        self.total_tokens_spent += count_token(messages) + count_token(response_message)
+        self.threadlock_total_tokens_spent.release()
         # count title generation tokens cost
 
         return self.title
@@ -261,12 +357,16 @@ class ChatGPT:
             response = requests.get(url, headers=self.headers)
         except requests.exceptions.RequestException as e:
             console.print(f"[red]Error: {str(e)}")
+            self.threadlock_logger.acquire()
             log.exception(e)
+            self.threadlock_logger.release()
             return None
         except Exception as e:
             console.print(
                 f"[red]Error: {str(e)}. Check log for more information")
+            self.threadlock_logger.acquire()
             log.exception(e)
+            self.threadlock_logger.release()
             self.save_chat_history(
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
@@ -469,9 +569,11 @@ def handle_command(command: str, chat_gpt: ChatGPT):
 
         # tokens limit judge moved to ChatGPT.set_model function
 
+        chat_gpt.threadlock_total_tokens_spent.acquire()
         console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chat_gpt.total_tokens_spent}\n"
                             f"[bold green]Current Tokens:[/]\t\t{chat_gpt.current_tokens}/[bold]{chat_gpt.tokens_limit}",
                             title='token_summary', title_align='left', width=40, style='dim'))
+        chat_gpt.threadlock_total_tokens_spent.release()
 
     elif command == '/usage':
         with console.status("Getting credit usage...") as status:
@@ -712,7 +814,9 @@ def main(args):
                 if not message:
                     continue
 
+                chat_gpt.threadlock_logger.acquire()
                 log.info(f"> {message}")
+                chat_gpt.threadlock_logger.release()
                 chat_gpt.handle(message)
 
                 if message.lower() in ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit', 'quit']:
@@ -727,6 +831,7 @@ def main(args):
     log.info(f"Total tokens spent: {chat_gpt.total_tokens_spent}")
     console.print(
         f"[bright_magenta]Total tokens spent: [bold]{chat_gpt.total_tokens_spent}")
+    # here: no lock is needed any more because sub thread is stoped
 
 
 if __name__ == "__main__":
