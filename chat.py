@@ -91,6 +91,7 @@ class ChatGPT:
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
         self.title = None
+        self.auto_gen_title_background_enable = True
 
         self.thread_auto_gen_title_background = threading.Thread(target=self.auto_gen_title_background, name='Thread-AutoGenTitleBackground')
         self.threadlock_total_tokens_spent = threading.Lock()
@@ -236,9 +237,9 @@ class ChatGPT:
                 self.total_tokens_spent += self.current_tokens
                 self.threadlock_total_tokens_spent.release()
 
-                if len(self.messages) == 3:
+                if len(self.messages) == 3 and self.auto_gen_title_background_enable:
                     self.thread_auto_gen_title_background.start()
-                # first conversation, start title generating
+                # first conversation, start title generating (only when this function is enabled)
 
                 if self.tokens_limit - self.current_tokens in range(1, 500):
                     console.print(
@@ -784,6 +785,10 @@ def main(args):
     api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "30"))
 
     chat_gpt = ChatGPT(api_key, api_timeout)
+
+    if os.environ.get("AUTO_GENERATE_TITLE", "1") != "1":
+        chat_gpt.auto_gen_title_background_enable = False
+    # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
 
     console.print(
         "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
