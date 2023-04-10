@@ -4,6 +4,7 @@ import argparse
 import json
 import logging
 import os
+import platform
 import re
 import sys
 from datetime import datetime
@@ -224,7 +225,9 @@ class ChatGPT:
             response = self.send_request(data, tips="Generating title... [/](Ctrl-C to skip)", stream=False)
             if response is None:
                 return
-            self.title = response.json()["choices"][0]["message"]['content']
+
+            response_json = response.json()
+            self.title = response_json["choices"][0]["message"]['content']
             log.info(f"Title generated: {self.title}")
 
         except KeyboardInterrupt:
@@ -237,6 +240,11 @@ class ChatGPT:
             self.save_chat_history(
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
+
+        response_message = list()
+        response_message.append(response_json["choices"][0]["message"])
+        self.total_tokens_spent += count_token(messages) + count_token(response_message)
+        # count title generation tokens cost
 
         return self.title
 
@@ -307,7 +315,7 @@ class ChatGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/delete', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/last', '/copy', '/model', '/save', '/system', '/title', '/timeout', '/undo', '/delete', '/help', '/exit'
     ]
 
     copy_actions = [
@@ -437,6 +445,12 @@ def copy_code(message, select_code_idx: int = None):
     # erase code begin and end sign
     console.print("[dim]Code copied to Clipboard")
 
+def change_CLI_title(new_title: str):
+    if platform.system() == "Windows":
+        os.system("title {}".format(new_title))
+    else:
+        print("\033]0;{}\007".format(new_title), end='')
+
 
 def handle_command(command: str, chat_gpt: ChatGPT):
     '''处理斜杠(/)命令'''
@@ -531,6 +545,17 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         else:
             console.print("[dim]No change.")
 
+    elif command.startswith('/title'):
+        args = command.split()
+        if len(args) > 1:
+            new_title = ' '.join(args[1:])
+        else:
+            new_title = chat_gpt.gen_title()
+            if not new_title:
+                console.print("[red]Failed to generate title.")
+                return
+        change_CLI_title(new_title)
+
     elif command.startswith('/timeout'):
         args = command.split()
         if len(args) > 1:
@@ -587,6 +612,7 @@ def handle_command(command: str, chat_gpt: ChatGPT):
     /save \[filename_or_path] - Save the chat history to a file
     /model \[model_name]      - Change AI model
     /system \[new_prompt]     - Modify the system prompt
+    /title                   - Generate a title for this chat
     /timeout \[new_timeout]   - Modify the api timeout
     /undo                    - Undo the last question and remove its answer
     /delete (first)          - Delete the first conversation in current chat
