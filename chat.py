@@ -555,7 +555,9 @@ def handle_command(command: str, chat_gpt: ChatGPT):
             if not new_title:
                 console.print("[red]Failed to generate title.")
                 return
+        # if a title is given, don't generate a new one; otherwise generate
         change_CLI_title(new_title)
+        console.print(f"[dim]CLI Title changed to '{chat_gpt.title}'")
 
     elif command.startswith('/timeout'):
         args = command.split()
