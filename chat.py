@@ -238,6 +238,12 @@ class ChatGPT:
                 self.threadlock_total_tokens_spent.release()
 
                 if len(self.messages) == 3 and self.auto_gen_title_background_enable:
+                    if self.thread_auto_gen_title_background.is_alive():
+                        self.thread_auto_gen_title_background.join()
+                    if self.thread_auto_gen_title_background._started.is_set():
+                        self.thread_auto_gen_title_background = threading.Thread(target=self.auto_gen_title_background, name='Thread-AutoGenTitleBackground')
+                    # here: threading.Thread._started.is_set() doesn't appear in .pyi but it actually works...
+                    # it comes from the source code from threading.Thread.start() in py v3.10.8, and NO IDEA if there'll be a compatibility problem or not
                     self.thread_auto_gen_title_background.start()
                 # first conversation, start title generating (only when this function is enabled)
 
