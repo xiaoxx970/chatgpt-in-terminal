@@ -553,6 +553,8 @@ def change_CLI_title(new_title: str):
         os.system("title {}".format(new_title))
     else:
         print("\033]0;{}\007".format(new_title), end='')
+        sys.stdout.flush()
+        # flush the stdout buffer in order to making the control sequences effective immediately
 
 
 def handle_command(command: str, chat_gpt: ChatGPT):
