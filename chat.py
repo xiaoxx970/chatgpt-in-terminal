@@ -90,6 +90,7 @@ class ChatGPT:
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
         self.title: str = None
+
         self.auto_gen_title_background_enable = True
 
         self.gen_title_thread_list = list()
@@ -265,8 +266,7 @@ class ChatGPT:
             if response is None:
                 return
 
-            response_json = response.json()
-            self.title: str = response_json["choices"][0]["message"]['content']
+            self.title: str = response.json()["choices"][0]["message"]['content']
             log.info(f"Title generated: {self.title}")
 
         except KeyboardInterrupt:
@@ -281,7 +281,7 @@ class ChatGPT:
             raise EOFError
 
         response_message = list()
-        response_message.append(response_json["choices"][0]["message"])
+        response_message.append(response.json()["choices"][0]["message"])
         self.threadlock_total_tokens_spent.acquire()
         self.total_tokens_spent += count_token(messages) + count_token(response_message)
         self.threadlock_total_tokens_spent.release()
