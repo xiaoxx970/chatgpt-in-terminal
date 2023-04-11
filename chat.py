@@ -95,7 +95,6 @@ class ChatGPT:
 
         self.thread_auto_gen_title_background = threading.Thread(target=self.auto_gen_title_background, name='Thread-AutoGenTitleBackground')
         self.threadlock_total_tokens_spent = threading.Lock()
-        self.threadlock_logger = threading.Lock()
 
     def send_request(self, data, tips = "ChatGPT is thinking...", stream = ChatMode.stream_mode):
         try:
@@ -106,9 +105,7 @@ class ChatGPT:
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
                 console.print(f"[red]Error: {error_msg}")
-                self.threadlock_logger.acquire()
                 log.error(error_msg)
-                self.threadlock_logger.release()
                 return None
 
             response.raise_for_status()
@@ -122,9 +119,7 @@ class ChatGPT:
             return None
         except requests.exceptions.RequestException as e:
             console.print(f"[red]Error: {str(e)}")
-            self.threadlock_logger.acquire()
             log.exception(e)
-            self.threadlock_logger.release()
             return None
 
     def send_request_silent(self, data):
@@ -137,22 +132,16 @@ class ChatGPT:
             # match 4xx error codes
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
-                self.threadlock_logger.acquire()
                 log.error(error_msg)
-                self.threadlock_logger.release()
                 return None
             
             response.raise_for_status()
             return response
         except requests.exceptions.ReadTimeout as e:
-            self.threadlock_logger.acquire()
             log.error("Automatic generating title failed as timeout")
-            self.threadlock_logger.release()
             return None
         except requests.exceptions.RequestException as e:
-            self.threadlock_logger.acquire()
             log.exception(e)
-            self.threadlock_logger.release()
             return None
 
     def process_stream_response(self, response):
@@ -183,9 +172,7 @@ class ChatGPT:
             return self.process_stream_response(response)
         else:
             response_json = response.json()
-            self.threadlock_logger.acquire()
             log.debug(f"Response: {response_json}")
-            self.threadlock_logger.release()
             reply_message = response_json["choices"][0]["message"]
             print_message(reply_message)
             return reply_message
@@ -228,9 +215,7 @@ class ChatGPT:
 
             reply_message = self.process_response(response)
             if reply_message is not None:
-                self.threadlock_logger.acquire()
                 log.info(f"ChatGPT: {reply_message['content']}")
-                self.threadlock_logger.release()
                 self.messages.append(reply_message)
                 self.current_tokens = count_token(self.messages)
                 self.threadlock_total_tokens_spent.acquire()
@@ -255,9 +240,7 @@ class ChatGPT:
         except Exception as e:
             console.print(
                 f"[red]Error: {str(e)}. Check log for more information")
-            self.threadlock_logger.acquire()
             log.exception(e)
-            self.threadlock_logger.release()
             self.save_chat_history(
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
@@ -285,9 +268,7 @@ class ChatGPT:
 
             response_json = response.json()
             self.title = response_json["choices"][0]["message"]['content']
-            self.threadlock_logger.acquire()
             log.info(f"Title generated: {self.title}")
-            self.threadlock_logger.release()
 
         except KeyboardInterrupt:
             return
@@ -295,9 +276,7 @@ class ChatGPT:
         except Exception as e:
             console.print(
                 f"[red]Error: {str(e)}. Check log for more information")
-            self.threadlock_logger.acquire()
             log.exception(e)
-            self.threadlock_logger.release()
             self.save_chat_history(
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
@@ -332,16 +311,12 @@ class ChatGPT:
             self.title = response_json["choices"][0]["message"]['content']
             # here: we don't need a lock here for self.title because: the only three places changes or uses chat_gpt.title will never operate together
             # they are: gen_title, gen_title_silent (here), '/save' command
-            self.threadlock_logger.acquire()
             log.info(f"Title background silent generated: {self.title}")
-            self.threadlock_logger.release()
 
         except Exception as e:
             console.print(
                 f"[red]Background Title auto-generation Error: {str(e)}. Check log for more information")
-            self.threadlock_logger.acquire()
             log.exception(e)
-            self.threadlock_logger.release()
             self.save_chat_history(
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
@@ -361,14 +336,10 @@ class ChatGPT:
         # it SHOULD NOT be triggered or used by any other functions or commands
         new_title = self.gen_title_silent()
         if not new_title:
-            self.threadlock_logger.acquire()
             log.error("Background Title auto-generation Failed")
-            self.threadlock_logger.release()
             return
         change_CLI_title(self.title)
-        self.threadlock_logger.acquire()
         log.info(f"Background Title auto-generation result: {self.title}")
-        self.threadlock_logger.release()
 
     def save_chat_history(self, filename):
         with open(f"{filename}", 'w', encoding='utf-8') as f:
@@ -382,16 +353,12 @@ class ChatGPT:
             response = requests.get(url, headers=self.headers)
         except requests.exceptions.RequestException as e:
             console.print(f"[red]Error: {str(e)}")
-            self.threadlock_logger.acquire()
             log.exception(e)
-            self.threadlock_logger.release()
             return None
         except Exception as e:
             console.print(
                 f"[red]Error: {str(e)}. Check log for more information")
-            self.threadlock_logger.acquire()
             log.exception(e)
-            self.threadlock_logger.release()
             self.save_chat_history(
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
@@ -838,9 +805,7 @@ def main(args):
                 if not message:
                     continue
 
-                chat_gpt.threadlock_logger.acquire()
                 log.info(f"> {message}")
-                chat_gpt.threadlock_logger.release()
                 chat_gpt.handle(message)
 
                 if message.lower() in ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit', 'quit']:
