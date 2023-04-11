@@ -96,7 +96,6 @@ class ChatGPT:
         self.threadlist_auto_gen_title_background = list()
         self.threadID = 0
         self.threadlock_total_tokens_spent = threading.Lock()
-        self.threadlock_title_and_CLI_change = threading.Lock()
 
     def send_request(self, data, tips = "ChatGPT is thinking...", stream = ChatMode.stream_mode):
         try:
@@ -187,7 +186,6 @@ class ChatGPT:
 
             # delete the first request and response (never delete system prompt, which means messages[0])
             del self.messages[1:3]
-            self.title = None
 
             # recount current tokens
             new_tokens = count_token(self.messages)
@@ -228,7 +226,6 @@ class ChatGPT:
                     self.threadID += 1
                     new_thread_auto_gen_title_background = AutoTitleGenerationThread(self.threadID, "thread_auto_title_generation", self)
                     new_thread_auto_gen_title_background.start()
-                    log.info(f"Background Title auto-generation started, threadID {self.threadID}")
                     self.threadlist_auto_gen_title_background.append(new_thread_auto_gen_title_background)
 
                 if self.tokens_limit - self.current_tokens in range(1, 500):
@@ -405,7 +402,7 @@ class ChatGPT:
         console.print(f"[dim]API timeout set to [green]{timeout}s[/].")
 
 
-class AutoTitleGenerationThread (threading.Thread):
+class AutoTitleGenerationThread(threading.Thread):
     def __init__(self, threadID, name, ChatGPTClass: ChatGPT):
         threading.Thread.__init__(self)
         self.threadID = threadID
@@ -413,6 +410,7 @@ class AutoTitleGenerationThread (threading.Thread):
         self.ChatGPTClass = ChatGPTClass
     
     def run(self):
+        log.info(f"Background Title auto-generation started, threadID {self.threadID}")
         self.ChatGPTClass.auto_gen_title_background()
 
 
@@ -629,10 +627,19 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         if len(args) > 1:
             filename = args[1]
         else:
-            gen_filename = chat_gpt.gen_title()
+            if chat_gpt.title:
+                gen_filename = chat_gpt.title
+            elif chat_gpt.threadlist_auto_gen_title_background and chat_gpt.threadlist_auto_gen_title_background[-1].is_alive():
+                with console.status("[bold cyan]Waiting Background Title Generation to join..."):
+                    chat_gpt.threadlist_auto_gen_title_background[-1].join()
+                gen_filename = chat_gpt.title
+            else:
+                gen_filename = chat_gpt.gen_title()
             if gen_filename:
                 gen_filename = gen_filename.replace('"','')
                 gen_filename = f"./chat_history_{gen_filename}.json"
+            # here: if title is already generated or generating, just use it
+            # but title auto generation can also be disabled; therefore when title is not generated then try generating a new one
             date_filename = f'./chat_history_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json'
             filename = prompt(
                 "Save to: ", default=gen_filename or date_filename, style=style)
@@ -651,6 +658,9 @@ def handle_command(command: str, chat_gpt: ChatGPT):
             console.print("[dim]No change.")
 
     elif command == '/title':
+        if chat_gpt.threadlist_auto_gen_title_background and chat_gpt.threadlist_auto_gen_title_background[-1].is_alive():
+            with console.status("[bold cyan]Waiting Background Title Generation to join..."):
+                chat_gpt.threadlist_auto_gen_title_background[-1].join()
         new_title = chat_gpt.gen_title()
         if not new_title:
             console.print("[red]Failed to generate title.")
