@@ -94,8 +94,6 @@ class ChatGPT:
         self.title: str = None
 
         self.auto_gen_title_background_enable = True
-
-        self.gen_title_thread_list = list()
         self.threadlock_total_tokens_spent = threading.Lock()
 
     def send_request(self, data, tips="ChatGPT is thinking...", stream=ChatMode.stream_mode):
@@ -400,6 +398,10 @@ class CustomCompleter(Completer):
         "all"
     ]
 
+    title_actions = [
+        "force"
+    ]
+
     available_models = [
         "gpt-3.5-turbo",
         "gpt-3.5-turbo-0301",
@@ -431,6 +433,13 @@ class CustomCompleter(Completer):
                 for delete in self.delete_actions:
                     if delete.startswith(delete_prefix):
                         yield Completion(delete, start_position=-len(delete_prefix))
+
+            # Check if it's a /title command
+            elif text.startswith('/title '):
+                title_prefix = text[7:]
+                for title in self.title_actions:
+                    if title.startswith(title_prefix):
+                        yield Completion(title, start_position=-len(title_prefix))
 
             else:
                 for command in self.commands:
@@ -624,8 +633,18 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         else:
             console.print("[dim]No change.")
 
-    elif command == '/title':
-        new_title = chat_gpt.gen_title()
+    elif command.startswith('/title'):
+        args = command.split()
+        if len(args) > 1:
+            if args[1] == 'force':
+                new_title = chat_gpt.gen_title(force=True)
+                # force to generate a new title
+            else:
+                console.print(
+                    "[dim]Nothing to do. Available copy command: `[bright_magenta]/title force[/]`")
+                return
+        else:
+            new_title = chat_gpt.gen_title()
         if not new_title:
             console.print("[red]Failed to generate title.")
             return
@@ -689,7 +708,8 @@ def handle_command(command: str, chat_gpt: ChatGPT):
     /save \[filename_or_path] - Save the chat history to a file
     /model \[model_name]      - Change AI model
     /system \[new_prompt]     - Modify the system prompt
-    /title                   - Generate a title for this chat
+    /title                   - Generate a title for this chat (if already generated one, no new generation will be made)
+    /title force             - Generate a title for this chat, no matter if a old one has already been generated
     /timeout \[new_timeout]   - Modify the api timeout
     /undo                    - Undo the last question and remove its answer
     /delete (first)          - Delete the first conversation in current chat
