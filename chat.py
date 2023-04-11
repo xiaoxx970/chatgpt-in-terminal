@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import platform
+import queue
 import re
 import sys
 import threading
@@ -40,6 +41,7 @@ style = Style.from_dict({
     "prompt": "ansigreen",  # 将提示符设置为绿色
 })
 
+gen_title_messages = queue.Queue()
 
 class ChatMode:
     raw_mode = False
@@ -223,13 +225,7 @@ class ChatGPT:
                 self.threadlock_total_tokens_spent.release()
 
                 if len(self.messages) == 3 and self.auto_gen_title_background_enable:
-                    gen_title_thread = threading.Thread(target=self.auto_gen_title_background)
-
-                    if self.gen_title_thread_list and self.gen_title_thread_list[-1].is_alive():
-                        self.gen_title_thread_list[-1].join()
-                    gen_title_thread.start()
-                    self.gen_title_thread_list.append(
-                        gen_title_thread)
+                    gen_title_messages.put(self.messages[1]['content'])
 
                 if self.tokens_limit - self.current_tokens in range(1, 500):
                     console.print(
@@ -246,57 +242,35 @@ class ChatGPT:
 
         return reply_message
 
-    def gen_title(self):
+    def gen_title(self, force: bool = False):
         if len(self.messages) < 2:
             self.title = None
             return
-        if self.title:
+
+        with console.status("[bold cyan]Waiting last generationg to finish..."):
+            gen_title_messages.join()
+        if self.title and not force:
             return self.title
-        prompt = 'Generate a filename for the following content, no more than 10 words, only use filenames that work on multiple platforms, no suffix. \n\nContent: '
+
+        # title not generated, do
+
+        content_this_time = self.messages[1]['content']
+        gen_title_messages.put(content_this_time)
         try:
-            messages = [{"role": "user", "content": prompt +
-                         self.messages[1]['content']}]
-            data = {
-                "model": "gpt-3.5-turbo",
-                "messages": messages,
-                "temperature": 0.5
-            }
-            response = self.send_request(
-                data, tips="Generating title... [/](Ctrl-C to skip)", stream=False)
-            if response is None:
-                return
-
-            self.title: str = response.json()["choices"][0]["message"]['content']
-            log.info(f"Title generated: {self.title}")
-
+            with console.status("[bold cyan]Generating title... [/](Ctrl-C to skip)"):
+                gen_title_messages.join()
         except KeyboardInterrupt:
             return
 
-        except Exception as e:
-            console.print(
-                f"[red]Error: {str(e)}. Check log for more information")
-            log.exception(e)
-            self.save_chat_history(
-                f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
-            raise EOFError
-
-        response_message = list()
-        response_message.append(response.json()["choices"][0]["message"])
-        self.threadlock_total_tokens_spent.acquire()
-        self.total_tokens_spent += count_token(messages) + count_token(response_message)
-        self.threadlock_total_tokens_spent.release()
-        # count title generation tokens cost
-
         return self.title
 
-    def gen_title_silent(self):
+    def gen_title_silent(self, content: str):
         # this is a silent sub function, only for sub thread which auto-generates title when first conversation is made and debug functions
         # it SHOULD NOT be triggered or used by any other functions or commands
         # because of the usage of this subfunction, no check for messages list length and title appearance is needed
         prompt = 'Generate a filename for the following content, no more than 10 words, only use filenames that work on multiple platforms, no suffix. \n\nContent: '
         try:
-            messages = [{"role": "user", "content": prompt +
-                         self.messages[1]['content']}]
+            messages = [{"role": "user", "content": prompt + content}]
             data = {
                 "model": "gpt-3.5-turbo",
                 "messages": messages,
@@ -304,10 +278,10 @@ class ChatGPT:
             }
             response = self.send_request_silent(data)
             if response is None:
+                self.title = None
                 return
 
-            response_json = response.json()
-            self.title: str = response_json["choices"][0]["message"]['content']
+            self.title: str = response.json()["choices"][0]["message"]['content']
             # here: we don't need a lock here for self.title because: the only three places changes or uses chat_gpt.title will never operate together
             # they are: gen_title, gen_title_silent (here), '/save' command
             log.info(f"Title background silent generated: {self.title}")
@@ -322,7 +296,7 @@ class ChatGPT:
             # something went wrong, just interrupt and raise EOF
 
         response_message = list()
-        response_message.append(response_json["choices"][0]["message"])
+        response_message.append(response.json()["choices"][0]["message"])
         self.threadlock_total_tokens_spent.acquire()
         self.total_tokens_spent += count_token(messages) + \
             count_token(response_message)
@@ -332,14 +306,19 @@ class ChatGPT:
         return self.title
 
     def auto_gen_title_background(self):
-        # this is the auto title generation sub thread main function
+        # this is the auto title generation daemon thread main function
         # it SHOULD NOT be triggered or used by any other functions or commands
-        new_title = self.gen_title_silent()
-        if not new_title:
-            log.error("Background Title auto-generation Failed")
-            return
-        change_CLI_title(self.title)
-        log.info(f"Background Title auto-generation result: {self.title}")
+        while True:
+            content_this_time = gen_title_messages.get()
+            log.info(f"Title Generation Daemon Thread: Working with message \"{content_this_time}\"")
+            new_title = self.gen_title_silent(content_this_time)
+            if not new_title:
+                log.error("Background Title auto-generation Failed")
+            else:
+                change_CLI_title(self.title)
+            gen_title_messages.task_done()
+            log.info("Title Generation Daemon Thread: Pause")
+
 
     def save_chat_history(self, filename):
         with open(f"{filename}", 'w', encoding='utf-8') as f:
@@ -622,14 +601,7 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         if len(args) > 1:
             filename = args[1]
         else:
-            if chat_gpt.title:
-                gen_filename = chat_gpt.title
-            elif chat_gpt.gen_title_thread_list and chat_gpt.gen_title_thread_list[-1].is_alive():
-                with console.status("[bold cyan]Waiting Background Title Generation to join..."):
-                    chat_gpt.gen_title_thread_list[-1].join()
-                gen_filename = chat_gpt.title
-            else:
-                gen_filename = chat_gpt.gen_title()
+            gen_filename = chat_gpt.gen_title()
             if gen_filename:
                 gen_filename = gen_filename.replace('"', '')
                 gen_filename = f"./chat_history_{gen_filename}.json"
@@ -653,14 +625,11 @@ def handle_command(command: str, chat_gpt: ChatGPT):
             console.print("[dim]No change.")
 
     elif command == '/title':
-        if chat_gpt.gen_title_thread_list and chat_gpt.gen_title_thread_list[-1].is_alive():
-            with console.status("[bold cyan]Waiting Background Title Generation to join..."):
-                chat_gpt.gen_title_thread_list[-1].join()
         new_title = chat_gpt.gen_title()
         if not new_title:
             console.print("[red]Failed to generate title.")
             return
-        change_CLI_title(new_title)
+        # CLI title is changed by daemon thread
         console.print(f"[dim]CLI Title changed to '{chat_gpt.title}'")
 
     elif command.startswith('/timeout'):
@@ -695,6 +664,7 @@ def handle_command(command: str, chat_gpt: ChatGPT):
                 chat_gpt.delete_first_conversation()
             elif args[1] == 'all':
                 del chat_gpt.messages[1:]
+                chat_gpt.title = None
                 chat_gpt.current_tokens = count_token(chat_gpt.messages)
                 # recount current tokens
                 console.print("[dim]Current chat deleted.")
@@ -777,6 +747,11 @@ def main(args: argparse.Namespace):
     if os.environ.get("AUTO_GENERATE_TITLE", "1") != "1":
         chat_gpt.auto_gen_title_background_enable = False
     # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
+
+    gen_title_daemon_thread = threading.Thread(target=chat_gpt.auto_gen_title_background)
+    gen_title_daemon_thread.daemon = True
+    gen_title_daemon_thread.start()
+    # start generate title daemon thread
 
     console.print(
         "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
