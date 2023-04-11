@@ -93,11 +93,10 @@ class ChatGPT:
         self.title = None
         self.auto_gen_title_background_enable = True
 
-        self.threadlist_auto_gen_title_background = list()
-        self.threadID = 0
+        self.gen_title_thread_list = list()
         self.threadlock_total_tokens_spent = threading.Lock()
 
-    def send_request(self, data, tips = "ChatGPT is thinking...", stream = ChatMode.stream_mode):
+    def send_request(self, data, tips="ChatGPT is thinking...", stream=ChatMode.stream_mode):
         try:
             with console.status(f"[bold cyan]{tips}"):
                 response = requests.post(
@@ -135,7 +134,7 @@ class ChatGPT:
                 error_msg = response.json()['error']['message']
                 log.error(error_msg)
                 return None
-            
+
             response.raise_for_status()
             return response
         except requests.exceptions.ReadTimeout as e:
@@ -223,12 +222,13 @@ class ChatGPT:
                 self.threadlock_total_tokens_spent.release()
 
                 if len(self.messages) == 3 and self.auto_gen_title_background_enable:
-                    self.threadID += 1
-                    new_thread_auto_gen_title_background = AutoTitleGenerationThread(self.threadID, "thread_auto_title_generation", self)
-                    if self.threadlist_auto_gen_title_background and self.threadlist_auto_gen_title_background[-1].is_alive():
-                        self.threadlist_auto_gen_title_background[-1].join()
-                    new_thread_auto_gen_title_background.start()
-                    self.threadlist_auto_gen_title_background.append(new_thread_auto_gen_title_background)
+                    gen_title_thread = threading.Thread(target=self.auto_gen_title_background)
+
+                    if self.gen_title_thread_list and self.gen_title_thread_list[-1].is_alive():
+                        self.gen_title_thread_list[-1].join()
+                    gen_title_thread.start()
+                    self.gen_title_thread_list.append(
+                        gen_title_thread)
 
                 if self.tokens_limit - self.current_tokens in range(1, 500):
                     console.print(
@@ -260,7 +260,8 @@ class ChatGPT:
                 "messages": messages,
                 "temperature": 0.5
             }
-            response = self.send_request(data, tips="Generating title... [/](Ctrl-C to skip)", stream=False)
+            response = self.send_request(
+                data, tips="Generating title... [/](Ctrl-C to skip)", stream=False)
             if response is None:
                 return
 
@@ -319,11 +320,12 @@ class ChatGPT:
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
             # something went wrong, just interrupt and raise EOF
-        
+
         response_message = list()
         response_message.append(response_json["choices"][0]["message"])
         self.threadlock_total_tokens_spent.acquire()
-        self.total_tokens_spent += count_token(messages) + count_token(response_message)
+        self.total_tokens_spent += count_token(messages) + \
+            count_token(response_message)
         self.threadlock_total_tokens_spent.release()
         # count title generation tokens cost
 
@@ -402,18 +404,6 @@ class ChatGPT:
             console.print("[red]Input must be a number")
             return
         console.print(f"[dim]API timeout set to [green]{timeout}s[/].")
-
-
-class AutoTitleGenerationThread(threading.Thread):
-    def __init__(self, threadID, name, ChatGPTClass: ChatGPT):
-        threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.name = name
-        self.ChatGPTClass = ChatGPTClass
-    
-    def run(self):
-        log.info(f"Background Title auto-generation started, threadID {self.threadID}")
-        self.ChatGPTClass.auto_gen_title_background()
 
 
 class CustomCompleter(Completer):
@@ -548,6 +538,7 @@ def copy_code(message, select_code_idx: int = None):
     # erase code begin and end sign
     console.print("[dim]Code copied to Clipboard")
 
+
 def change_CLI_title(new_title: str):
     if platform.system() == "Windows":
         os.system("title {}".format(new_title))
@@ -633,14 +624,14 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         else:
             if chat_gpt.title:
                 gen_filename = chat_gpt.title
-            elif chat_gpt.threadlist_auto_gen_title_background and chat_gpt.threadlist_auto_gen_title_background[-1].is_alive():
+            elif chat_gpt.gen_title_thread_list and chat_gpt.gen_title_thread_list[-1].is_alive():
                 with console.status("[bold cyan]Waiting Background Title Generation to join..."):
-                    chat_gpt.threadlist_auto_gen_title_background[-1].join()
+                    chat_gpt.gen_title_thread_list[-1].join()
                 gen_filename = chat_gpt.title
             else:
                 gen_filename = chat_gpt.gen_title()
             if gen_filename:
-                gen_filename = gen_filename.replace('"','')
+                gen_filename = gen_filename.replace('"', '')
                 gen_filename = f"./chat_history_{gen_filename}.json"
             # here: if title is already generated or generating, just use it
             # but title auto generation can also be disabled; therefore when title is not generated then try generating a new one
@@ -662,9 +653,9 @@ def handle_command(command: str, chat_gpt: ChatGPT):
             console.print("[dim]No change.")
 
     elif command == '/title':
-        if chat_gpt.threadlist_auto_gen_title_background and chat_gpt.threadlist_auto_gen_title_background[-1].is_alive():
+        if chat_gpt.gen_title_thread_list and chat_gpt.gen_title_thread_list[-1].is_alive():
             with console.status("[bold cyan]Waiting Background Title Generation to join..."):
-                chat_gpt.threadlist_auto_gen_title_background[-1].join()
+                chat_gpt.gen_title_thread_list[-1].join()
         new_title = chat_gpt.gen_title()
         if not new_title:
             console.print("[red]Failed to generate title.")
