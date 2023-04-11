@@ -225,6 +225,8 @@ class ChatGPT:
                 if len(self.messages) == 3 and self.auto_gen_title_background_enable:
                     self.threadID += 1
                     new_thread_auto_gen_title_background = AutoTitleGenerationThread(self.threadID, "thread_auto_title_generation", self)
+                    if self.threadlist_auto_gen_title_background and self.threadlist_auto_gen_title_background[-1].is_alive():
+                        self.threadlist_auto_gen_title_background[-1].join()
                     new_thread_auto_gen_title_background.start()
                     self.threadlist_auto_gen_title_background.append(new_thread_auto_gen_title_background)
 
