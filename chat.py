@@ -93,8 +93,10 @@ class ChatGPT:
         self.title = None
         self.auto_gen_title_background_enable = True
 
-        self.thread_auto_gen_title_background = threading.Thread(target=self.auto_gen_title_background, name='Thread-AutoGenTitleBackground')
+        self.threadlist_auto_gen_title_background = list()
+        self.threadID = 0
         self.threadlock_total_tokens_spent = threading.Lock()
+        self.threadlock_title_and_CLI_change = threading.Lock()
 
     def send_request(self, data, tips = "ChatGPT is thinking...", stream = ChatMode.stream_mode):
         try:
@@ -223,14 +225,11 @@ class ChatGPT:
                 self.threadlock_total_tokens_spent.release()
 
                 if len(self.messages) == 3 and self.auto_gen_title_background_enable:
-                    if self.thread_auto_gen_title_background.is_alive():
-                        self.thread_auto_gen_title_background.join()
-                    if self.thread_auto_gen_title_background._started.is_set():
-                        self.thread_auto_gen_title_background = threading.Thread(target=self.auto_gen_title_background, name='Thread-AutoGenTitleBackground')
-                    # here: threading.Thread._started.is_set() doesn't appear in .pyi but it actually works...
-                    # it comes from the source code from threading.Thread.start() in py v3.10.8, and NO IDEA if there'll be a compatibility problem or not
-                    self.thread_auto_gen_title_background.start()
-                # first conversation, start title generating (only when this function is enabled)
+                    self.threadID += 1
+                    new_thread_auto_gen_title_background = AutoTitleGenerationThread(self.threadID, "thread_auto_title_generation", self)
+                    new_thread_auto_gen_title_background.start()
+                    log.info(f"Background Title auto-generation started, threadID {self.threadID}")
+                    self.threadlist_auto_gen_title_background.append(new_thread_auto_gen_title_background)
 
                 if self.tokens_limit - self.current_tokens in range(1, 500):
                     console.print(
@@ -404,6 +403,17 @@ class ChatGPT:
             console.print("[red]Input must be a number")
             return
         console.print(f"[dim]API timeout set to [green]{timeout}s[/].")
+
+
+class AutoTitleGenerationThread (threading.Thread):
+    def __init__(self, threadID, name, ChatGPTClass: ChatGPT):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.ChatGPTClass = ChatGPTClass
+    
+    def run(self):
+        self.ChatGPTClass.auto_gen_title_background()
 
 
 class CustomCompleter(Completer):
