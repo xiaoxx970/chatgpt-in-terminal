@@ -7,7 +7,7 @@ import os
 import re
 import sys
 from datetime import datetime
-from typing import Union
+from typing import Dict, List
 
 import pyperclip
 import requests
@@ -22,11 +22,10 @@ from prompt_toolkit.shortcuts import confirm
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import ValidationError, Validator
 from rich import print as rprint
-from rich.console import Console, Group
+from rich.console import Console
 from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.text import Text
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
 logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
@@ -72,7 +71,7 @@ class ChatMode:
 
 
 class ChatGPT:
-    def __init__(self, api_key: str, timeout: int):
+    def __init__(self, api_key: str, timeout: float):
         self.api_key = api_key
         self.endpoint = "https://api.openai.com/v1/chat/completions"
         self.headers = {
@@ -88,7 +87,7 @@ class ChatGPT:
         self.total_tokens_spent = 0
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
-        self.title = None
+        self.title: str = None
 
     def send_request(self, data, tips = "ChatGPT is thinking...", stream = ChatMode.stream_mode):
         try:
@@ -116,14 +115,15 @@ class ChatGPT:
             log.exception(e)
             return None
 
-    def process_stream_response(self, response):
-        reply = ""
+    def process_stream_response(self, response: requests.Response):
+        reply: str = ""
         client = sseclient.SSEClient(response)
         with Live(console=console, auto_refresh=False) as live:
             try:
                 rprint("[bold cyan]ChatGPT: ")
                 for event in client.events():
                     if event.data == '[DONE]':
+                        # finish_reason = part["choices"][0]['finish_reason'] 
                         break
                     part = json.loads(event.data)
                     if "content" in part["choices"][0]["delta"]:
@@ -139,13 +139,13 @@ class ChatGPT:
             finally:
                 return {'role': 'assistant', 'content': reply}
 
-    def process_response(self, response) -> dict[str, any]:
+    def process_response(self, response: requests.Response):
         if ChatMode.stream_mode:
             return self.process_stream_response(response)
         else:
             response_json = response.json()
             log.debug(f"Response: {response_json}")
-            reply_message = response_json["choices"][0]["message"]
+            reply_message: Dict[str, str] = response_json["choices"][0]["message"]
             print_message(reply_message)
             return reply_message
 
@@ -194,7 +194,7 @@ class ChatGPT:
 
                 if self.tokens_limit - self.current_tokens in range(1, 500):
                     console.print(
-                        f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left", new_line_start=True)
+                        f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left")
                 # approaching tokens limit (less than 500 left), show info
 
         except Exception as e:
@@ -207,7 +207,7 @@ class ChatGPT:
 
         return reply_message
 
-    def gen_title(self) -> Union[str, None]:
+    def gen_title(self):
         if len(self.messages) < 2:
             self.title = None
             return
@@ -225,7 +225,7 @@ class ChatGPT:
             response = self.send_request(data, tips="Generating title... [/](Ctrl-C to skip)", stream=False)
             if response is None:
                 return
-            self.title = response.json()["choices"][0]["message"]['content']
+            self.title: str = response.json()["choices"][0]["message"]['content']
             log.info(f"Title generated: {self.title}")
 
         except KeyboardInterrupt:
@@ -264,7 +264,7 @@ class ChatGPT:
             raise EOFError
         return response.json()
 
-    def modify_system_prompt(self, new_content):
+    def modify_system_prompt(self, new_content: str):
         if self.messages[0]['role'] == 'system':
             old_content = self.messages[0]['content']
             self.messages[0]['content'] = new_content
@@ -359,7 +359,7 @@ class CustomCompleter(Completer):
                         yield Completion(command, start_position=-len(text))
 
 
-def count_token(messages: list):
+def count_token(messages: List[Dict[str, str]]):
     '''计算 messages 占用的 token
     `cl100k_base` 编码适用于: gpt-4, gpt-3.5-turbo, text-embedding-ada-002'''
     encoding = tiktoken.get_encoding("cl100k_base")
@@ -378,7 +378,7 @@ class NumberValidator(Validator):
                                   cursor_position=len(text))
 
 
-def print_message(message):
+def print_message(message: Dict[str, str]):
     '''打印单条来自 ChatGPT 或用户的消息'''
     role = message["role"]
     content = message["content"]
@@ -392,7 +392,7 @@ def print_message(message):
             console.print(Markdown(content), new_line_start=True)
 
 
-def copy_code(message, select_code_idx: int = None):
+def copy_code(message: Dict[str, str], select_code_idx: int = None):
     '''Copy the code in ChatGPT's last reply to Clipboard'''
     code_list = re.findall(r'```[\s\S]*?```', message["content"])
     if len(code_list) == 0:
@@ -625,7 +625,7 @@ def create_key_bindings():
     return key_bindings
 
 
-def main(args):
+def main(args: argparse.Namespace):
     # 从 .env 文件中读取 OPENAI_API_KEY
     load_dotenv()
 
