@@ -9,6 +9,7 @@ import queue
 import re
 import sys
 import threading
+import time
 from datetime import datetime
 from typing import Dict, List
 
@@ -95,12 +96,17 @@ class ChatGPT:
 
         self.auto_gen_title_background_enable = True
         self.threadlock_total_tokens_spent = threading.Lock()
+    
+    def add_total_tokens(self, tokens: int):
+        self.threadlock_total_tokens_spent.acquire()
+        self.total_tokens_spent += tokens
+        self.threadlock_total_tokens_spent.release()
 
-    def send_request(self, data, tips="ChatGPT is thinking...", stream=ChatMode.stream_mode):
+    def send_request(self, data):
         try:
-            with console.status(f"[bold cyan]{tips}"):
+            with console.status(f"[bold cyan]ChatGPT is thinking..."):
                 response = requests.post(
-                    self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=stream)
+                    self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=ChatMode.stream_mode)
             # 匹配4xx错误，显示服务器返回的具体原因
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
@@ -218,9 +224,7 @@ class ChatGPT:
                 log.info(f"ChatGPT: {reply_message['content']}")
                 self.messages.append(reply_message)
                 self.current_tokens = count_token(self.messages)
-                self.threadlock_total_tokens_spent.acquire()
-                self.total_tokens_spent += self.current_tokens
-                self.threadlock_total_tokens_spent.release()
+                self.add_total_tokens(self.current_tokens)
 
                 if len(self.messages) == 3 and self.auto_gen_title_background_enable:
                     gen_title_messages.put(self.messages[1]['content'])
@@ -241,24 +245,26 @@ class ChatGPT:
         return reply_message
 
     def gen_title(self, force: bool = False):
+        # Empty the title if there is only system message left
         if len(self.messages) < 2:
             self.title = None
             return
 
-        with console.status("[bold cyan]Waiting last generationg to finish..."):
-            gen_title_messages.join()
-        if self.title and not force:
-            return self.title
-
-        # title not generated, do
-
-        content_this_time = self.messages[1]['content']
-        gen_title_messages.put(content_this_time)
         try:
+            with console.status("[bold cyan]Waiting last generationg to finish..."):
+                gen_title_messages.join()
+            if self.title and not force:
+                return self.title
+
+            # title not generated, do
+
+            content_this_time = self.messages[1]['content']
+            gen_title_messages.put(content_this_time)
             with console.status("[bold cyan]Generating title... [/](Ctrl-C to skip)"):
                 gen_title_messages.join()
         except KeyboardInterrupt:
-            return
+            console.print("Skip wait.", style="bold cyan")
+            raise
 
         return self.title
 
@@ -279,11 +285,15 @@ class ChatGPT:
                 self.title = None
                 return
 
-            self.title: str = response.json()["choices"][0]["message"]['content']
+            reply_message = response.json()["choices"][0]["message"]
+            self.title: str = reply_message['content']
             # here: we don't need a lock here for self.title because: the only three places changes or uses chat_gpt.title will never operate together
             # they are: gen_title, gen_title_silent (here), '/save' command
             log.info(f"Title background silent generated: {self.title}")
 
+            messages.append(reply_message)
+            self.add_total_tokens(count_token(messages))
+            # count title generation tokens cost
         except Exception as e:
             console.print(
                 f"[red]Background Title auto-generation Error: {str(e)}. Check log for more information")
@@ -292,14 +302,6 @@ class ChatGPT:
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
             # something went wrong, just interrupt and raise EOF
-
-        response_message = list()
-        response_message.append(response.json()["choices"][0]["message"])
-        self.threadlock_total_tokens_spent.acquire()
-        self.total_tokens_spent += count_token(messages) + \
-            count_token(response_message)
-        self.threadlock_total_tokens_spent.release()
-        # count title generation tokens cost
 
         return self.title
 
@@ -310,11 +312,12 @@ class ChatGPT:
             content_this_time = gen_title_messages.get()
             log.info(f"Title Generation Daemon Thread: Working with message \"{content_this_time}\"")
             new_title = self.gen_title_silent(content_this_time)
+            gen_title_messages.task_done()
+            time.sleep(0.2)
             if not new_title:
                 log.error("Background Title auto-generation Failed")
             else:
                 change_CLI_title(self.title)
-            gen_title_messages.task_done()
             log.info("Title Generation Daemon Thread: Pause")
 
 
@@ -529,9 +532,9 @@ def copy_code(message: Dict[str, str], select_code_idx: int = None):
 
 def change_CLI_title(new_title: str):
     if platform.system() == "Windows":
-        os.system("title {}".format(new_title))
+        os.system(f"title {new_title}")
     else:
-        print("\033]0;{}\007".format(new_title), end='')
+        print(f"\033]0;{new_title}\007", end='')
         sys.stdout.flush()
         # flush the stdout buffer in order to making the control sequences effective immediately
 
@@ -641,7 +644,7 @@ def handle_command(command: str, chat_gpt: ChatGPT):
                 # force to generate a new title
             else:
                 console.print(
-                    "[dim]Nothing to do. Available copy command: `[bright_magenta]/title force[/]`")
+                    "[dim]Nothing to do. Available title command: `[bright_magenta]/title force[/]`")
                 return
         else:
             new_title = chat_gpt.gen_title()
@@ -768,8 +771,7 @@ def main(args: argparse.Namespace):
         chat_gpt.auto_gen_title_background_enable = False
     # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
 
-    gen_title_daemon_thread = threading.Thread(target=chat_gpt.auto_gen_title_background)
-    gen_title_daemon_thread.daemon = True
+    gen_title_daemon_thread = threading.Thread(target=chat_gpt.auto_gen_title_background, daemon=True)
     gen_title_daemon_thread.start()
     # start generate title daemon thread
 
