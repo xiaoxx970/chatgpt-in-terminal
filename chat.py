@@ -34,6 +34,13 @@ from rich.panel import Panel
 # 日志记录到 chat.log，注释下面这行可不记录日志
 logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO, encoding="UTF-8")
+
+# If you want to see all debug logs, comment the two lines above and dis-comment two lines below
+# 若要记录debug级别的日志，将上面的basicConfig注释掉并取消下面的的注释，或将level改为logging.DEBUG
+
+# logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
+#                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.DEBUG, encoding="UTF-8")
+
 log = logging.getLogger("chat")
 
 console = Console()
@@ -289,7 +296,7 @@ class ChatGPT:
             self.title: str = reply_message['content']
             # here: we don't need a lock here for self.title because: the only three places changes or uses chat_gpt.title will never operate together
             # they are: gen_title, gen_title_silent (here), '/save' command
-            log.info(f"Title background silent generated: {self.title}")
+            log.debug(f"Title background silent generated: {self.title}")
 
             messages.append(reply_message)
             self.add_total_tokens(count_token(messages))
@@ -310,7 +317,7 @@ class ChatGPT:
         # it SHOULD NOT be triggered or used by any other functions or commands
         while True:
             content_this_time = gen_title_messages.get()
-            log.info(f"Title Generation Daemon Thread: Working with message \"{content_this_time}\"")
+            log.debug(f"Title Generation Daemon Thread: Working with message \"{content_this_time}\"")
             new_title = self.gen_title_silent(content_this_time)
             gen_title_messages.task_done()
             time.sleep(0.2)
@@ -318,7 +325,7 @@ class ChatGPT:
                 log.error("Background Title auto-generation Failed")
             else:
                 change_CLI_title(self.title)
-            log.info("Title Generation Daemon Thread: Pause")
+            log.debug("Title Generation Daemon Thread: Pause")
 
     def save_chat_history(self, filename):
         with open(f"{filename}", 'w', encoding='utf-8') as f:
@@ -522,6 +529,7 @@ def change_CLI_title(new_title: str):
         print(f"\033]0;{new_title}\007", end='')
         sys.stdout.flush()
         # flush the stdout buffer in order to making the control sequences effective immediately
+    log.debug(f"CLI Title changed to '{new_title}'")
 
 
 def handle_command(command: str, chat_gpt: ChatGPT):
@@ -736,37 +744,40 @@ def main(args: argparse.Namespace):
     # if 'key' arg triggered, load the api key from .env with the given key-name;
     # otherwise load the api key with the key-name "OPENAI_API_KEY"
     if args.key:
-        log.info(f"Try loading API key with {args.key} from .env")
+        log.debug(f"Try loading API key with {args.key} from .env")
         api_key = os.environ.get(args.key)
     else:
         api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        log.error("API Key not found, waiting for input")
+        log.debug("API Key not found, waiting for input")
         api_key = prompt("OpenAI API Key not found, please input: ")
     api_key_log = api_key[:3] + '*' * (len(api_key) - 7) + api_key[-4:]
-    log.info(f"Loaded API Key: {api_key_log}")
+    log.debug(f"Loaded API Key: {api_key_log}")
+    if len(api_key) <= 7:
+        log.debug("API Key may be wrong (too short)")
 
     api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "30"))
-    log.info(f"API Timeout set to {api_timeout}")
+    log.debug(f"API Timeout set to {api_timeout}")
 
     chat_gpt = ChatGPT(api_key, api_timeout)
 
     if os.environ.get("AUTO_GENERATE_TITLE", "1") != "1":
         chat_gpt.auto_gen_title_background_enable = False
-        log.info("Auto title generation disabled")
+        log.debug("Auto title generation disabled")
     # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
 
     gen_title_daemon_thread = threading.Thread(
         target=chat_gpt.auto_gen_title_background, daemon=True)
     gen_title_daemon_thread.start()
     # start generate title daemon thread
+    log.debug("Title generation daemon thread started")
 
     console.print(
         "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
 
     if args.model:
         chat_gpt.set_model(args.model)
-        log.info(f"Set model to '{args.model}'")
+        log.debug(f"Set model to '{args.model}'")
 
     if args.multi:
         ChatMode.toggle_multi_line_mode()
@@ -782,7 +793,7 @@ def main(args: argparse.Namespace):
             for message in chat_gpt.messages:
                 print_message(message)
             chat_gpt.current_tokens = count_token(chat_gpt.messages)
-            log.info(f"Chat history successfully loaded from: {args.load}")
+            log.debug(f"Chat history successfully loaded from: {args.load}")
             console.print(
                 f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
 
@@ -794,7 +805,7 @@ def main(args: argparse.Namespace):
     # 绑定回车事件，达到自定义多行模式的效果
     key_bindings = create_key_bindings()
 
-    log.info("Main process start")
+    log.debug("Main process start")
 
     while True:
         try:
@@ -827,7 +838,7 @@ def main(args: argparse.Namespace):
 
 
 if __name__ == "__main__":
-    log.info("chat.py start")
+    log.info("ChatGPT-in-Terminal start")
     parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
     parser.add_argument('--load', metavar='FILE', type=str,
                         help='Load chat history from file')
