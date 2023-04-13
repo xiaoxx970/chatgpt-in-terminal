@@ -44,6 +44,7 @@ style = Style.from_dict({
 
 gen_title_messages = queue.Queue()
 
+
 class ChatMode:
     raw_mode = False
     multi_line_mode = False
@@ -93,10 +94,9 @@ class ChatGPT:
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
         self.title: str = None
-
         self.auto_gen_title_background_enable = True
         self.threadlock_total_tokens_spent = threading.Lock()
-    
+
     def add_total_tokens(self, tokens: int):
         self.threadlock_total_tokens_spent.acquire()
         self.total_tokens_spent += tokens
@@ -158,7 +158,7 @@ class ChatGPT:
                 rprint("[bold cyan]ChatGPT: ")
                 for event in client.events():
                     if event.data == '[DONE]':
-                        # finish_reason = part["choices"][0]['finish_reason'] 
+                        # finish_reason = part["choices"][0]['finish_reason']
                         break
                     part = json.loads(event.data)
                     if "content" in part["choices"][0]["delta"]:
@@ -320,7 +320,6 @@ class ChatGPT:
                 change_CLI_title(self.title)
             log.info("Title Generation Daemon Thread: Pause")
 
-
     def save_chat_history(self, filename):
         with open(f"{filename}", 'w', encoding='utf-8') as f:
             json.dump(self.messages, f, ensure_ascii=False, indent=4)
@@ -401,10 +400,6 @@ class CustomCompleter(Completer):
         "all"
     ]
 
-    title_actions = [
-        "force"
-    ]
-
     available_models = [
         "gpt-3.5-turbo",
         "gpt-3.5-turbo-0301",
@@ -429,21 +424,12 @@ class CustomCompleter(Completer):
                 for copy in self.copy_actions:
                     if copy.startswith(copy_prefix):
                         yield Completion(copy, start_position=-len(copy_prefix))
-
             # Check if it's a /delete command
             elif text.startswith('/delete '):
                 delete_prefix = text[8:]
                 for delete in self.delete_actions:
                     if delete.startswith(delete_prefix):
                         yield Completion(delete, start_position=-len(delete_prefix))
-
-            # Check if it's a /title command
-            elif text.startswith('/title '):
-                title_prefix = text[7:]
-                for title in self.title_actions:
-                    if title.startswith(title_prefix):
-                        yield Completion(title, start_position=-len(title_prefix))
-
             else:
                 for command in self.commands:
                     if command.startswith(text):
@@ -456,8 +442,7 @@ def count_token(messages: List[Dict[str, str]]):
     encoding = tiktoken.get_encoding("cl100k_base")
     length = 0
     for message in messages:
-        length += len(encoding.encode(
-            f"role: {message['role']}, content: {message['content']}"))
+        length += len(encoding.encode(str(message)))
     return length
 
 
@@ -639,19 +624,14 @@ def handle_command(command: str, chat_gpt: ChatGPT):
     elif command.startswith('/title'):
         args = command.split()
         if len(args) > 1:
-            if args[1] == 'force':
-                new_title = chat_gpt.gen_title(force=True)
-                # force to generate a new title
-            else:
-                console.print(
-                    "[dim]Nothing to do. Available title command: `[bright_magenta]/title force[/]`")
-                return
+            chat_gpt.title = ' '.join(args[1:])
+            change_CLI_title(chat_gpt.title)
         else:
-            new_title = chat_gpt.gen_title()
-        if not new_title:
-            console.print("[red]Failed to generate title.")
-            return
-        # CLI title is changed by daemon thread
+            # generate a new title
+            new_title = chat_gpt.gen_title(force=True)
+            if not new_title:
+                console.print("[red]Failed to generate title.")
+                return
         console.print(f"[dim]CLI Title changed to '{chat_gpt.title}'")
 
     elif command.startswith('/timeout'):
@@ -711,8 +691,7 @@ def handle_command(command: str, chat_gpt: ChatGPT):
     /save \[filename_or_path] - Save the chat history to a file
     /model \[model_name]      - Change AI model
     /system \[new_prompt]     - Modify the system prompt
-    /title                   - Generate a title for this chat (if already generated one, no new generation will be made)
-    /title force             - Generate a title for this chat, no matter if a old one has already been generated
+    /title (new_title)       - Set title for this chat (if new_title is not provided, a new title will be generated)
     /timeout \[new_timeout]   - Modify the api timeout
     /undo                    - Undo the last question and remove its answer
     /delete (first)          - Delete the first conversation in current chat
@@ -771,7 +750,8 @@ def main(args: argparse.Namespace):
         chat_gpt.auto_gen_title_background_enable = False
     # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
 
-    gen_title_daemon_thread = threading.Thread(target=chat_gpt.auto_gen_title_background, daemon=True)
+    gen_title_daemon_thread = threading.Thread(
+        target=chat_gpt.auto_gen_title_background, daemon=True)
     gen_title_daemon_thread.start()
     # start generate title daemon thread
 
@@ -790,6 +770,7 @@ def main(args: argparse.Namespace):
     if args.load:
         chat_history = load_chat_history(args.load)
         if chat_history:
+            change_CLI_title(args.load.rstrip(".json"))
             chat_gpt.messages = chat_history
             for message in chat_gpt.messages:
                 print_message(message)
