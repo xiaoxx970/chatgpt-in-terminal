@@ -28,7 +28,7 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
    cd ./chatgpt-in-terminal
    ```
    
-2. Write the OPENAI_API_KEY variable in the `.env` file in the project root directory, as follows
+2. Create  `.env` file and write the OPENAI_API_KEY variable into it, as follows
 
    ```shell
    OPENAI_API_KEY=your_API_KEY

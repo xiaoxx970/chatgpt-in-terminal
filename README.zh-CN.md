@@ -30,7 +30,7 @@
    cd ./chatgpt-in-terminal
    ```
 
-2. 在项目根目录下的 `.env` 文件中写入 OPENAI_API_KEY 变量，内容如下
+2. 在项目根目录下创建 `.env` 文件并写入 OPENAI_API_KEY 变量，内容如下
 
    ```shell
    OPENAI_API_KEY=你的API_KEY
