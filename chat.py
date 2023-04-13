@@ -4,8 +4,12 @@ import argparse
 import json
 import logging
 import os
+import platform
+import queue
 import re
 import sys
+import threading
+import time
 from datetime import datetime
 from typing import Dict, List
 
@@ -30,6 +34,13 @@ from rich.panel import Panel
 # 日志记录到 chat.log，注释下面这行可不记录日志
 logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO, encoding="UTF-8")
+
+# If you want to see all debug logs, comment the two lines above and dis-comment two lines below
+# 若要记录debug级别的日志，将上面的basicConfig注释掉并取消下面的的注释，或将level改为logging.DEBUG
+
+# logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
+#                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.DEBUG, encoding="UTF-8")
+
 log = logging.getLogger("chat")
 
 console = Console()
@@ -37,6 +48,8 @@ console = Console()
 style = Style.from_dict({
     "prompt": "ansigreen",  # 将提示符设置为绿色
 })
+
+gen_title_messages = queue.Queue()
 
 
 class ChatMode:
@@ -88,12 +101,19 @@ class ChatGPT:
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
         self.title: str = None
+        self.auto_gen_title_background_enable = True
+        self.threadlock_total_tokens_spent = threading.Lock()
 
-    def send_request(self, data, tips = "ChatGPT is thinking...", stream = ChatMode.stream_mode):
+    def add_total_tokens(self, tokens: int):
+        self.threadlock_total_tokens_spent.acquire()
+        self.total_tokens_spent += tokens
+        self.threadlock_total_tokens_spent.release()
+
+    def send_request(self, data):
         try:
-            with console.status(f"[bold cyan]{tips}"):
+            with console.status(f"[bold cyan]ChatGPT is thinking..."):
                 response = requests.post(
-                    self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=stream)
+                    self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=ChatMode.stream_mode)
             # 匹配4xx错误，显示服务器返回的具体原因
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
@@ -115,6 +135,28 @@ class ChatGPT:
             log.exception(e)
             return None
 
+    def send_request_silent(self, data):
+        # this is a silent sub function, for sending request without outputs (silently)
+        # it SHOULD NOT be triggered or used by not-silent functions
+        # it is only used by gen_title_silent now
+        try:
+            response = requests.post(
+                self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout)
+            # match 4xx error codes
+            if response.status_code // 100 == 4:
+                error_msg = response.json()['error']['message']
+                log.error(error_msg)
+                return None
+
+            response.raise_for_status()
+            return response
+        except requests.exceptions.ReadTimeout as e:
+            log.error("Automatic generating title failed as timeout")
+            return None
+        except requests.exceptions.RequestException as e:
+            log.exception(e)
+            return None
+
     def process_stream_response(self, response: requests.Response):
         reply: str = ""
         client = sseclient.SSEClient(response)
@@ -123,7 +165,7 @@ class ChatGPT:
                 rprint("[bold cyan]ChatGPT: ")
                 for event in client.events():
                     if event.data == '[DONE]':
-                        # finish_reason = part["choices"][0]['finish_reason'] 
+                        # finish_reason = part["choices"][0]['finish_reason']
                         break
                     part = json.loads(event.data)
                     if "content" in part["choices"][0]["delta"]:
@@ -157,7 +199,6 @@ class ChatGPT:
 
             # delete the first request and response (never delete system prompt, which means messages[0])
             del self.messages[1:3]
-            self.title = None
 
             # recount current tokens
             new_tokens = count_token(self.messages)
@@ -190,7 +231,10 @@ class ChatGPT:
                 log.info(f"ChatGPT: {reply_message['content']}")
                 self.messages.append(reply_message)
                 self.current_tokens = count_token(self.messages)
-                self.total_tokens_spent += self.current_tokens
+                self.add_total_tokens(self.current_tokens)
+
+                if len(self.messages) == 3 and self.auto_gen_title_background_enable:
+                    gen_title_messages.put(self.messages[1]['content'])
 
                 if self.tokens_limit - self.current_tokens in range(1, 500):
                     console.print(
@@ -207,39 +251,83 @@ class ChatGPT:
 
         return reply_message
 
-    def gen_title(self):
+    def gen_title(self, force: bool = False):
+        # Empty the title if there is only system message left
         if len(self.messages) < 2:
             self.title = None
             return
-        if self.title:
-            return self.title
-        prompt = 'Generate a filename for the following content, no more than 10 words, only use filenames that work on multiple platforms, no suffix. \n\nContent: '
+
         try:
-            messages = [{"role": "user", "content": prompt +
-                         self.messages[1]['content']}]
-            data = {
-                "model": "gpt-3.5-turbo",
-                "messages": messages,
-                "temperature": 0.5
-            }
-            response = self.send_request(data, tips="Generating title... [/](Ctrl-C to skip)", stream=False)
-            if response is None:
-                return
-            self.title: str = response.json()["choices"][0]["message"]['content']
-            log.info(f"Title generated: {self.title}")
+            with console.status("[bold cyan]Waiting last generationg to finish..."):
+                gen_title_messages.join()
+            if self.title and not force:
+                return self.title
 
+            # title not generated, do
+
+            content_this_time = self.messages[1]['content']
+            gen_title_messages.put(content_this_time)
+            with console.status("[bold cyan]Generating title... [/](Ctrl-C to skip)"):
+                gen_title_messages.join()
         except KeyboardInterrupt:
-            return
-
-        except Exception as e:
-            console.print(
-                f"[red]Error: {str(e)}. Check log for more information")
-            log.exception(e)
-            self.save_chat_history(
-                f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
-            raise EOFError
+            console.print("Skip wait.", style="bold cyan")
+            raise
 
         return self.title
+
+    def gen_title_silent(self, content: str):
+        # this is a silent sub function, only for sub thread which auto-generates title when first conversation is made and debug functions
+        # it SHOULD NOT be triggered or used by any other functions or commands
+        # because of the usage of this subfunction, no check for messages list length and title appearance is needed
+        prompt = 'Generate a title for the following content in content\'s language, no more than 10 words, only use characters that work on multiple platform filesystems. \n\nContent: '
+        messages = [{"role": "user", "content": prompt + content}]
+        data = {
+            "model": "gpt-3.5-turbo",
+            "messages": messages,
+            "temperature": 0.5
+        }
+        response = self.send_request_silent(data)
+        if response is None:
+            self.title = None
+            return
+        reply_message = response.json()["choices"][0]["message"]
+        self.title: str = reply_message['content']
+        # here: we don't need a lock here for self.title because: the only three places changes or uses chat_gpt.title will never operate together
+        # they are: gen_title, gen_title_silent (here), '/save' command
+        log.debug(f"Title background silent generated: {self.title}")
+
+        messages.append(reply_message)
+        self.add_total_tokens(count_token(messages))
+        # count title generation tokens cost
+
+        return self.title
+
+    def auto_gen_title_background(self):
+        # this is the auto title generation daemon thread main function
+        # it SHOULD NOT be triggered or used by any other functions or commands
+        while True:
+            try:
+                content_this_time = gen_title_messages.get()
+                log.debug(f"Title Generation Daemon Thread: Working with message \"{content_this_time}\"")
+                new_title = self.gen_title_silent(content_this_time)
+                gen_title_messages.task_done()
+                time.sleep(0.2)
+                if not new_title:
+                    log.error("Background Title auto-generation Failed")
+                else:
+                    change_CLI_title(self.title)
+                log.debug("Title Generation Daemon Thread: Pause")
+            
+            except Exception as e:
+                console.print(
+                    f"[red]Background Title auto-generation Error: {str(e)}. Check log for more information")
+                log.exception(e)
+                self.save_chat_history(
+                    f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
+                while gen_title_messages.unfinished_tasks:
+                    gen_title_messages.task_done()
+                continue
+                # something went wrong, continue the loop
 
     def save_chat_history(self, filename):
         with open(f"{filename}", 'w', encoding='utf-8') as f:
@@ -308,7 +396,7 @@ class ChatGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/last', '/copy', '/model', '/save', '/system', '/timeout', '/undo', '/delete', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/last', '/copy', '/model', '/save', '/system', '/title', '/timeout', '/undo', '/delete', '/help', '/exit'
     ]
 
     copy_actions = [
@@ -345,14 +433,12 @@ class CustomCompleter(Completer):
                 for copy in self.copy_actions:
                     if copy.startswith(copy_prefix):
                         yield Completion(copy, start_position=-len(copy_prefix))
-
             # Check if it's a /delete command
             elif text.startswith('/delete '):
                 delete_prefix = text[8:]
                 for delete in self.delete_actions:
                     if delete.startswith(delete_prefix):
                         yield Completion(delete, start_position=-len(delete_prefix))
-
             else:
                 for command in self.commands:
                     if command.startswith(text):
@@ -365,8 +451,7 @@ def count_token(messages: List[Dict[str, str]]):
     encoding = tiktoken.get_encoding("cl100k_base")
     length = 0
     for message in messages:
-        length += len(encoding.encode(
-            f"role: {message['role']}, content: {message['content']}"))
+        length += len(encoding.encode(str(message)))
     return length
 
 
@@ -439,6 +524,16 @@ def copy_code(message: Dict[str, str], select_code_idx: int = None):
     console.print("[dim]Code copied to Clipboard")
 
 
+def change_CLI_title(new_title: str):
+    if platform.system() == "Windows":
+        os.system(f"title {new_title}")
+    else:
+        print(f"\033]0;{new_title}\007", end='')
+        sys.stdout.flush()
+        # flush the stdout buffer in order to making the control sequences effective immediately
+    log.debug(f"CLI Title changed to '{new_title}'")
+
+
 def handle_command(command: str, chat_gpt: ChatGPT):
     '''处理斜杠(/)命令'''
     if command == '/raw':
@@ -455,9 +550,11 @@ def handle_command(command: str, chat_gpt: ChatGPT):
 
         # tokens limit judge moved to ChatGPT.set_model function
 
+        chat_gpt.threadlock_total_tokens_spent.acquire()
         console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chat_gpt.total_tokens_spent}\n"
                             f"[bold green]Current Tokens:[/]\t\t{chat_gpt.current_tokens}/[bold]{chat_gpt.tokens_limit}",
                             title='token_summary', title_align='left', width=40, style='dim'))
+        chat_gpt.threadlock_total_tokens_spent.release()
 
     elif command == '/usage':
         with console.status("Getting credit usage...") as status:
@@ -513,8 +610,10 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         else:
             gen_filename = chat_gpt.gen_title()
             if gen_filename:
-                gen_filename = gen_filename.replace('"','')
+                gen_filename = gen_filename.replace('"', '')
                 gen_filename = f"./chat_history_{gen_filename}.json"
+            # here: if title is already generated or generating, just use it
+            # but title auto generation can also be disabled; therefore when title is not generated then try generating a new one
             date_filename = f'./chat_history_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json'
             filename = prompt(
                 "Save to: ", default=gen_filename or date_filename, style=style)
@@ -531,6 +630,19 @@ def handle_command(command: str, chat_gpt: ChatGPT):
             chat_gpt.modify_system_prompt(new_content)
         else:
             console.print("[dim]No change.")
+
+    elif command.startswith('/title'):
+        args = command.split()
+        if len(args) > 1:
+            chat_gpt.title = ' '.join(args[1:])
+            change_CLI_title(chat_gpt.title)
+        else:
+            # generate a new title
+            new_title = chat_gpt.gen_title(force=True)
+            if not new_title:
+                console.print("[red]Failed to generate title.")
+                return
+        console.print(f"[dim]CLI Title changed to '{chat_gpt.title}'")
 
     elif command.startswith('/timeout'):
         args = command.split()
@@ -564,6 +676,7 @@ def handle_command(command: str, chat_gpt: ChatGPT):
                 chat_gpt.delete_first_conversation()
             elif args[1] == 'all':
                 del chat_gpt.messages[1:]
+                chat_gpt.title = None
                 chat_gpt.current_tokens = count_token(chat_gpt.messages)
                 # recount current tokens
                 console.print("[dim]Current chat deleted.")
@@ -585,9 +698,10 @@ def handle_command(command: str, chat_gpt: ChatGPT):
     /last                    - Display last ChatGPT's reply
     /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
     /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
-    /save \[filename_or_path] - Save the chat history to a file
+    /save \[filename_or_path] - Save the chat history to a file, suggest title if filename_or_path not provided
     /model \[model_name]      - Change AI model
     /system \[new_prompt]     - Modify the system prompt
+    /title \[new_title]       - Set title for this chat, if new_title is not provided, a new title will be generated
     /timeout \[new_timeout]   - Modify the api timeout
     /undo                    - Undo the last question and remove its answer
     /delete (first)          - Delete the first conversation in current chat
@@ -632,21 +746,40 @@ def main(args: argparse.Namespace):
     # if 'key' arg triggered, load the api key from .env with the given key-name;
     # otherwise load the api key with the key-name "OPENAI_API_KEY"
     if args.key:
+        log.debug(f"Try loading API key with {args.key} from .env")
         api_key = os.environ.get(args.key)
     else:
         api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
+        log.debug("API Key not found, waiting for input")
         api_key = prompt("OpenAI API Key not found, please input: ")
+    api_key_log = api_key[:3] + '*' * (len(api_key) - 7) + api_key[-4:]
+    log.debug(f"Loaded API Key: {api_key_log}")
+    if len(api_key) <= 7:
+        log.debug("API Key may be wrong (too short)")
 
     api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "30"))
+    log.debug(f"API Timeout set to {api_timeout}")
 
     chat_gpt = ChatGPT(api_key, api_timeout)
+
+    if os.environ.get("AUTO_GENERATE_TITLE", "1") != "1":
+        chat_gpt.auto_gen_title_background_enable = False
+        log.debug("Auto title generation disabled")
+    # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
+
+    gen_title_daemon_thread = threading.Thread(
+        target=chat_gpt.auto_gen_title_background, daemon=True)
+    gen_title_daemon_thread.start()
+    # start generate title daemon thread
+    log.debug("Title generation daemon thread started")
 
     console.print(
         "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
 
     if args.model:
         chat_gpt.set_model(args.model)
+        log.debug(f"Set model to '{args.model}'")
 
     if args.multi:
         ChatMode.toggle_multi_line_mode()
@@ -657,10 +790,12 @@ def main(args: argparse.Namespace):
     if args.load:
         chat_history = load_chat_history(args.load)
         if chat_history:
+            change_CLI_title(args.load.rstrip(".json"))
             chat_gpt.messages = chat_history
             for message in chat_gpt.messages:
                 print_message(message)
             chat_gpt.current_tokens = count_token(chat_gpt.messages)
+            log.debug(f"Chat history successfully loaded from: {args.load}")
             console.print(
                 f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
 
@@ -671,6 +806,8 @@ def main(args: argparse.Namespace):
 
     # 绑定回车事件，达到自定义多行模式的效果
     key_bindings = create_key_bindings()
+
+    log.debug("Main process start")
 
     while True:
         try:
@@ -699,9 +836,11 @@ def main(args: argparse.Namespace):
     log.info(f"Total tokens spent: {chat_gpt.total_tokens_spent}")
     console.print(
         f"[bright_magenta]Total tokens spent: [bold]{chat_gpt.total_tokens_spent}")
+    # here: no lock is needed any more because sub thread is stoped
 
 
 if __name__ == "__main__":
+    log.info("ChatGPT-in-Terminal start")
     parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
     parser.add_argument('--load', metavar='FILE', type=str,
                         help='Load chat history from file')

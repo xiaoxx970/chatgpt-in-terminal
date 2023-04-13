@@ -11,7 +11,7 @@
 
 支持上键历史检索、可选的多行提问、tokens 统计
 
-聊天框中支持斜杠(/)命令，可实时切换多行提问模式、撤销上一次提问和回答、修改system prompt等
+聊天框中支持斜杠(/)命令，可实时切换多行提问模式、撤销上一次提问和回答、修改system prompt等，具体请查看下面的可用命令
 
 支持将聊天消息保存到 JSON 文件中，并能够从文件中加载
 
@@ -48,15 +48,48 @@
    pip3 install -r requirements.txt
    ```
 
+## 更新
+
+如果要把脚本更新为最新版本，在本项目目录下运行：
+
+```sh
+git pull
+pip3 install -r requirements.txt
+```
+
 ## 如何使用
 
-使用以下命令进行运行：
+使用以下命令运行：
 
 ```shell
 python3 chat.py
 ```
 
-原始格式的对话记录会存至 `chat.log`
+>  原始格式的对话记录会存至 `chat.log`
+
+### 可用参数
+
+| 选项          | 功能                              | 示例                                          |
+| ------------- | --------------------------------- | --------------------------------------------- |
+| -h, --help    | 显示此帮助信息并退出              | `chat.py --help`                              |
+| --load FILE   | 从文件中加载聊天记录              | `chat.py --load chat_history_code_check.json` |
+| --key API_KEY | 选择 .env 文件中要使用的 API 密钥 | `chat.py --key OPENAI_API_KEY1`               |
+| --model MODEL | 选择要使用的 AI 模型              | `chat.py --model gpt-3.5-turbo`               |
+| -m, --multi   | 启用多行模式                      | `chat.py --multi`                             |
+| -r, --raw     | 启用原始模式                      | `chat.py --raw`                               |
+
+> 多行模式与 raw 模式可以同时使用
+
+### `.env` 配置文件
+
+```.env
+# OpenAI 的 API 密钥
+OPENAI_API_KEY=
+# 向 API 请求的最大等待时间，默认30s
+OPENAI_API_TIMEOUT=30
+# 是否为对话自动生成标题，默认开启（生成标题将额外消耗少量 token）
+AUTO_GENERATE_TITLE=1
+```
 
 ### 可用命令
 
@@ -104,6 +137,10 @@ python3 chat.py
 
 - `/system [new_prompt]`：修改系统提示语
 
+- `/title [new_title]`: 为这个聊天终端设置标题
+
+   > 如果没有提供 new_title，将根据第一个提问生成新标题
+
 - `/timeout [new_timeout]`：修改 API 超时时间
 
   > 超时默认30s，也可通过 `.env` 文件中的 `OPENAI_API_TIMEOUT=` 配置默认超时
@@ -113,20 +150,6 @@ python3 chat.py
 - `/help`：显示可用命令
 
 - `/exit`：退出应用
-
-### 可用参数
-
-```shell
-options:
-  -h, --help     Show this help message and exit
-  --load FILE    Load chat history from file
-  --key API_KEY  Select which API key in .env file to use
-  --model MODEL  Choose which AI model to use
-  -m, --multi    Enable multi-line mode
-  -r, --raw      Enable raw mode
-```
-
-> 多行模式与 raw 模式可以同时使用
 
 ### 退出词
 
@@ -145,6 +168,10 @@ options:
 > 目前价格为: $0.002 / 1K tokens，免费版速率限制为: 20次 / min (`gpt-3.5-turbo`)
 
 ## Changelog
+
+### 2023-04-13
+
+- 增加后台生成并设置终端标题功能，现在客户端会将第一个提问内容的摘要作为终端标题
 
 ### 2023-04-09
 
