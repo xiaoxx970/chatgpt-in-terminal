@@ -84,7 +84,7 @@ python3 chat.py
 
 ### Available Arguments
 
-| 选项          | 功能                            | 示例                                          |
+| Arguments     | Description                     | Example                                       |
 | ------------- | ------------------------------- | --------------------------------------------- |
 | -h, --help    | show this help message and exit | `chat.py --help`                              |
 | --load FILE   | Load chat history from file     | `chat.py --load chat_history_code_check.json` |
