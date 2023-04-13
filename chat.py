@@ -736,18 +736,24 @@ def main(args: argparse.Namespace):
     # if 'key' arg triggered, load the api key from .env with the given key-name;
     # otherwise load the api key with the key-name "OPENAI_API_KEY"
     if args.key:
+        log.info(f"Try loading API key with {args.key} from .env")
         api_key = os.environ.get(args.key)
     else:
         api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
+        log.error("API Key not found, waiting for input")
         api_key = prompt("OpenAI API Key not found, please input: ")
+    api_key_log = api_key[:3] + '*' * (len(api_key) - 7) + api_key[-4:]
+    log.info(f"Loaded API Key: {api_key_log}")
 
     api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "30"))
+    log.info(f"API Timeout set to {api_timeout}")
 
     chat_gpt = ChatGPT(api_key, api_timeout)
 
     if os.environ.get("AUTO_GENERATE_TITLE", "1") != "1":
         chat_gpt.auto_gen_title_background_enable = False
+        log.info("Auto title generation disabled")
     # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
 
     gen_title_daemon_thread = threading.Thread(
@@ -760,6 +766,7 @@ def main(args: argparse.Namespace):
 
     if args.model:
         chat_gpt.set_model(args.model)
+        log.info(f"Set model to '{args.model}'")
 
     if args.multi:
         ChatMode.toggle_multi_line_mode()
@@ -775,6 +782,7 @@ def main(args: argparse.Namespace):
             for message in chat_gpt.messages:
                 print_message(message)
             chat_gpt.current_tokens = count_token(chat_gpt.messages)
+            log.info(f"Chat history successfully loaded from: {args.load}")
             console.print(
                 f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
 
@@ -785,6 +793,8 @@ def main(args: argparse.Namespace):
 
     # 绑定回车事件，达到自定义多行模式的效果
     key_bindings = create_key_bindings()
+
+    log.info("Main process start")
 
     while True:
         try:
@@ -817,6 +827,7 @@ def main(args: argparse.Namespace):
 
 
 if __name__ == "__main__":
+    log.info("chat.py start")
     parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
     parser.add_argument('--load', metavar='FILE', type=str,
                         help='Load chat history from file')
