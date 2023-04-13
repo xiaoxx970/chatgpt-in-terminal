@@ -55,6 +55,23 @@ git pull
 pip3 install -r requirements.txt
 ```
 
+> If git error is reported
+>
+> ```shell
+> error: Your local changes to the following files would be overwritten by merge:
+>          .env
+> Please commit your changes or stash them before you merge.
+> Aborting
+> ```
+>
+> Just untrack the .env file from git first (doesn't delete the local .env file)
+>
+> ```sh
+> git rm --cache .env
+> ```
+>
+> Then run the `git pull` command above 
+
 ## How to Use
 
 Run with the following command:
