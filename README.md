@@ -11,7 +11,7 @@ Markdown content in answers is rendered as beautifully formatted rich text.
 
 Supports history retrieval with the up arrow key, optional multi-line questions, and tokens counting.
 
-Slash (/) commands are available in the chat box to toggle multi-line submit mode, undo the last question and answer, modify the system prompt and more.
+Slash (/) commands are available in the chat box to toggle multi-line submit mode, undo the last question and answer, modify the system prompt and more, see the available commands below for details.
 
 Supports saving chat messages to a JSON file and loading them from the file.
 
@@ -46,6 +46,15 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
    pip3 install -r requirements.txt
    ```
 
+## Update
+
+If you want to update the script to the latest version, run the following command in this project's directory:
+
+```sh
+git pull
+pip3 install -r requirements.txt
+```
+
 ## How to Use
 
 Run with the following command:
@@ -54,7 +63,31 @@ Run with the following command:
 python3 chat.py
 ```
 
-Original chat logs will be saved to `chat.log`
+> Original chat logs will be saved to `chat.log`
+
+### Available Arguments
+
+| 选项          | 功能                            | 示例                                          |
+| ------------- | ------------------------------- | --------------------------------------------- |
+| -h, --help    | show this help message and exit | `chat.py --help`                              |
+| --load FILE   | Load chat history from file     | `chat.py --load chat_history_code_check.json` |
+| --key API_KEY | choose the API key to load      | `chat.py --key OPENAI_API_KEY1`               |
+| --model MODEL | choose the AI model to use      | `chat.py --model gpt-3.5-turbo`               |
+| -m, --multi   | Enable multi-line mode          | `chat.py --multi`                             |
+| -r, --raw     | Enable raw mode                 | `chat.py --raw`                               |
+
+> Multi-line mode and raw mode can be used simultaneously
+
+### `.env` configuration file
+
+```.env
+# API key for OpenAI
+OPENAI_API_KEY=
+# The maximum waiting time for API requests, the default is 30s
+OPENAI_API_TIMEOUT=30
+# Whether to automatically generate titles for conversations, enabled by default (generating titles will consume a small amount of tokens)
+AUTO_GENERATE_TITLE=1
+```
 
 ### Available Commands
 
@@ -102,6 +135,10 @@ Original chat logs will be saved to `chat.log`
 
 - `/system [new_prompt]`: Modify the system prompt
 
+- `/title [new_title]`: Set terminal title for this chat
+
+  > If new_title is not provided, a new title will be generated based on first question
+
 - `/timeout [new_timeout]`: Modify API timeout.
 
   > The default timeout is 30 seconds, it can also be configured by setting `OPENAI_API_TIMEOUT=` in the `.env` file.
@@ -111,20 +148,6 @@ Original chat logs will be saved to `chat.log`
 - `/help`: Display available commands
 
 - `/exit`: Exit the application
-
-### Available Arguments
-
-```shell
-options:
-  -h, --help     Show this help message and exit
-  --load FILE    Load chat history from file
-  --key API_KEY  Select which API key in .env file to use
-  --model MODEL  Choose which AI model to use
-  -m, --multi    Enable multi-line mode
-  -r, --raw      Enable raw mode
-```
-
-> Multi-line mode and raw mode can be used simultaneously
 
 ### Exit Words
 
@@ -143,6 +166,10 @@ Upon exit, the token count for the chat session will be displayed.
 > Current price: $0.002 / 1K tokens, Free Edition rate limit: 20 requests / min (`gpt-3.5-turbo`)
 
 ## Changelog
+
+### 2023-04-13
+
+- Added the function of generating and setting the terminal title in the background, and now the client will use the summary of the first question content as the terminal title
 
 ### 2023-04-09
 
