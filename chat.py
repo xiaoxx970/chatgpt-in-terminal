@@ -727,11 +727,19 @@ def create_key_bindings():
     '''自定义回车事件绑定，实现斜杠命令的提交忽略多行模式'''
     key_bindings = KeyBindings()
 
-    @key_bindings.add(Keys.Enter, eager=True)
+    @key_bindings.add(Keys.Enter)
     def _(event):
         buffer = event.current_buffer
         text = buffer.text.strip()
         if text.startswith('/') or not ChatMode.multi_line_mode:
+            buffer.validate_and_handle()
+        else:
+            buffer.insert_text('\n')
+
+    @key_bindings.add(Keys.Escape, Keys.Enter)
+    def _(event):
+        buffer = event.current_buffer
+        if ChatMode.multi_line_mode:
             buffer.validate_and_handle()
         else:
             buffer.insert_text('\n')
