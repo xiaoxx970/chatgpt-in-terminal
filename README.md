@@ -19,6 +19,61 @@ Supports saving chat messages to a JSON file and loading them from the file.
 
 Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) model, which is the same model used by ChatGPT (Free Edition), as default.
 
+## Changelog
+
+### 2023-04-15
+
+- Added the ability to create a line break in single-line mode using `Esc` + `Enter`
+
+<details>
+  <summary>More Change log</summary>
+
+### 2023-04-13
+
+- Added the function of generating and setting the terminal title in the background, and now the client will use the summary of the first question content as the terminal title
+
+### 2023-04-09
+
+- Add filename generate function, client will suggest the summary of the first question as filename when save command executed.
+
+### 2023-04-05
+
+- Add `/delete` command to delete the first question and answer in this chat to reduce token.
+
+### 2023-04-01
+
+- Add `/copy` command to copy the last reply's content to the clipboard
+- Add streaming output mode, enabled by default, use `/stream` to switch
+
+### 2023-03-28
+
+- Add `--model` runtime argument and `/model` command to choose / change AI models.
+
+### 2023-03-27
+
+- Added `--key` runtime argument to select which API key in the `.env` file to use.
+
+### 2023-03-23
+
+- Added slash (/) command functionality
+- Added `--load` runtime argument to load previously saved chat history
+- Modified program structure and interaction methods, changing the original `input()` function to the `prompt_toolkit` library's input interface, supporting multi-line input, command-line completion, and other features.
+- Improved error handling mechanisms, added chat history backup, logging, and other features, enhancing the program's reliability and fault tolerance.
+- Refactored code logic and function structure, improving modularity and readability.
+
+</details>
+
+## Preparation
+
+1. An OpenAI API key. You need to register an OpenAI account and obtain an API key.
+
+   OpenAI's API key can be generated on the page opened by clicking "View API keys" in the upper right corner of the homepage, direct link: https://platform.openai.com/account/api-keys
+
+   ![image-20230303233352970](README.assets/image-20230303233352970.png)
+
+2. [Python](https://www.python.org/downloads/) version 3.6 or higher.
+3. [git](https://git-scm.com/downloads)
+
 ## Installation
 
 1. Clone the repo and enter the directory
@@ -28,19 +83,21 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
    cd ./chatgpt-in-terminal
    ```
    
-2. Create  `.env` file and write the OPENAI_API_KEY variable into it, as follows
+2. Rename the `.env.example` file in the current directory to `.env`.
 
    ```shell
-   OPENAI_API_KEY=your_API_KEY
+   mv .env.example .env
    ```
+
+   Edit the `.env` file and modify the `OPENAI_API_KEY` variable to your API Key.
+
+   ```shell
+   OPENAI_API_KEY=your_API_Key
+   ```
+
+   > If the `.env` file is not configured, you can also enter the API Key directly at runtime, but it will only be effective for the current session.
    
-   OpenAI keys can be generated from the top-right corner of the homepage by clicking `View API keys`. Direct link: https://platform.openai.com/account/api-keys
-   
-   ![image-20230303233352970](README.assets/image-20230303233352970.png)
-   
-   > If you don't configure the `.env` file, you can also input the API KEY directly when running, which is valid for a single session.
-   
-3. Install dependencies through requirements.txt
+3. Install the dependencies in the `requirements.txt` file using the `pip` command.
 
    ```shell
    pip3 install -r requirements.txt
@@ -80,6 +137,8 @@ Run with the following command:
 python3 chat.py
 ```
 
+When entering a question in single-line mode, use `Esc` + `Enter` to start a new line, and use `Enter` to submit the question.
+
 > Original chat logs will be saved to `chat.log`
 
 ### Available Arguments
@@ -103,7 +162,7 @@ OPENAI_API_KEY=
 # The maximum waiting time for API requests, the default is 30s
 OPENAI_API_TIMEOUT=30
 # Whether to automatically generate titles for conversations, enabled by default (generating titles will consume a small amount of tokens)
-AUTO_GENERATE_TITLE=1
+AUTO_GENERATE_TITLE=True
 ```
 
 ### Available Commands
@@ -114,9 +173,9 @@ AUTO_GENERATE_TITLE=1
 
 - `/multi`: Enable or disable multi-line mode, allowing users to enter multi-line text
 
-  > In multi-line mode, use [[Esc]] + [[Enter]] to submit the question
+  > In multi-line mode, use `Esc` + `Enter` to submit the question
   >
-  > If pasting multi-line text, single-line mode can also paste properly
+  > If pasting multi line text, single-line mode can also paste properly
 
 - `/stream`: disable or enable stream mode
 
@@ -182,41 +241,6 @@ Upon exit, the token count for the chat session will be displayed.
 
 > Current price: $0.002 / 1K tokens, Free Edition rate limit: 20 requests / min (`gpt-3.5-turbo`)
 
-## Changelog
-
-### 2023-04-13
-
-- Added the function of generating and setting the terminal title in the background, and now the client will use the summary of the first question content as the terminal title
-
-### 2023-04-09
-
-- Add filename generate function, client will suggest the summary of the first question as filename when save command executed.
-
-### 2023-04-05
-
-- Add `/delete` command to delete the first question and answer in this chat to reduce token.
-
-### 2023-04-01
-
-- Add `/copy` command to copy the last reply's content to the clipboard
-- Add streaming output mode, enabled by default, use `/stream` to switch
-
-### 2023-03-28
-
-- Add `--model` runtime argument and `/model` command to choose / change AI models.
-
-### 2023-03-27
-
-- Added `--key` runtime argument to select which API key in the `.env` file to use.
-
-### 2023-03-23
-
-- Added slash (/) command functionality
-- Added `--load` runtime argument to load previously saved chat history
-- Modified program structure and interaction methods, changing the original `input()` function to the `prompt_toolkit` library's input interface, supporting multi-line input, command-line completion, and other features.
-- Improved error handling mechanisms, added chat history backup, logging, and other features, enhancing the program's reliability and fault tolerance.
-- Refactored code logic and function structure, improving modularity and readability.
-
 ## Dependencies
 
 Thanks to the following projects for providing strong support for this script:
@@ -225,6 +249,15 @@ Thanks to the following projects for providing strong support for this script:
 - [python-dotenv](https://github.com/theskumar/python-dotenv): For loading environment variables from `.env` file
 - [prompt_toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit): Command-line input processing library
 
+## Contributing
+
+Feel free to dive in! [Open an issue](https://github.com/xiaoxx970/chatgpt-in-terminal/issues/new) or submit PRs.
+
+### Contributors
+
+This project exists thanks to all the people who contribute. 
+<a href="https://github.com/xiaoxx970/chatgpt-in-terminal/graphs/contributors"><img src="https://opencollective.com/chatgpt-in-terminal/contributors.svg?width=890&button=false" /></a>
+
 ## Project Structure
 
 ```bash
@@ -232,9 +265,9 @@ Thanks to the following projects for providing strong support for this script:
 ├── chat.py             # Project code
 ├── requirements.txt    # Dependency package list
 ├── chat.log            # Chat log generated after chatting
-└── .env                # API key storage file
+└── .env                # Storage API key and other settings
 ```
 
 ## License
 
-This project is licensed under the [MIT License](https://chat.openai.com/LICENSE).
+This project is licensed under the [MIT License](LICENSE).

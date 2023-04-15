@@ -724,7 +724,7 @@ def load_chat_history(file_path):
 
 
 def create_key_bindings():
-    '''自定义回车事件绑定，实现斜杠命令的提交忽略多行模式'''
+    '''自定义回车事件绑定，实现斜杠命令的提交忽略多行模式，以及单行模式下 `esc+Enter` 换行'''
     key_bindings = KeyBindings()
 
     @key_bindings.add(Keys.Enter)
@@ -746,6 +746,19 @@ def create_key_bindings():
 
     return key_bindings
 
+def strtobool(val: str):
+    """Convert a string representation of truth to True or False.
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+    """
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return True
+    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return False
+    else:
+        raise ValueError("invalid truth value %r" % (val,))
 
 def main(args: argparse.Namespace):
     # 从 .env 文件中读取 OPENAI_API_KEY
@@ -771,7 +784,7 @@ def main(args: argparse.Namespace):
 
     chat_gpt = ChatGPT(api_key, api_timeout)
 
-    if os.environ.get("AUTO_GENERATE_TITLE", "1") != "1":
+    if not strtobool(os.environ.get("AUTO_GENERATE_TITLE", "True")):
         chat_gpt.auto_gen_title_background_enable = False
         log.debug("Auto title generation disabled")
     # AUTO_GENERATE_TITLE is set to another number (or char), disable this function

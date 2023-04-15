@@ -21,6 +21,61 @@
 
 默认使用 [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) 模型，也就是 ChatGPT(免费版) 所使用的模型。
 
+## Changelog
+
+### 2023-04-15
+
+- 新增在单行模式下换行功能，现在可以使用 `Esc` + `Enter` 在单行模式下换行
+
+<details>
+  <summary>更多 Change log</summary>
+
+### 2023-04-13
+
+- 增加后台生成并设置终端标题功能，现在客户端会将第一个提问内容的摘要作为终端标题
+
+### 2023-04-09
+
+- 增加文件名生成功能，客户端在执行保存命令时会将第一个提问内容的摘要作为文件名的建议
+
+### 2023-04-05
+
+- 添加`/delete`命令删除本次对话中的第一个问题和答案以减少 token
+
+### 2023-04-01
+
+- 增加 `/copy` 命令，用于复制回复内容
+- 增加流式输出模式，默认开启，使用 `/stream` 切换
+
+### 2023-03-28
+
+- 增加 `--model` 运行参数和 `/model` 命令，用于选择 / 更改使用的模型
+
+### 2023-03-27
+
+- 增加 `--key` 运行参数，用于选择使用哪一个储存在 `.env` 文件中的API key
+
+### 2023-03-23
+
+- 增加了斜杠(/)命令功能
+- 增加了 `--load` 运行参数，加载已经保存的聊天记录
+- 修改了程序结构和交互方式，将原来的 `input()` 函数改为了 `prompt_toolkit` 库提供的输入界面，支持多行输入和命令行补全等功能。
+- 改进了错误处理机制，增加了聊天记录备份、日志记录等功能，提高了程序的可靠性和容错能力。
+- 重构了代码逻辑和函数结构，增加了模块化和可读性。
+
+</details>
+
+## 准备工作
+
+1. 一个 OpenAI API 密钥。你需要注册一个 OpenAI 帐户并获取 API 密钥。
+
+   OpenAI 的 API 密钥可在主页右上角点击 "View API keys" 打开的页面中生成，直达链接：https://platform.openai.com/account/api-keys
+
+   ![image-20230303233352970](README.assets/image-20230303233352970.png)
+
+2. [Python](https://www.python.org/downloads/) 3.6 或更高版本
+3. [git](https://git-scm.com/downloads)
+
 ## 安装
 
 1. 克隆 Repo 并进入目录
@@ -30,19 +85,21 @@
    cd ./chatgpt-in-terminal
    ```
 
-2. 在项目根目录下创建 `.env` 文件并写入 OPENAI_API_KEY 变量，内容如下
+2. 把当前目录下 `.env.example` 文件重命名为 `.env`
+
+   ```shell
+   mv .env.example .env
+   ```
+
+   编辑 `.env` 文件，修改 `OPENAI_API_KEY` 变量为你的 API Key
 
    ```shell
    OPENAI_API_KEY=你的API_KEY
    ```
 
-   OpenAI 的密钥可在主页右上角点击 `View API keys` 打开的页面中生成，直达链接：https://platform.openai.com/account/api-keys
+   > 如果不配置 `.env` 文件，也可在运行时直接输入 API Key，单次生效
 
-   ![image-20230303233352970](README.assets/image-20230303233352970.png)
-
-   > 如果不配置 `.env` 文件，也可在运行时直接输入API KEY，单次生效
-
-3. 通过 requirements.txt 安装依赖
+3. 通过 `pip` 命令 安装 `requirements.txt` 中的依赖
 
    ```shell
    pip3 install -r requirements.txt
@@ -82,6 +139,8 @@ pip3 install -r requirements.txt
 python3 chat.py
 ```
 
+在默认的单行模式下输入提问时，使用 `Esc` + `Enter` 换行，`Enter` 提交
+
 >  原始格式的对话记录会存至 `chat.log`
 
 ### 可用参数
@@ -105,7 +164,7 @@ OPENAI_API_KEY=
 # 向 API 请求的最大等待时间，默认30s
 OPENAI_API_TIMEOUT=30
 # 是否为对话自动生成标题，默认开启（生成标题将额外消耗少量 token）
-AUTO_GENERATE_TITLE=1
+AUTO_GENERATE_TITLE=True
 ```
 
 ### 可用命令
@@ -116,7 +175,7 @@ AUTO_GENERATE_TITLE=1
 
 - `/multi`：启用或禁用多行模式，允许用户输入多行文本
 
-  > 多行模式下使用 [[Esc]] + [[Enter]] 提交问题
+  > 多行模式下使用 `Esc` + `Enter` 提交问题
   >
   > 如果是粘贴多行文本，则单行模式也可以正常粘贴
 
@@ -184,41 +243,6 @@ AUTO_GENERATE_TITLE=1
 
 > 目前价格为: $0.002 / 1K tokens，免费版速率限制为: 20次 / min (`gpt-3.5-turbo`)
 
-## Changelog
-
-### 2023-04-13
-
-- 增加后台生成并设置终端标题功能，现在客户端会将第一个提问内容的摘要作为终端标题
-
-### 2023-04-09
-
-- 增加文件名生成功能，客户端在执行保存命令时会将第一个提问内容的摘要作为文件名的建议
-
-### 2023-04-05
-
-- 添加`/delete`命令删除本次对话中的第一个问题和答案以减少 token
-
-### 2023-04-01
-
-- 增加 `/copy` 命令，用于复制回复内容
-- 增加流式输出模式，默认开启，使用 `/stream` 切换
-
-### 2023-03-28
-
-- 增加 `--model` 运行参数和 `/model` 命令，用于选择 / 更改使用的模型
-
-### 2023-03-27
-
-- 增加 `--key` 运行参数，用于选择使用哪一个储存在 `.env` 文件中的API key
-
-### 2023-03-23
-
-- 增加了斜杠(/)命令功能
-- 增加了 `--load` 运行参数，加载已经保存的聊天记录
-- 修改了程序结构和交互方式，将原来的 `input()` 函数改为了 `prompt_toolkit` 库提供的输入界面，支持多行输入和命令行补全等功能。
-- 改进了错误处理机制，增加了聊天记录备份、日志记录等功能，提高了程序的可靠性和容错能力。
-- 重构了代码逻辑和函数结构，增加了模块化和可读性。
-
 ## 依赖
 
 感谢以下项目为本脚本提供强大的支持：
@@ -227,6 +251,15 @@ AUTO_GENERATE_TITLE=1
 - [python-dotenv](https://github.com/theskumar/python-dotenv)：用于从 `.env` 文件加载环境变量
 - [prompt_toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit)：命令行输入处理库
 
+## 如何贡献
+
+非常欢迎你的加入！[提一个 Issue](https://github.com/xiaoxx970/chatgpt-in-terminal/issues/new) 或者提交一个 Pull Request。
+
+### 贡献者
+
+感谢以下参与项目的人：
+<a href="https://github.com/xiaoxx970/chatgpt-in-terminal/graphs/contributors"><img src="https://opencollective.com/chatgpt-in-terminal/contributors.svg?width=890&button=false" /></a>
+
 ## 项目结构
 
 ```shell
@@ -234,7 +267,7 @@ AUTO_GENERATE_TITLE=1
 ├── chat.py             # 项目代码
 ├── requirements.txt    # 依赖包列表
 ├── chat.log            # 聊天后生成的对话日志
-└── .env                # 密钥存储文件
+└── .env                # 密钥存储以及其他设置
 ```
 
 ## 许可证
