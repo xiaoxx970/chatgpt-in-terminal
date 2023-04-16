@@ -1,4 +1,14 @@
-#!/bin/bash
+#!/usr/bin/bash
+
+if ! [ -x "$(command -v curl)" ]; then
+    echo "Error: curl required but not installed"
+    exit 1
+fi
+if ! [ -x "$(command -v jq)" ]; then
+    echo "Error: jq required but not installed"
+    exit 1
+fi
+# check curl and jq command
 
 . ./.env
 response_subscription=$(curl -s "https://api.openai.com/dashboard/billing/subscription" \
@@ -10,7 +20,10 @@ else
     echo "Error occurs with /dashborad/billing/subsription"
     echo "Message: " $response_subscription
 fi
-response_usage=$(curl -s "https://api.openai.com/dashboard/billing/usage?start_date=2023-04-01&end_date=2023-04-02" \
+start_date="2023-04-01"
+end_date="2023-04-02"
+# default: test the usage 2023-04-01~2023-04-02
+response_usage=$(curl -s "https://api.openai.com/dashboard/billing/usage?start_date=$start_date&end_date=$end_date" \
                  -H "Authorization: Bearer $OPENAI_API_KEY")
 errorkey_usage=$(echo "$response_usage" | jq '.error')
 if [ "$errorkey_usage" = "null" ]; then
