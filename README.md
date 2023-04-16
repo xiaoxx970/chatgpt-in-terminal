@@ -185,7 +185,11 @@ AUTO_GENERATE_TITLE=True
 
   > GPT-3.5 has a token limit of 4096; use this command to check if you're approaching the limit
 
-- `/usage`: ~~Display the API credits summary~~ Currently unavailable
+- `/usage`: Display the API credits summary
+
+  > This feature may not be stable. If it doesn't work, you can use `./billing_api_test` to test API status.
+  > 
+  > Note: This is a bash script and cannot be run directly on Windows. If you are using Windows and need to test the API status, you can choose to use Git Bash or WSL. And plus, this script also relies on curl and jq, so make sure you have installed them correctly.
 
 - `/model`: Show or change the Model in use
 
