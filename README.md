@@ -189,7 +189,7 @@ AUTO_GENERATE_TITLE=True
 
   > This feature may not be stable. If it doesn't work, you can use `./billing_api_test` to test API status.
   > 
-  > Note: This is a bash script and cannot be run directly on Windows. If you are using Windows and need to test the API status, you can choose to use Git Bash or WSL. And plus, this script also relies on curl and jq, so make sure you have installed them correctly.
+  > Note: `./billing_api_test` is a bash script and cannot be run directly on Windows. If you are using Windows and need to test the API status, you can choose to use Git Bash or WSL. And plus, this script also relies on curl and jq, so make sure you have installed them correctly.
 
 - `/model`: Show or change the Model in use
 
