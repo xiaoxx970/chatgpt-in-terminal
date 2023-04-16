@@ -1,5 +1,4 @@
-#!/usr/bin/bash
-
+#!/bin/bash
 if ! [ -x "$(command -v curl)" ]; then
     echo "Error: curl required but not installed"
     exit 1
@@ -9,10 +8,11 @@ if ! [ -x "$(command -v jq)" ]; then
     exit 1
 fi
 # check curl and jq command
-
 . ./.env
+timeout=30
 response_subscription=$(curl -s "https://api.openai.com/dashboard/billing/subscription" \
-                        -H "Authorization: Bearer $OPENAI_API_KEY")
+                        -H "Authorization: Bearer $OPENAI_API_KEY"                      \
+                        --connect-timeout $timeout)
 errorkey_subscription=$(echo "$response_subscription" | jq '.error')
 if [ "$errorkey_subscription" = "null" ]; then
     echo "No error occurs with /dashborad/billing/subsription"
@@ -23,8 +23,9 @@ fi
 start_date="2023-04-01"
 end_date="2023-04-02"
 # default: test the usage 2023-04-01~2023-04-02
-response_usage=$(curl -s "https://api.openai.com/dashboard/billing/usage?start_date=$start_date&end_date=$end_date" \
-                 -H "Authorization: Bearer $OPENAI_API_KEY")
+response_usage=$(curl -s "https://api.openai.com/dashboard/billing/usage?start_date=${start_date}&end_date=${end_date}" \
+                 -H "Authorization: Bearer $OPENAI_API_KEY"                                                             \
+                 --connect-timeout $timeout)
 errorkey_usage=$(echo "$response_usage" | jq '.error')
 if [ "$errorkey_usage" = "null" ]; then
     echo "No error occurs with /dashborad/billing/usage"
