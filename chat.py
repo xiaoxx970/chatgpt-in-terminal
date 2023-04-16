@@ -10,7 +10,7 @@ import re
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List
 
 import pyperclip
@@ -103,6 +103,10 @@ class ChatGPT:
         self.title: str = None
         self.auto_gen_title_background_enable = True
         self.threadlock_total_tokens_spent = threading.Lock()
+
+        self.credit_total_granted = 0
+        self.credit_total_used = 0
+        self.credit_total_available = 0
 
     def add_total_tokens(self, tokens: int):
         self.threadlock_total_tokens_spent.acquire()
@@ -336,9 +340,49 @@ class ChatGPT:
             f"[dim]Chat history saved to: [bright_magenta]{filename}", highlight=False)
 
     def get_credit_usage(self):
-        url = 'https://api.openai.com/dashboard/billing/credit_grants'
+        url_subscription = "https://api.openai.com/dashboard/billing/subscription"
+        url_usage = "https://api.openai.com/dashboard/billing/usage"
+
         try:
-            response = requests.get(url, headers=self.headers)
+            response_subscription = requests.get(
+                url_subscription, headers=self.headers, timeout=self.timeout)
+            self.credit_total_granted = response_subscription.json()["hard_limit_usd"]
+            # get response from /dashborad/billing/subscription for total granted credit
+
+            usage_get_start_date = datetime(2023, 1, 1)
+            usage_get_end_date = usage_get_start_date + timedelta(days=99)
+            # start with 2023-01-01, get 99 days' data per turn
+            usage_get_response_list = list()
+
+            while usage_get_start_date < datetime.now():
+                usage_get_params = {
+                    "start_date": usage_get_start_date.strftime("%Y-%m-%d"),
+                    "end_date": usage_get_end_date.strftime("%Y-%m-%d")
+                }
+                response_usage = requests.get(
+                    url_usage, headers=self.headers, params=usage_get_params, timeout=self.timeout)
+                usage_get_response_list.append(response_usage)
+                usage_get_start_date = usage_get_end_date
+                usage_get_end_date = usage_get_start_date + timedelta(days=99)
+            # get all usage info from 2023-01-01 to now
+            
+            credit_total_used_cent = 0
+            for response in usage_get_response_list:
+                credit_total_used_cent += response.json()["total_usage"]
+            self.credit_total_used = credit_total_used_cent / 100
+            self.credit_total_available = self.credit_total_granted - self.credit_total_used
+
+        except TypeError:
+            console.print(
+                "[red]Unexpected TypeError occured, `[bright_magenta]/usage[/]` command may be currently unavaliable.\n"
+                "[red]If you could, you may run this bash script `[bright_magenta]./billing_api_test[/]` to see if OpenAI Credit APIs are accessible or not.\n"
+                "[red]If this issue persists or if the bash script shows an error accessing the APIs, please let us know by creating a new issue in our Github repo."
+            )
+            return None
+        except requests.exceptions.ReadTimeout as e:
+            console.print(
+                f"[red]Error: API read timed out ({self.timeout}s). You can retry or increase the timeout.", highlight=False)
+            return None
         except requests.exceptions.RequestException as e:
             console.print(f"[red]Error: {str(e)}")
             log.exception(e)
@@ -350,8 +394,9 @@ class ChatGPT:
             self.save_chat_history(
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
-        return response.json()
-
+        
+        return True
+        
     def modify_system_prompt(self, new_content: str):
         if self.messages[0]['role'] == 'system':
             old_content = self.messages[0]['content']
@@ -396,7 +441,7 @@ class ChatGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/last', '/copy', '/model', '/save', '/system', '/title', '/timeout', '/undo', '/delete', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/title', '/timeout', '/undo', '/delete', '/help', '/exit'
     ]
 
     copy_actions = [
@@ -557,16 +602,13 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         chat_gpt.threadlock_total_tokens_spent.release()
 
     elif command == '/usage':
-        with console.status("Getting credit usage...") as status:
-            credit_usage = chat_gpt.get_credit_usage()
-        if not credit_usage:
-            return
-        console.print(Panel(f"[bold blue]Total Granted:[/]\t${credit_usage.get('total_granted')}\n"
-                            f"[bold bright_yellow]Used:[/]\t\t${credit_usage.get('total_used')}\n"
-                            f"[bold green]Available:[/]\t${credit_usage.get('total_available')}",
-                            title=credit_usage.get('object'), title_align='left', width=35, style='dim'))
-        console.print(
-            "[red]`[bright_magenta]/usage[/]` command is currently unavailable, it's not sure if this command will be available again or not.")
+        with console.status("Getting credit usage..."):
+            if not chat_gpt.get_credit_usage():
+                return
+        console.print(Panel(f"[bold blue]Total Granted:[/]\t${format(chat_gpt.credit_total_granted, '.2f')}\n"
+                            f"[bold bright_yellow]Used:[/]\t\t${format(chat_gpt.credit_total_used, '.2f')}\n"
+                            f"[bold green]Available:[/]\t${format(chat_gpt.credit_total_available, '.2f')}",
+                            title="Credit Summary", title_align='left', width=35, style='dim'))
 
     elif command.startswith('/model'):
         args = command.split()
@@ -695,6 +737,7 @@ def handle_command(command: str, chat_gpt: ChatGPT):
     /multi                   - Toggle multi-line mode (allow multi-line input)
     /stream                  - Toggle stream output mode (flow print the answer)
     /tokens                  - Show the total tokens spent and the tokens for the current conversation
+    /usage                   - Show total credits and current credits used
     /last                    - Display last ChatGPT's reply
     /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
     /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
