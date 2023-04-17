@@ -346,6 +346,9 @@ class ChatGPT:
         try:
             response_subscription = requests.get(
                 url_subscription, headers=self.headers, timeout=self.timeout)
+            if "error" in response_subscription.json():
+                log.error(f"/dashboard/billing/subscription resopned: {response_subscription.json()}")
+                raise RuntimeError("'/dashboard/billing/subscription' Access denied")
             self.credit_total_granted = response_subscription.json()["hard_limit_usd"]
             # get response from /dashborad/billing/subscription for total granted credit
 
@@ -361,20 +364,20 @@ class ChatGPT:
                 }
                 response_usage = requests.get(
                     url_usage, headers=self.headers, params=usage_get_params, timeout=self.timeout)
+                if "error" in response_usage.json():
+                    log.error(f"/dashboard/billing/usage responsed: {response_usage.json()}")
+                    raise RuntimeError("'/dashboard/billing/usage' Access denied")
                 credit_total_used_cent += response_usage.json()["total_usage"]
                 usage_get_start_date = usage_get_end_date
-                usage_get_end_date = usage_get_start_date + timedelta(days=99)
+                usage_get_end_date = usage_get_start_date - timedelta(days=99)
             # get all usage info from 2023-01-01 to now
             
             self.credit_total_used = credit_total_used_cent / 100
             self.credit_total_available = self.credit_total_granted - self.credit_total_used
 
-        except TypeError:
-            console.print(
-                "[red]Unexpected TypeError occured, `[bright_magenta]/usage[/]` command may be currently unavaliable.\n"
-                "[red]If you could, you may run this bash script `[bright_magenta]./billing_api_test[/]` to see if OpenAI Credit APIs are accessible or not.\n"
-                "[red]If this issue persists or if the bash script shows an error accessing the APIs, please let us know by creating a new issue in our Github repo."
-            )
+        except RuntimeError as e:
+            console.print(f"[red]Error: {str(e)}. Check log for more information.")
+            log.exception(e)
             return None
         except requests.exceptions.ReadTimeout as e:
             console.print(
