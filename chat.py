@@ -352,7 +352,7 @@ class ChatGPT:
             usage_get_start_date = datetime(2023, 1, 1)
             usage_get_end_date = usage_get_start_date + timedelta(days=99)
             # start with 2023-01-01, get 99 days' data per turn
-            usage_get_response_list = list()
+            credit_total_used_cent = 0
 
             while usage_get_start_date < datetime.now():
                 usage_get_params = {
@@ -361,14 +361,11 @@ class ChatGPT:
                 }
                 response_usage = requests.get(
                     url_usage, headers=self.headers, params=usage_get_params, timeout=self.timeout)
-                usage_get_response_list.append(response_usage)
+                credit_total_used_cent += response_usage.json()["total_usage"]
                 usage_get_start_date = usage_get_end_date
                 usage_get_end_date = usage_get_start_date + timedelta(days=99)
             # get all usage info from 2023-01-01 to now
             
-            credit_total_used_cent = 0
-            for response in usage_get_response_list:
-                credit_total_used_cent += response.json()["total_usage"]
             self.credit_total_used = credit_total_used_cent / 100
             self.credit_total_available = self.credit_total_granted - self.credit_total_used
 
