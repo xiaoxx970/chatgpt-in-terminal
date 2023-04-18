@@ -279,7 +279,7 @@ class ChatGPT:
         # this is a silent sub function, only for sub thread which auto-generates title when first conversation is made and debug functions
         # it SHOULD NOT be triggered or used by any other functions or commands
         # because of the usage of this subfunction, no check for messages list length and title appearance is needed
-        prompt = 'Generate a title for the following content in content\'s language, no more than 10 words, only use characters that work on multiple platform filesystems. \n\nContent: '
+        prompt = 'Generate a short title for the following content in content\'s language, only use characters that work on multiple platform filesystems. \n\nContent: '
         messages = [{"role": "user", "content": prompt + content}]
         data = {
             "model": "gpt-3.5-turbo",
@@ -534,7 +534,7 @@ def change_CLI_title(new_title: str):
     log.debug(f"CLI Title changed to '{new_title}'")
 
 
-def handle_command(command: str, chat_gpt: ChatGPT):
+def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings):
     '''处理斜杠(/)命令'''
     if command == '/raw':
         ChatMode.toggle_raw_mode()
@@ -625,7 +625,7 @@ def handle_command(command: str, chat_gpt: ChatGPT):
             new_content = ' '.join(args[1:])
         else:
             new_content = prompt(
-                "System prompt: ", default=chat_gpt.messages[0]['content'], style=style)
+                "System prompt: ", default=chat_gpt.messages[0]['content'], style=style, key_bindings=key_bindings)
         if new_content != chat_gpt.messages[0]['content']:
             chat_gpt.modify_system_prompt(new_content)
         else:
@@ -837,7 +837,7 @@ def main(args: argparse.Namespace):
 
             if message.startswith('/'):
                 command = message.strip().lower()
-                handle_command(command, chat_gpt)
+                handle_command(command, chat_gpt, key_bindings)
             else:
                 if not message:
                     continue
