@@ -92,7 +92,7 @@ class ChatGPT:
             "Authorization": f"Bearer {api_key}"
         }
         self.messages = [
-            {"role": "system", "content": "You are a helpful assistant."}]
+            {"role": "system", "content": f"You are a helpful assistant.\nKnowledge cutoff: 2021-09\nCurrent date: {datetime.now().strftime('%Y-%m-%d')}"}]
         self.model = 'gpt-3.5-turbo'
         self.tokens_limit = 4096
         # as default: gpt-3.5-turbo has a tokens limit as 4096
@@ -279,7 +279,7 @@ class ChatGPT:
         # this is a silent sub function, only for sub thread which auto-generates title when first conversation is made and debug functions
         # it SHOULD NOT be triggered or used by any other functions or commands
         # because of the usage of this subfunction, no check for messages list length and title appearance is needed
-        prompt = 'Generate a short title for the following content in content\'s language, only use characters that work on multiple platform filesystems. \n\nContent: '
+        prompt = 'Generate a minimal title for the following content in content\'s language, only use characters that work on multiple platform filesystems. \n\nContent: '
         messages = [{"role": "user", "content": prompt + content}]
         data = {
             "model": "gpt-3.5-turbo",
