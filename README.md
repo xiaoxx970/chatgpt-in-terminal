@@ -187,9 +187,7 @@ AUTO_GENERATE_TITLE=True
 
 - `/usage`: Display the API credits summary
 
-  > This feature may not be stable. If it doesn't work, you can use `./billing_api_test` to test API status.
-  > 
-  > Note: `./billing_api_test` is a bash script and cannot be run directly on Windows. If you are using Windows and need to test the API status, you can choose to use Git Bash or WSL. And plus, this script also relies on curl and jq, so make sure you have installed them correctly.
+  > This feature may not be stable. If it fails to operate, you can visit the [usage page](https://platform.openai.com/account/usage) to view further information.
 
 - `/model`: Show or change the Model in use
 

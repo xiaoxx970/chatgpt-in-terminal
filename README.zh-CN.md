@@ -189,9 +189,7 @@ AUTO_GENERATE_TITLE=True
 
 - `/usage`：显示已用的 API 的账号余额
 
-  > 这个功能也许会不稳定。如果使用这个命令时频繁报错或无法正常输出，你可以尝试使用`./billing_api_test` 脚本来测试 `/usage` 命令需要的API的目前状态。
-  >
-  > 注意：`./billing_api_test` 是一个bash脚本，无法在Windows上直接运行。如果你在使用Windows且需要测试API状态，可以选择使用Git Bash或是WSL。同时该脚本依赖于curl和jq，请确保你已经正确安装。
+  > 这个功能也许会不稳定。如果使用这个命令时频繁报错或无法正常输出，你可以访问 [usage 页面](https://platform.openai.com/account/usage) 查看更多信息。
 
 - `/model`：显示或选择使用的模型
 
