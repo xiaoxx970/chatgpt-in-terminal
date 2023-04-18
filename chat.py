@@ -245,8 +245,7 @@ class ChatGPT:
             console.print(
                 f"[red]Error: {str(e)}. Check log for more information")
             log.exception(e)
-            self.save_chat_history(
-                f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
+            self.save_chat_history_urgent()
             raise EOFError
 
         return reply_message
@@ -279,7 +278,7 @@ class ChatGPT:
         # this is a silent sub function, only for sub thread which auto-generates title when first conversation is made and debug functions
         # it SHOULD NOT be triggered or used by any other functions or commands
         # because of the usage of this subfunction, no check for messages list length and title appearance is needed
-        prompt = 'Generate a minimal title for the following content in content\'s language, only use characters that work on multiple platform filesystems. \n\nContent: '
+        prompt = 'Generate a minimal title for the following content in content\'s language, only use characters that work on multiple platform filesystems, no line-break. \n\nContent: '
         messages = [{"role": "user", "content": prompt + content}]
         data = {
             "model": "gpt-3.5-turbo",
@@ -317,23 +316,36 @@ class ChatGPT:
                 else:
                     change_CLI_title(self.title)
                 log.debug("Title Generation Daemon Thread: Pause")
-            
+
             except Exception as e:
                 console.print(
                     f"[red]Background Title auto-generation Error: {str(e)}. Check log for more information")
                 log.exception(e)
-                self.save_chat_history(
-                    f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
+                self.save_chat_history_urgent()
                 while gen_title_messages.unfinished_tasks:
                     gen_title_messages.task_done()
                 continue
                 # something went wrong, continue the loop
 
     def save_chat_history(self, filename):
+        try:
+            with open(f"{filename}", 'w', encoding='utf-8') as f:
+                json.dump(self.messages, f, ensure_ascii=False, indent=4)
+            console.print(
+                f"[dim]Chat history saved to: [bright_magenta]{filename}", highlight=False)
+        except Exception as e:
+            console.print(
+                f"[red]Error: {str(e)}. Check log for more information")
+            log.exception(e)
+            self.save_chat_history_urgent()
+            return
+
+    def save_chat_history_urgent(self):
+        filename = f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json'
         with open(f"{filename}", 'w', encoding='utf-8') as f:
             json.dump(self.messages, f, ensure_ascii=False, indent=4)
         console.print(
-            f"[dim]Chat history saved to: [bright_magenta]{filename}", highlight=False)
+            f"[dim]Chat history urgently saved to: [bright_magenta]{filename}", highlight=False)
 
     def get_credit_usage(self):
         url = 'https://api.openai.com/dashboard/billing/credit_grants'
@@ -347,8 +359,7 @@ class ChatGPT:
             console.print(
                 f"[red]Error: {str(e)}. Check log for more information")
             log.exception(e)
-            self.save_chat_history(
-                f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
+            self.save_chat_history_urgent()
             raise EOFError
         return response.json()
 
@@ -534,7 +545,7 @@ def change_CLI_title(new_title: str):
     log.debug(f"CLI Title changed to '{new_title}'")
 
 
-def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings):
+def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, chat_save_perfix: str):
     '''处理斜杠(/)命令'''
     if command == '/raw':
         ChatMode.toggle_raw_mode()
@@ -611,10 +622,10 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings):
             gen_filename = chat_gpt.gen_title()
             if gen_filename:
                 gen_filename = gen_filename.replace('"', '')
-                gen_filename = f"./chat_history_{gen_filename}.json"
+                gen_filename = f"{chat_save_perfix}{gen_filename}.json"
             # here: if title is already generated or generating, just use it
             # but title auto generation can also be disabled; therefore when title is not generated then try generating a new one
-            date_filename = f'./chat_history_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json'
+            date_filename = f'{chat_save_perfix}{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json'
             filename = prompt(
                 "Save to: ", default=gen_filename or date_filename, style=style)
         chat_gpt.save_chat_history(filename)
@@ -746,6 +757,7 @@ def create_key_bindings():
 
     return key_bindings
 
+
 def strtobool(val: str):
     """Convert a string representation of truth to True or False.
     True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
@@ -759,6 +771,7 @@ def strtobool(val: str):
         return False
     else:
         raise ValueError("invalid truth value %r" % (val,))
+
 
 def main(args: argparse.Namespace):
     # 从 .env 文件中读取 OPENAI_API_KEY
@@ -788,6 +801,8 @@ def main(args: argparse.Namespace):
         chat_gpt.auto_gen_title_background_enable = False
         log.debug("Auto title generation disabled")
     # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
+
+    chat_save_perfix = os.environ.get("CHAT_SAVE_PERFIX", "./chat_history_")
 
     gen_title_daemon_thread = threading.Thread(
         target=chat_gpt.auto_gen_title_background, daemon=True)
@@ -837,7 +852,8 @@ def main(args: argparse.Namespace):
 
             if message.startswith('/'):
                 command = message.strip().lower()
-                handle_command(command, chat_gpt, key_bindings)
+                handle_command(command, chat_gpt,
+                               key_bindings, chat_save_perfix)
             else:
                 if not message:
                     continue

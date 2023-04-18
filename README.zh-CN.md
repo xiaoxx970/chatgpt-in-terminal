@@ -21,7 +21,7 @@
 
 默认使用 [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) 模型，也就是 ChatGPT(免费版) 所使用的模型。
 
-## Changelog
+## 更新记录
 
 ### 2023-04-15
 
@@ -158,13 +158,19 @@ python3 chat.py
 
 ### `.env` 配置文件
 
-```.env
+```shell
 # OpenAI 的 API 密钥
 OPENAI_API_KEY=
+
 # 向 API 请求的最大等待时间，默认30s
 OPENAI_API_TIMEOUT=30
+
 # 是否为对话自动生成标题，默认开启（生成标题将额外消耗少量 token）
 AUTO_GENERATE_TITLE=True
+
+# 定义 /save 命令保存聊天历史时的默认文件前缀，默认值为"./chat_history_"，表示将聊天历史存到当前目录的以"chat_history_"开头的文件中
+# 同时该前缀还可以指定为目录+/的形式来让程序保存聊天历史到一个文件夹中(注意需要提前创建好对应文件夹)，比如：CHAT_SAVE_PERFIX=chat_history/
+CHAT_SAVE_PERFIX=./chat_history_
 ```
 
 ### 可用命令
