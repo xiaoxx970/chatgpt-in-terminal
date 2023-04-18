@@ -369,7 +369,7 @@ class ChatGPT:
                     raise RuntimeError("'/dashboard/billing/usage' Access denied")
                 credit_total_used_cent += response_usage.json()["total_usage"]
                 usage_get_start_date = usage_get_end_date
-                usage_get_end_date = usage_get_start_date - timedelta(days=99)
+                usage_get_end_date = usage_get_start_date + timedelta(days=99)
             # get all usage info from 2023-01-01 to now
             
             self.credit_total_used = credit_total_used_cent / 100
