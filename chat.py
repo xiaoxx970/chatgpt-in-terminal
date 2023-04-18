@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import argparse
+import concurrent.futures
 import json
 import logging
 import os
 import platform
-import queue
 import re
 import sys
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
+from queue import Queue
 from typing import Dict, List
 
 import pyperclip
@@ -49,7 +50,7 @@ style = Style.from_dict({
     "prompt": "ansigreen",  # 将提示符设置为绿色
 })
 
-gen_title_messages = queue.Queue()
+gen_title_messages = Queue()
 
 
 class ChatMode:
@@ -106,7 +107,8 @@ class ChatGPT:
 
         self.credit_total_granted = 0
         self.credit_total_used = 0
-        self.credit_total_available = 0
+        self.credit_monthly_used = 0
+        self.credit_plan = ""
 
     def add_total_tokens(self, tokens: int):
         self.threadlock_total_tokens_spent.acquire()
@@ -321,7 +323,7 @@ class ChatGPT:
                 else:
                     change_CLI_title(self.title)
                 log.debug("Title Generation Daemon Thread: Pause")
-            
+
             except Exception as e:
                 console.print(
                     f"[red]Background Title auto-generation Error: {str(e)}. Check log for more information")
@@ -339,46 +341,21 @@ class ChatGPT:
         console.print(
             f"[dim]Chat history saved to: [bright_magenta]{filename}", highlight=False)
 
-    def get_credit_usage(self):
-        url_subscription = "https://api.openai.com/dashboard/billing/subscription"
-        url_usage = "https://api.openai.com/dashboard/billing/usage"
-
+    def send_get(self, url, params=None):
         try:
-            response_subscription = requests.get(
-                url_subscription, headers=self.headers, timeout=self.timeout)
-            if "error" in response_subscription.json():
-                log.error(f"/dashboard/billing/subscription resopned: {response_subscription.json()}")
-                raise RuntimeError("'/dashboard/billing/subscription' Access denied")
-            self.credit_total_granted = response_subscription.json()["hard_limit_usd"]
-            # get response from /dashborad/billing/subscription for total granted credit
-
-            usage_get_start_date = datetime(2023, 1, 1)
-            usage_get_end_date = usage_get_start_date + timedelta(days=99)
-            # start with 2023-01-01, get 99 days' data per turn
-            credit_total_used_cent = 0
-
-            while usage_get_start_date < datetime.now():
-                usage_get_params = {
-                    "start_date": usage_get_start_date.strftime("%Y-%m-%d"),
-                    "end_date": usage_get_end_date.strftime("%Y-%m-%d")
-                }
-                response_usage = requests.get(
-                    url_usage, headers=self.headers, params=usage_get_params, timeout=self.timeout)
-                if "error" in response_usage.json():
-                    log.error(f"/dashboard/billing/usage responsed: {response_usage.json()}")
-                    raise RuntimeError("'/dashboard/billing/usage' Access denied")
-                credit_total_used_cent += response_usage.json()["total_usage"]
-                usage_get_start_date = usage_get_end_date
-                usage_get_end_date = usage_get_start_date + timedelta(days=99)
-            # get all usage info from 2023-01-01 to now
-            
-            self.credit_total_used = credit_total_used_cent / 100
-            self.credit_total_available = self.credit_total_granted - self.credit_total_used
-
-        except RuntimeError as e:
-            console.print(f"[red]Error: {str(e)}. Check log for more information.")
-            log.exception(e)
-            return None
+            response = requests.get(
+                url, headers=self.headers, timeout=self.timeout, params=params)
+        # 匹配4xx错误，显示服务器返回的具体原因
+            if response.status_code // 100 == 4:
+                error_msg = response.json()['error']['message']
+                console.print(f"[red]Get {url} Error: {error_msg}")
+                log.error(error_msg)
+                return None
+            response.raise_for_status()
+            return response
+        except KeyboardInterrupt:
+            console.print("[bold cyan]Aborted.")
+            raise
         except requests.exceptions.ReadTimeout as e:
             console.print(
                 f"[red]Error: API read timed out ({self.timeout}s). You can retry or increase the timeout.", highlight=False)
@@ -387,6 +364,71 @@ class ChatGPT:
             console.print(f"[red]Error: {str(e)}")
             log.exception(e)
             return None
+
+    def fetch_credit_total_granted(self):
+        url_subscription = "https://api.openai.com/dashboard/billing/subscription"
+        response_subscription = self.send_get(url_subscription)
+        if not response_subscription:
+            self.credit_total_granted = None
+        response_subscription_json = response_subscription.json()
+        self.credit_total_granted = response_subscription_json["hard_limit_usd"]
+        self.credit_plan = response_subscription_json["plan"]["title"]
+
+    def fetch_credit_monthly_used(self, url_usage):
+        usage_get_params_monthly = {
+            "start_date": str(date.today().replace(day=1)),
+            "end_date": str(date.today() + timedelta(days=1))}
+        response_monthly_usage = self.send_get(
+            url_usage, params=usage_get_params_monthly)
+        if not response_monthly_usage:
+            self.credit_monthly_used = None
+        self.credit_monthly_used = response_monthly_usage.json()[
+            "total_usage"] / 100
+
+    def get_credit_usage(self):
+        url_usage = "https://api.openai.com/dashboard/billing/usage"
+        try:
+            # get response from /dashborad/billing/subscription for total granted credit
+            fetch_credit_total_granted_thread = threading.Thread(
+                target=self.fetch_credit_total_granted)
+            fetch_credit_total_granted_thread.start()
+
+            # get usage this month
+            fetch_credit_monthly_used_thread = threading.Thread(
+                target=self.fetch_credit_monthly_used, args=(url_usage,))
+            fetch_credit_monthly_used_thread.start()
+
+            # start with 2023-01-01, get 99 days' data per turn
+            usage_get_start_date = date(2023, 1, 1)
+            usage_get_end_date = usage_get_start_date + timedelta(days=99)
+            # 创建线程池，设置最大线程数为5
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                # 提交任务到线程池列表
+                futures = []
+                while usage_get_start_date < date.today():
+                    usage_get_params = {
+                        "start_date": str(usage_get_start_date),
+                        "end_date": str(usage_get_end_date)}
+                    futures.append(executor.submit(
+                        self.send_get, url_usage, usage_get_params))
+                    usage_get_start_date = usage_get_end_date
+                    usage_get_end_date = usage_get_start_date + timedelta(days=99)
+
+            fetch_credit_total_granted_thread.join()
+            fetch_credit_monthly_used_thread.join()
+
+            credit_total_used_cent = 0
+            # 获取所有线程池任务的返回值
+            for future in futures:
+                result = future.result()
+                if result:
+                    credit_total_used_cent += result.json()["total_usage"]
+            # get all usage info from 2023-01-01 to now
+            self.credit_total_used = credit_total_used_cent / 100
+
+        except KeyboardInterrupt:
+            console.print("[bold cyan]Aborted.")
+            raise
         except Exception as e:
             console.print(
                 f"[red]Error: {str(e)}. Check log for more information")
@@ -394,9 +436,8 @@ class ChatGPT:
             self.save_chat_history(
                 f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json')
             raise EOFError
-        
         return True
-        
+
     def modify_system_prompt(self, new_content: str):
         if self.messages[0]['role'] == 'system':
             old_content = self.messages[0]['content']
@@ -602,13 +643,13 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         chat_gpt.threadlock_total_tokens_spent.release()
 
     elif command == '/usage':
-        with console.status("Getting credit usage..."):
+        with console.status("[cyan]Getting credit usage..."):
             if not chat_gpt.get_credit_usage():
                 return
-        console.print(Panel(f"[bold blue]Total Granted:[/]\t${format(chat_gpt.credit_total_granted, '.2f')}\n"
-                            f"[bold bright_yellow]Used:[/]\t\t${format(chat_gpt.credit_total_used, '.2f')}\n"
-                            f"[bold green]Available:[/]\t${format(chat_gpt.credit_total_available, '.2f')}",
-                            title="Credit Summary", title_align='left', width=35, style='dim'))
+        console.print(Panel(f"[bold green]Total Granted:[/]\t${format(chat_gpt.credit_total_granted, '.2f')}\n"
+                            f"[bold cyan]Monthly Used:[/]\t${format(chat_gpt.credit_monthly_used, '.2f')}\n"
+                            f"[bold blue]Total Used:[/]\t${format(chat_gpt.credit_total_used, '.2f')}",
+                            title="Credit Summary", title_align='left', subtitle=f"[blue]Plan: {chat_gpt.credit_plan}", width=35, style='dim'))
 
     elif command.startswith('/model'):
         args = command.split()
@@ -789,6 +830,7 @@ def create_key_bindings():
 
     return key_bindings
 
+
 def strtobool(val: str):
     """Convert a string representation of truth to True or False.
     True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
@@ -802,6 +844,7 @@ def strtobool(val: str):
         return False
     else:
         raise ValueError("invalid truth value %r" % (val,))
+
 
 def main(args: argparse.Namespace):
     # 从 .env 文件中读取 OPENAI_API_KEY
