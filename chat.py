@@ -44,6 +44,8 @@ style = Style.from_dict({
     "prompt": "ansigreen",  # 将提示符设置为绿色
 })
 
+remote_version = None
+local_version = None
 
 
 class ChatMode:
@@ -487,7 +489,7 @@ class ChatGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/title', '/timeout', '/undo', '/delete', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/title', '/timeout', '/undo', '/delete', '/version', '/help', '/exit'
     ]
 
     copy_actions = [
@@ -768,6 +770,11 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         else:
             chat_gpt.delete_first_conversation()
 
+    elif command == '/version':
+        console.print(Panel(f"[bold blue]Local Version:[/]\t{local_version}\n"
+                            f"[bold green]Remote Version:[/]\t{remote_version}",
+                            title='Version', title_align='left', width=28, style='dim'))
+
     elif command == '/exit':
         raise EOFError
 
@@ -789,6 +796,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
     /undo                    - Undo the last question and remove its answer
     /delete (first)          - Delete the first conversation in current chat
     /delete all              - Clear all messages and conversations current chat
+    /version                 - Show chatgpt-in-terminal local and remote version
     /help                    - Show this help message
     /exit                    - Exit the application''')
 
@@ -843,9 +851,29 @@ def strtobool(val: str):
         return False
     else:
         raise ValueError("invalid truth value %r" % (val,))
+    
+
+def get_remote_version():
+    """Get remote VERSION from GitHub
+    Version contains by ~/VERSION file
+    """
+    response = requests.get(
+        url="https://raw.githubusercontent.com/Ace-Radom/chatgpt-in-terminal/version_ext/VERSION", timeout=5)
+    if response.status_code == 200:
+        global remote_version 
+        remote_version = response.text.strip()
 
 
 def main(args: argparse.Namespace):
+    get_remote_version_thread = threading.Thread(target=get_remote_version)
+    get_remote_version_thread.start()
+    # try to get remote version
+
+    if os.path.exists("VERSION"):
+        with open("VERSION", "r") as f:
+            global local_version
+            local_version = f.read().strip()
+
     # 从 .env 文件中读取 OPENAI_API_KEY
     load_dotenv()
 
@@ -888,8 +916,14 @@ def main(args: argparse.Namespace):
     gen_title_daemon_thread.start()
     log.debug("Title generation daemon thread started")
 
+    get_remote_version_thread.join()
+
     console.print(
         "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
+    
+    if remote_version and remote_version != local_version:
+        console.print(
+            f"[dim]New version available: [red]{local_version}[/] -> [green]{remote_version}[/]")
 
     if args.model:
         chat_gpt.set_model(args.model)
