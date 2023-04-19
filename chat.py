@@ -107,7 +107,7 @@ class ChatGPT:
 
         self.credit_total_granted = 0
         self.credit_total_used = 0
-        self.credit_monthly_used = 0
+        self.credit_used_this_month = 0
         self.credit_plan = ""
 
     def add_total_tokens(self, tokens: int):
@@ -381,8 +381,8 @@ class ChatGPT:
         response_monthly_usage = self.send_get(
             url_usage, params=usage_get_params_monthly)
         if not response_monthly_usage:
-            self.credit_monthly_used = None
-        self.credit_monthly_used = response_monthly_usage.json()[
+            self.credit_used_this_month = None
+        self.credit_used_this_month = response_monthly_usage.json()[
             "total_usage"] / 100
 
     def get_credit_usage(self):
@@ -630,12 +630,6 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         ChatMode.toggle_stream_mode()
 
     elif command == '/tokens':
-        # here: tokens count may be wrong because of the support of changing AI models, because gpt-4 API allows max 8192 tokens (gpt-4-32k up to 32768)
-        # one possible solution is: there are only 6 models under '/v1/chat/completions' now, and with if-elif-else all cases can be enumerated
-        # but that means, when the model list is updated, here needs to be updated too
-
-        # tokens limit judge moved to ChatGPT.set_model function
-
         chat_gpt.threadlock_total_tokens_spent.acquire()
         console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chat_gpt.total_tokens_spent}\n"
                             f"[bold green]Current Tokens:[/]\t\t{chat_gpt.current_tokens}/[bold]{chat_gpt.tokens_limit}",
@@ -646,9 +640,9 @@ def handle_command(command: str, chat_gpt: ChatGPT):
         with console.status("[cyan]Getting credit usage..."):
             if not chat_gpt.get_credit_usage():
                 return
-        console.print(Panel(f"[bold green]Total Granted:[/]\t${format(chat_gpt.credit_total_granted, '.2f')}\n"
-                            f"[bold cyan]Monthly Used:[/]\t${format(chat_gpt.credit_monthly_used, '.2f')}\n"
-                            f"[bold blue]Total Used:[/]\t${format(chat_gpt.credit_total_used, '.2f')}",
+        console.print(Panel(f"[bold green]Total Granted:[/]\t\t${format(chat_gpt.credit_total_granted, '.2f')}\n"
+                            f"[bold cyan]Used This Month:[/]\t${format(chat_gpt.credit_used_this_month, '.2f')}\n"
+                            f"[bold blue]Used Total:[/]\t\t${format(chat_gpt.credit_total_used, '.2f')}",
                             title="Credit Summary", title_align='left', subtitle=f"[blue]Plan: {chat_gpt.credit_plan}", width=35, style='dim'))
 
     elif command.startswith('/model'):
@@ -857,13 +851,10 @@ def main(args: argparse.Namespace):
         api_key = os.environ.get(args.key)
     else:
         api_key = os.environ.get("OPENAI_API_KEY")
+
     if not api_key:
         log.debug("API Key not found, waiting for input")
         api_key = prompt("OpenAI API Key not found, please input: ")
-    api_key_log = api_key[:3] + '*' * (len(api_key) - 7) + api_key[-4:]
-    log.debug(f"Loaded API Key: {api_key_log}")
-    if len(api_key) <= 7:
-        log.debug("API Key may be wrong (too short)")
 
     api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "30"))
     log.debug(f"API Timeout set to {api_timeout}")
@@ -871,14 +862,14 @@ def main(args: argparse.Namespace):
     chat_gpt = ChatGPT(api_key, api_timeout)
 
     if not strtobool(os.environ.get("AUTO_GENERATE_TITLE", "True")):
+        # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
         chat_gpt.auto_gen_title_background_enable = False
         log.debug("Auto title generation disabled")
-    # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
 
+    # start generate title daemon thread
     gen_title_daemon_thread = threading.Thread(
         target=chat_gpt.auto_gen_title_background, daemon=True)
     gen_title_daemon_thread.start()
-    # start generate title daemon thread
     log.debug("Title generation daemon thread started")
 
     console.print(
@@ -886,7 +877,6 @@ def main(args: argparse.Namespace):
 
     if args.model:
         chat_gpt.set_model(args.model)
-        log.debug(f"Set model to '{args.model}'")
 
     if args.multi:
         ChatMode.toggle_multi_line_mode()
@@ -902,7 +892,7 @@ def main(args: argparse.Namespace):
             for message in chat_gpt.messages:
                 print_message(message)
             chat_gpt.current_tokens = count_token(chat_gpt.messages)
-            log.debug(f"Chat history successfully loaded from: {args.load}")
+            log.info(f"Chat history successfully loaded from: {args.load}")
             console.print(
                 f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
 
@@ -913,8 +903,6 @@ def main(args: argparse.Namespace):
 
     # 绑定回车事件，达到自定义多行模式的效果
     key_bindings = create_key_bindings()
-
-    log.debug("Main process start")
 
     while True:
         try:
@@ -943,7 +931,6 @@ def main(args: argparse.Namespace):
     log.info(f"Total tokens spent: {chat_gpt.total_tokens_spent}")
     console.print(
         f"[bright_magenta]Total tokens spent: [bold]{chat_gpt.total_tokens_spent}")
-    # here: no lock is needed any more because sub thread is stoped
 
 
 if __name__ == "__main__":
