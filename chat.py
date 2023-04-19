@@ -853,26 +853,27 @@ def strtobool(val: str):
         raise ValueError("invalid truth value %r" % (val,))
     
 
-def get_remote_version():
-    """Get remote VERSION from GitHub
+def get_remote_local_version():
+    """Get remote VERSION from GitHub, local VERSION from ~/VERSION
     Version contains by ~/VERSION file
     """
+    global remote_version
+    global local_version
+
     response = requests.get(
         url="https://raw.githubusercontent.com/Ace-Radom/chatgpt-in-terminal/version_ext/VERSION", timeout=5)
     if response.status_code == 200:
-        global remote_version 
         remote_version = response.text.strip()
+    
+    if os.path.exists("VERSION"):
+        with open("VERSION", "r") as f:
+            local_version = f.read().strip()
 
 
 def main(args: argparse.Namespace):
-    get_remote_version_thread = threading.Thread(target=get_remote_version)
-    get_remote_version_thread.start()
-    # try to get remote version
-
-    if os.path.exists("VERSION"):
-        with open("VERSION", "r") as f:
-            global local_version
-            local_version = f.read().strip()
+    get_remote_local_version_thread = threading.Thread(target=get_remote_local_version)
+    get_remote_local_version_thread.start()
+    # try to get remote and local version
 
     # 从 .env 文件中读取 OPENAI_API_KEY
     load_dotenv()
@@ -916,7 +917,7 @@ def main(args: argparse.Namespace):
     gen_title_daemon_thread.start()
     log.debug("Title generation daemon thread started")
 
-    get_remote_version_thread.join()
+    get_remote_local_version_thread.join()
 
     console.print(
         "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
