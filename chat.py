@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import argparse
+import concurrent.futures
 import json
 import logging
 import os
 import platform
-import queue
 import re
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, date, timedelta
+from queue import Queue
 from typing import Dict, List
 
 import pyperclip
@@ -49,7 +50,7 @@ style = Style.from_dict({
     "prompt": "ansigreen",  # 将提示符设置为绿色
 })
 
-gen_title_messages = queue.Queue()
+gen_title_messages = Queue()
 
 
 class ChatMode:
@@ -103,6 +104,11 @@ class ChatGPT:
         self.title: str = None
         self.auto_gen_title_background_enable = True
         self.threadlock_total_tokens_spent = threading.Lock()
+
+        self.credit_total_granted = 0
+        self.credit_total_used = 0
+        self.credit_used_this_month = 0
+        self.credit_plan = ""
 
     def add_total_tokens(self, tokens: int):
         self.threadlock_total_tokens_spent.acquire()
@@ -347,21 +353,101 @@ class ChatGPT:
         console.print(
             f"[dim]Chat history urgently saved to: [bright_magenta]{filename}", highlight=False)
 
-    def get_credit_usage(self):
-        url = 'https://api.openai.com/dashboard/billing/credit_grants'
+    def send_get(self, url, params=None):
         try:
-            response = requests.get(url, headers=self.headers)
+            response = requests.get(
+                url, headers=self.headers, timeout=self.timeout, params=params)
+        # 匹配4xx错误，显示服务器返回的具体原因
+            if response.status_code // 100 == 4:
+                error_msg = response.json()['error']['message']
+                console.print(f"[red]Get {url} Error: {error_msg}")
+                log.error(error_msg)
+                return None
+            response.raise_for_status()
+            return response
+        except KeyboardInterrupt:
+            console.print("[bold cyan]Aborted.")
+            raise
+        except requests.exceptions.ReadTimeout as e:
+            console.print(
+                f"[red]Error: API read timed out ({self.timeout}s). You can retry or increase the timeout.", highlight=False)
+            return None
         except requests.exceptions.RequestException as e:
             console.print(f"[red]Error: {str(e)}")
             log.exception(e)
             return None
+
+    def fetch_credit_total_granted(self):
+        url_subscription = "https://api.openai.com/dashboard/billing/subscription"
+        response_subscription = self.send_get(url_subscription)
+        if not response_subscription:
+            self.credit_total_granted = None
+        response_subscription_json = response_subscription.json()
+        self.credit_total_granted = response_subscription_json["hard_limit_usd"]
+        self.credit_plan = response_subscription_json["plan"]["title"]
+
+    def fetch_credit_monthly_used(self, url_usage):
+        usage_get_params_monthly = {
+            "start_date": str(date.today().replace(day=1)),
+            "end_date": str(date.today() + timedelta(days=1))}
+        response_monthly_usage = self.send_get(
+            url_usage, params=usage_get_params_monthly)
+        if not response_monthly_usage:
+            self.credit_used_this_month = None
+        self.credit_used_this_month = response_monthly_usage.json()[
+            "total_usage"] / 100
+
+    def get_credit_usage(self):
+        url_usage = "https://api.openai.com/dashboard/billing/usage"
+        try:
+            # get response from /dashborad/billing/subscription for total granted credit
+            fetch_credit_total_granted_thread = threading.Thread(
+                target=self.fetch_credit_total_granted)
+            fetch_credit_total_granted_thread.start()
+
+            # get usage this month
+            fetch_credit_monthly_used_thread = threading.Thread(
+                target=self.fetch_credit_monthly_used, args=(url_usage,))
+            fetch_credit_monthly_used_thread.start()
+
+            # start with 2023-01-01, get 99 days' data per turn
+            usage_get_start_date = date(2023, 1, 1)
+            usage_get_end_date = usage_get_start_date + timedelta(days=99)
+            # 创建线程池，设置最大线程数为5
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                # 提交任务到线程池列表
+                futures = []
+                while usage_get_start_date < date.today():
+                    usage_get_params = {
+                        "start_date": str(usage_get_start_date),
+                        "end_date": str(usage_get_end_date)}
+                    futures.append(executor.submit(
+                        self.send_get, url_usage, usage_get_params))
+                    usage_get_start_date = usage_get_end_date
+                    usage_get_end_date = usage_get_start_date + timedelta(days=99)
+
+            fetch_credit_total_granted_thread.join()
+            fetch_credit_monthly_used_thread.join()
+
+            credit_total_used_cent = 0
+            # 获取所有线程池任务的返回值
+            for future in futures:
+                result = future.result()
+                if result:
+                    credit_total_used_cent += result.json()["total_usage"]
+            # get all usage info from 2023-01-01 to now
+            self.credit_total_used = credit_total_used_cent / 100
+
+        except KeyboardInterrupt:
+            console.print("[bold cyan]Aborted.")
+            raise
         except Exception as e:
             console.print(
                 f"[red]Error: {str(e)}. Check log for more information")
             log.exception(e)
             self.save_chat_history_urgent()
             raise EOFError
-        return response.json()
+        return True
 
     def modify_system_prompt(self, new_content: str):
         if self.messages[0]['role'] == 'system':
@@ -407,7 +493,7 @@ class ChatGPT:
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/last', '/copy', '/model', '/save', '/system', '/title', '/timeout', '/undo', '/delete', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/title', '/timeout', '/undo', '/delete', '/help', '/exit'
     ]
 
     copy_actions = [
@@ -555,12 +641,6 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         ChatMode.toggle_stream_mode()
 
     elif command == '/tokens':
-        # here: tokens count may be wrong because of the support of changing AI models, because gpt-4 API allows max 8192 tokens (gpt-4-32k up to 32768)
-        # one possible solution is: there are only 6 models under '/v1/chat/completions' now, and with if-elif-else all cases can be enumerated
-        # but that means, when the model list is updated, here needs to be updated too
-
-        # tokens limit judge moved to ChatGPT.set_model function
-
         chat_gpt.threadlock_total_tokens_spent.acquire()
         console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chat_gpt.total_tokens_spent}\n"
                             f"[bold green]Current Tokens:[/]\t\t{chat_gpt.current_tokens}/[bold]{chat_gpt.tokens_limit}",
@@ -568,16 +648,13 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         chat_gpt.threadlock_total_tokens_spent.release()
 
     elif command == '/usage':
-        with console.status("Getting credit usage...") as status:
-            credit_usage = chat_gpt.get_credit_usage()
-        if not credit_usage:
-            return
-        console.print(Panel(f"[bold blue]Total Granted:[/]\t${credit_usage.get('total_granted')}\n"
-                            f"[bold bright_yellow]Used:[/]\t\t${credit_usage.get('total_used')}\n"
-                            f"[bold green]Available:[/]\t${credit_usage.get('total_available')}",
-                            title=credit_usage.get('object'), title_align='left', width=35, style='dim'))
-        console.print(
-            "[red]`[bright_magenta]/usage[/]` command is currently unavailable, it's not sure if this command will be available again or not.")
+        with console.status("[cyan]Getting credit usage..."):
+            if not chat_gpt.get_credit_usage():
+                return
+        console.print(Panel(f"[bold green]Total Granted:[/]\t\t${format(chat_gpt.credit_total_granted, '.2f')}\n"
+                            f"[bold cyan]Used This Month:[/]\t${format(chat_gpt.credit_used_this_month, '.2f')}\n"
+                            f"[bold blue]Used Total:[/]\t\t${format(chat_gpt.credit_total_used, '.2f')}",
+                            title="Credit Summary", title_align='left', subtitle=f"[blue]Plan: {chat_gpt.credit_plan}", width=35, style='dim'))
 
     elif command.startswith('/model'):
         args = command.split()
@@ -706,6 +783,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
     /multi                   - Toggle multi-line mode (allow multi-line input)
     /stream                  - Toggle stream output mode (flow print the answer)
     /tokens                  - Show the total tokens spent and the tokens for the current conversation
+    /usage                   - Show total credits and current credits used
     /last                    - Display last ChatGPT's reply
     /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
     /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
@@ -784,13 +862,10 @@ def main(args: argparse.Namespace):
         api_key = os.environ.get(args.key)
     else:
         api_key = os.environ.get("OPENAI_API_KEY")
+
     if not api_key:
         log.debug("API Key not found, waiting for input")
         api_key = prompt("OpenAI API Key not found, please input: ")
-    api_key_log = api_key[:3] + '*' * (len(api_key) - 7) + api_key[-4:]
-    log.debug(f"Loaded API Key: {api_key_log}")
-    if len(api_key) <= 7:
-        log.debug("API Key may be wrong (too short)")
 
     api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "30"))
     log.debug(f"API Timeout set to {api_timeout}")
@@ -798,16 +873,15 @@ def main(args: argparse.Namespace):
     chat_gpt = ChatGPT(api_key, api_timeout)
 
     if not strtobool(os.environ.get("AUTO_GENERATE_TITLE", "True")):
+        # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
         chat_gpt.auto_gen_title_background_enable = False
         log.debug("Auto title generation disabled")
-    # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
 
     chat_save_perfix = os.environ.get("CHAT_SAVE_PERFIX", "./chat_history_")
 
     gen_title_daemon_thread = threading.Thread(
         target=chat_gpt.auto_gen_title_background, daemon=True)
     gen_title_daemon_thread.start()
-    # start generate title daemon thread
     log.debug("Title generation daemon thread started")
 
     console.print(
@@ -815,7 +889,6 @@ def main(args: argparse.Namespace):
 
     if args.model:
         chat_gpt.set_model(args.model)
-        log.debug(f"Set model to '{args.model}'")
 
     if args.multi:
         ChatMode.toggle_multi_line_mode()
@@ -831,7 +904,7 @@ def main(args: argparse.Namespace):
             for message in chat_gpt.messages:
                 print_message(message)
             chat_gpt.current_tokens = count_token(chat_gpt.messages)
-            log.debug(f"Chat history successfully loaded from: {args.load}")
+            log.info(f"Chat history successfully loaded from: {args.load}")
             console.print(
                 f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
 
@@ -842,8 +915,6 @@ def main(args: argparse.Namespace):
 
     # 绑定回车事件，达到自定义多行模式的效果
     key_bindings = create_key_bindings()
-
-    log.debug("Main process start")
 
     while True:
         try:
@@ -873,7 +944,6 @@ def main(args: argparse.Namespace):
     log.info(f"Total tokens spent: {chat_gpt.total_tokens_spent}")
     console.print(
         f"[bright_magenta]Total tokens spent: [bold]{chat_gpt.total_tokens_spent}")
-    # here: no lock is needed any more because sub thread is stoped
 
 
 if __name__ == "__main__":

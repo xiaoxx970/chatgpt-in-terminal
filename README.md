@@ -191,7 +191,9 @@ CHAT_SAVE_PERFIX=./chat_history_
 
   > GPT-3.5 has a token limit of 4096; use this command to check if you're approaching the limit
 
-- `/usage`: ~~Display the API credits summary~~ Currently unavailable
+- `/usage`: Display the API credits summary
+
+  > This feature may not be stable. If it fails to operate, you can visit the [usage page](https://platform.openai.com/account/usage) to view further information.
 
 - `/model`: Show or change the Model in use
 

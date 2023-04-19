@@ -193,7 +193,9 @@ CHAT_SAVE_PERFIX=./chat_history_
 
   > GPT-3.5的对话token限制为4096，可通过此命令实时查看是否接近限制
 
-- `/usage`：~~显示已用的 API 的账号余额~~ 暂时不可用
+- `/usage`：显示已用的 API 的账号余额
+
+  > 这个功能也许会不稳定。如果使用这个命令时频繁报错或无法正常输出，你可以访问 [usage 页面](https://platform.openai.com/account/usage) 查看更多信息。
 
 - `/model`：显示或选择使用的模型
 
