@@ -156,13 +156,19 @@ When entering a question in single-line mode, use `Esc` + `Enter` to start a new
 
 ### `.env` configuration file
 
-```.env
+```shell
 # API key for OpenAI
 OPENAI_API_KEY=
+
 # The maximum waiting time for API requests, the default is 30s
 OPENAI_API_TIMEOUT=30
+
 # Whether to automatically generate titles for conversations, enabled by default (generating titles will consume a small amount of tokens)
 AUTO_GENERATE_TITLE=True
+
+# Define the default file prefix when the /save command saves the chat history. The default value is "./chat_history_", which means that the chat history will be saved in the file starting with "chat_history_" in the current directory
+# At the same time, the prefix can also be specified as a directory + / to allow the program to save the chat history in a folder (note that the corresponding folder needs to be created in advance), for example: CHAT_SAVE_PERFIX=chat_history/
+CHAT_SAVE_PERFIX=./chat_history_
 ```
 
 ### Available Commands
