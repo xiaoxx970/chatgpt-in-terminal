@@ -169,6 +169,9 @@ AUTO_GENERATE_TITLE=True
 # Define the default file prefix when the /save command saves the chat history. The default value is "./chat_history_", which means that the chat history will be saved in the file starting with "chat_history_" in the current directory
 # At the same time, the prefix can also be specified as a directory + / to allow the program to save the chat history in a folder (note that the corresponding folder needs to be created in advance), for example: CHAT_SAVE_PERFIX=chat_history/
 CHAT_SAVE_PERFIX=./chat_history_
+
+# Log level, default is INFO, available value: DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_LEVEL=INFO
 ```
 
 ### Available Commands

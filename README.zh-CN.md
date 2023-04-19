@@ -171,6 +171,9 @@ AUTO_GENERATE_TITLE=True
 # 定义 /save 命令保存聊天历史时的默认文件前缀，默认值为"./chat_history_"，表示将聊天历史存到当前目录的以"chat_history_"开头的文件中
 # 同时该前缀还可以指定为目录+/的形式来让程序保存聊天历史到一个文件夹中(注意需要提前创建好对应文件夹)，比如：CHAT_SAVE_PERFIX=chat_history/
 CHAT_SAVE_PERFIX=./chat_history_
+
+# 日志级别，默认为INFO，可选值：DEBUG、INFO、WARNING、ERROR、CRITICAL
+LOG_LEVEL=INFO
 ```
 
 ### 可用命令

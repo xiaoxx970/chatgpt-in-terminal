@@ -36,12 +36,6 @@ from rich.panel import Panel
 logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO, encoding="UTF-8")
 
-# If you want to see all debug logs, comment the two lines above and dis-comment two lines below
-# 若要记录debug级别的日志，将上面的basicConfig注释掉并取消下面的的注释，或将level改为logging.DEBUG
-
-# logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
-#                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.DEBUG, encoding="UTF-8")
-
 log = logging.getLogger("chat")
 
 console = Console()
@@ -50,7 +44,6 @@ style = Style.from_dict({
     "prompt": "ansigreen",  # 将提示符设置为绿色
 })
 
-gen_title_messages = Queue()
 
 
 class ChatMode:
@@ -102,6 +95,7 @@ class ChatGPT:
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
         self.title: str = None
+        self.gen_title_messages = Queue()
         self.auto_gen_title_background_enable = True
         self.threadlock_total_tokens_spent = threading.Lock()
 
@@ -240,7 +234,7 @@ class ChatGPT:
                 self.add_total_tokens(self.current_tokens)
 
                 if len(self.messages) == 3 and self.auto_gen_title_background_enable:
-                    gen_title_messages.put(self.messages[1]['content'])
+                    self.gen_title_messages.put(self.messages[1]['content'])
 
                 if self.tokens_limit - self.current_tokens in range(1, 500):
                     console.print(
@@ -264,16 +258,16 @@ class ChatGPT:
 
         try:
             with console.status("[bold cyan]Waiting last generationg to finish..."):
-                gen_title_messages.join()
+                self.gen_title_messages.join()
             if self.title and not force:
                 return self.title
 
             # title not generated, do
 
             content_this_time = self.messages[1]['content']
-            gen_title_messages.put(content_this_time)
+            self.gen_title_messages.put(content_this_time)
             with console.status("[bold cyan]Generating title... [/](Ctrl-C to skip)"):
-                gen_title_messages.join()
+                self.gen_title_messages.join()
         except KeyboardInterrupt:
             console.print("Skip wait.", style="bold cyan")
             raise
@@ -284,8 +278,8 @@ class ChatGPT:
         # this is a silent sub function, only for sub thread which auto-generates title when first conversation is made and debug functions
         # it SHOULD NOT be triggered or used by any other functions or commands
         # because of the usage of this subfunction, no check for messages list length and title appearance is needed
-        prompt = 'Generate a minimal title for the following content in content\'s language, only use characters that work on multiple platform filesystems, no line-break. \n\nContent: '
-        messages = [{"role": "user", "content": prompt + content}]
+        prompt = f'Generate a minimal title for the following content in content\'s language, then remove all reserved characters in Windows AND Linux in the result, also DO NOT include line-break. \n\nContent: """\n{content}\n"""'
+        messages = [{"role": "user", "content": prompt}]
         data = {
             "model": "gpt-3.5-turbo",
             "messages": messages,
@@ -312,10 +306,10 @@ class ChatGPT:
         # it SHOULD NOT be triggered or used by any other functions or commands
         while True:
             try:
-                content_this_time = gen_title_messages.get()
+                content_this_time = self.gen_title_messages.get()
                 log.debug(f"Title Generation Daemon Thread: Working with message \"{content_this_time}\"")
                 new_title = self.gen_title_silent(content_this_time)
-                gen_title_messages.task_done()
+                self.gen_title_messages.task_done()
                 time.sleep(0.2)
                 if not new_title:
                     log.error("Background Title auto-generation Failed")
@@ -328,8 +322,8 @@ class ChatGPT:
                     f"[red]Background Title auto-generation Error: {str(e)}. Check log for more information")
                 log.exception(e)
                 self.save_chat_history_urgent()
-                while gen_title_messages.unfinished_tasks:
-                    gen_title_messages.task_done()
+                while self.gen_title_messages.unfinished_tasks:
+                    self.gen_title_messages.task_done()
                 continue
                 # something went wrong, continue the loop
 
@@ -855,6 +849,14 @@ def main(args: argparse.Namespace):
     # 从 .env 文件中读取 OPENAI_API_KEY
     load_dotenv()
 
+    try:
+        log_level = getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper())
+    except AttributeError as e:
+        console.print(
+            f"[dim]Invalid log level: {e}, check .env file. Set log level to INFO.")
+        log_level = logging.INFO
+    log.setLevel(log_level)
+
     # if 'key' arg triggered, load the api key from .env with the given key-name;
     # otherwise load the api key with the key-name "OPENAI_API_KEY"
     if args.key:
@@ -867,17 +869,19 @@ def main(args: argparse.Namespace):
         log.debug("API Key not found, waiting for input")
         api_key = prompt("OpenAI API Key not found, please input: ")
 
+    api_key_log = api_key[:3] + '*' * (len(api_key) - 7) + api_key[-4:]
+    log.debug(f"Loaded API Key: {api_key_log}")
+
     api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "30"))
     log.debug(f"API Timeout set to {api_timeout}")
+
+    chat_save_perfix = os.environ.get("CHAT_SAVE_PERFIX", "./chat_history_")
 
     chat_gpt = ChatGPT(api_key, api_timeout)
 
     if not strtobool(os.environ.get("AUTO_GENERATE_TITLE", "True")):
-        # AUTO_GENERATE_TITLE is set to another number (or char), disable this function
         chat_gpt.auto_gen_title_background_enable = False
         log.debug("Auto title generation disabled")
-
-    chat_save_perfix = os.environ.get("CHAT_SAVE_PERFIX", "./chat_history_")
 
     gen_title_daemon_thread = threading.Thread(
         target=chat_gpt.auto_gen_title_background, daemon=True)
