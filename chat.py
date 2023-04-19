@@ -278,8 +278,8 @@ class ChatGPT:
         # this is a silent sub function, only for sub thread which auto-generates title when first conversation is made and debug functions
         # it SHOULD NOT be triggered or used by any other functions or commands
         # because of the usage of this subfunction, no check for messages list length and title appearance is needed
-        prompt = 'Generate a minimal title for the following content in content\'s language, only use characters that work on multiple platform filesystems, no line-break. \n\nContent: '
-        messages = [{"role": "user", "content": prompt + content}]
+        prompt = f'Generate a minimal title for the following content in content\'s language, then remove all reserved characters in Windows AND Linux in the result, also DO NOT include line-break. \n\nContent: """\n{content}\n"""'
+        messages = [{"role": "user", "content": prompt}]
         data = {
             "model": "gpt-3.5-turbo",
             "messages": messages,
