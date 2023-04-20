@@ -193,12 +193,14 @@ class ChatGPT:
 
     def delete_first_conversation(self):
         if len(self.messages) >= 3:
-            truncated_question = self.messages[1]['content'].split('\n')[0]
-            if len(self.messages[1]['content']) > len(truncated_question):
+            question = self.messages[1]
+            del self.messages[1]
+            if self.messages[1]['role'] == "assistant":
+                # 如果第二个信息是回答才删除
+                del self.messages[1]
+            truncated_question = question['content'].split('\n')[0]
+            if len(question['content']) > len(truncated_question):
                 truncated_question += "..."
-
-            # delete the first request and response (never delete system prompt, which means messages[0])
-            del self.messages[1:3]
 
             # recount current tokens
             new_tokens = count_token(self.messages)
@@ -748,6 +750,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
                 truncated_question += "..."
             console.print(
                 f"[dim]Last question: '{truncated_question}' and it's answer has been removed.")
+            chat_gpt.current_tokens = count_token(chat_gpt.messages)
         else:
             console.print("[dim]Nothing to undo.")
 
