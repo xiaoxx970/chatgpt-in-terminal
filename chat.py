@@ -10,11 +10,11 @@ import re
 import sys
 import threading
 import time
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from queue import Queue
-from setuptools.config import read_configuration
 from typing import Dict, List
 
+import pkg_resources
 import pyperclip
 import requests
 import sseclient
@@ -33,8 +33,28 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 
+user_home = os.path.expanduser("~") + "/.chatgpt-in-terminal"
+if not os.path.exists(user_home):
+    os.makedirs(user_home)
+
+if not os.path.exists(f"{user_home}/.env"):
+    with open(f"{user_home}/.env", "w", encoding='utf-8') as f:
+        f.write(
+            "# API key for OpenAI\n"
+            "OPENAI_API_KEY=\n"
+            "# The maximum waiting time for API requests, the default is 30s\n"
+            "OPENAI_API_TIMEOUT=30\n"
+            "# Whether to automatically generate titles for conversations, enabled by default (generating titles will consume a small amount of tokens)\n"
+            "AUTO_GENERATE_TITLE=True\n"
+            "# Define the default file prefix when the /save command saves the chat history. The default value is \"./chat_history_\", which means that the chat history will be saved in the file starting with \"chat_history_\" in the current directory\n"
+            "# At the same time, the prefix can also be specified as a directory + / to allow the program to save the chat history in a folder (note that the corresponding folder needs to be created in advance), for example: CHAT_SAVE_PERFIX=chat_history/\n"
+            "CHAT_SAVE_PERFIX=./chat_history_\n"
+            "# Log level, default is INFO, available value: DEBUG, INFO, WARNING, ERROR, CRITICAL\n"
+            "LOG_LEVEL=INFO"
+        )
+
 # 日志记录到 chat.log，注释下面这行可不记录日志
-logging.basicConfig(filename=f'{sys.path[0]}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
+logging.basicConfig(filename=f'{user_home}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO, encoding="UTF-8")
 
 log = logging.getLogger("chat")
@@ -332,7 +352,7 @@ class ChatGPT:
 
     def save_chat_history(self, filename):
         try:
-            with open(f"{filename}", 'w', encoding='utf-8') as f:
+            with open(f"{user_home}/{filename}", 'w', encoding='utf-8') as f:
                 json.dump(self.messages, f, ensure_ascii=False, indent=4)
             console.print(
                 f"[dim]Chat history saved to: [bright_magenta]{filename}", highlight=False)
@@ -804,6 +824,8 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
 
 def load_chat_history(file_path):
     '''从 file_path 加载聊天记录'''
+    if not os.path.isabs(file_path):
+        file_path = user_home + "/" + file_path
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             chat_history = json.load(f)
@@ -866,18 +888,28 @@ def get_remote_version():
         remote_version = response.text.strip()
 
 
-def main(args: argparse.Namespace):
+def main():
+    log.info("ChatGPT-in-Terminal start")
+    parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
+    parser.add_argument('--load', metavar='FILE', type=str,
+                        help='Load chat history from file')
+    parser.add_argument('--key', type=str, help='choose the API key to load')
+    parser.add_argument('--model', type=str, help='choose the AI model to use')
+    parser.add_argument('-m', '--multi', action='store_true',
+                        help='Enable multi-line mode')
+    parser.add_argument('-r', '--raw', action='store_true',
+                        help='Enable raw mode')
+    args = parser.parse_args()
+
     get_remote_version_thread = threading.Thread(target=get_remote_version)
     get_remote_version_thread.start()
     # try to get remote version
 
     global local_version
-
-    config = read_configuration('setup.cfg')
-    local_version = config['metadata']['version']
+    local_version = pkg_resources.get_distribution('chatgpt-in-terminal').version
 
     # 从 .env 文件中读取 OPENAI_API_KEY
-    load_dotenv()
+    load_dotenv(f"{user_home}/.env")
 
     try:
         log_level = getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper())
@@ -987,16 +1019,4 @@ def main(args: argparse.Namespace):
 
 
 if __name__ == "__main__":
-    log.info("ChatGPT-in-Terminal start")
-    parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
-    parser.add_argument('--load', metavar='FILE', type=str,
-                        help='Load chat history from file')
-    parser.add_argument('--key', type=str, help='choose the API key to load')
-    parser.add_argument('--model', type=str, help='choose the AI model to use')
-    parser.add_argument('-m', '--multi', action='store_true',
-                        help='Enable multi-line mode')
-    parser.add_argument('-r', '--raw', action='store_true',
-                        help='Enable raw mode')
-    args = parser.parse_args()
-
-    main(args)
+    main()
