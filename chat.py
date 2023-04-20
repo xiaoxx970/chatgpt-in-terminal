@@ -33,12 +33,12 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 
-user_home = os.path.expanduser("~") + "/.chatgpt-in-terminal"
-if not os.path.exists(user_home):
-    os.makedirs(user_home)
+config_dir = os.path.expanduser("~") + "/.chatgpt-in-terminal"
+if not os.path.exists(config_dir):
+    os.makedirs(config_dir)
 
-if not os.path.exists(f"{user_home}/.env"):
-    with open(f"{user_home}/.env", "w", encoding='utf-8') as f:
+if not os.path.exists(f"{config_dir}/.env"):
+    with open(f"{config_dir}/.env", "w", encoding='utf-8') as f:
         f.write(
             "# API key for OpenAI\n"
             "OPENAI_API_KEY=\n"
@@ -54,7 +54,7 @@ if not os.path.exists(f"{user_home}/.env"):
         )
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
-logging.basicConfig(filename=f'{user_home}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
+logging.basicConfig(filename=f'{config_dir}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO, encoding="UTF-8")
 
 log = logging.getLogger("chat")
@@ -67,6 +67,7 @@ style = Style.from_dict({
 
 remote_version = None
 local_version = None
+threadlock_remote_version = threading.Lock()
 
 
 class ChatMode:
@@ -354,7 +355,7 @@ class ChatGPT:
 
     def save_chat_history(self, filename):
         try:
-            with open(f"{user_home}/{filename}", 'w', encoding='utf-8') as f:
+            with open(f"{config_dir}/{filename}", 'w', encoding='utf-8') as f:
                 json.dump(self.messages, f, ensure_ascii=False, indent=4)
             console.print(
                 f"[dim]Chat history saved to: [bright_magenta]{filename}", highlight=False)
@@ -795,9 +796,11 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             chat_gpt.delete_first_conversation()
 
     elif command == '/version':
-        console.print(Panel(f"[bold blue]Local Version:[/]\tv{local_version}\n"
-                            f"[bold green]Remote Version:[/]\tv{remote_version}",
+        threadlock_remote_version.acquire()
+        console.print(Panel(f"[bold blue]Local Version:[/]\tv{str(local_version)}\n"
+                            f"[bold green]Remote Version:[/]\tv{str(remote_version)}",
                             title='Version', title_align='left', width=28, style='dim'))
+        threadlock_remote_version.release()
 
     elif command == '/exit':
         raise EOFError
@@ -828,7 +831,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
 def load_chat_history(file_path):
     '''从 file_path 加载聊天记录'''
     if not os.path.isabs(file_path):
-        file_path = user_home + "/" + file_path
+        file_path = config_dir + "/" + file_path
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             chat_history = json.load(f)
@@ -879,12 +882,20 @@ def strtobool(val: str):
         raise ValueError("invalid truth value %r" % (val,))
     
 
-def get_remote_version():
+def check_remote_update():
     global remote_version
     response = requests.get(
         url="https://api.github.com/repos/xiaoxx970/chatgpt-in-terminal/releases", timeout=10)
-    if response.status_code == 200:
-        remote_version = parse_version(response.json()[0]["tag_name"])
+    if response.status_code != 200:
+        return
+    threadlock_remote_version.acquire()
+    remote_version = parse_version(response.json()[0]["tag_name"])
+    threadlock_remote_version.release()
+
+    if remote_version and remote_version > local_version:
+        with open(f"{config_dir}/new_version", 'w') as f:
+            f.write(str(remote_version))
+    # here: versions have already been parsed, just compare
 
 
 def main():
@@ -900,16 +911,23 @@ def main():
                         help='Enable raw mode')
     args = parser.parse_args()
 
-    get_remote_version_thread = threading.Thread(target=get_remote_version)
-    get_remote_version_thread.start()
-    # try to get remote version
-
     global local_version
     local_version = parse_version(get_distribution('chatgpt-in-terminal').version)
     # get local version from pkg resource
 
+    if os.path.exists(f"{config_dir}/new_version"):
+        with open(f"{config_dir}/new_version", 'r') as f:
+            new_version = parse_version(f.read().strip())
+            if new_version > local_version:
+                console.print(
+                    f"[dim]New version found last time: [red]v{local_version}[/] -> [green]v{new_version}[/]\n")
+
+    check_remote_update_thread = threading.Thread(target=check_remote_update)
+    check_remote_update_thread.start()
+    # try to get remote version and check update
+
     # 从 .env 文件中读取 OPENAI_API_KEY
-    load_dotenv(f"{user_home}/.env")
+    load_dotenv(f"{config_dir}/.env")
 
     try:
         log_level = getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper())
@@ -950,15 +968,8 @@ def main():
     gen_title_daemon_thread.start()
     log.debug("Title generation daemon thread started")
 
-    get_remote_version_thread.join()
-
     console.print(
         "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
-    
-    if remote_version and local_version and remote_version > local_version:
-        console.print(
-            f"[dim]New version available: [red]v{local_version}[/] -> [green]v{remote_version}[/]")
-    # here: versions have already been parsed, just compare
 
     if args.model:
         chat_gpt.set_model(args.model)
@@ -1017,7 +1028,14 @@ def main():
     log.info(f"Total tokens spent: {chat_gpt.total_tokens_spent}")
     console.print(
         f"[bright_magenta]Total tokens spent: [bold]{chat_gpt.total_tokens_spent}")
-
+    
+    threadlock_remote_version.acquire()
+    if remote_version and remote_version > local_version:
+        console.print(
+            f"New Version Available: [red]v{str(local_version)}[/] -> [green]v{str(remote_version)}[/]\n"
+            "Use `[bright_magenta]pip install --upgrade chatgpt-in-terminal[/]` to upgrade to newest version.\n"
+            "Visit our GitHub Site https://github.com/xiaoxx970/chatgpt-in-terminal to see what have been changed!")
+    threadlock_remote_version.release()
 
 if __name__ == "__main__":
     main()
