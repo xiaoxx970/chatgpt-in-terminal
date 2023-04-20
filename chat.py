@@ -796,7 +796,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
 
     elif command == '/version':
         console.print(Panel(f"[bold blue]Local Version:[/]\tv{local_version}\n"
-                            f"[bold green]Remote Version:[/]\t{remote_version}",
+                            f"[bold green]Remote Version:[/]\tv{remote_version}",
                             title='Version', title_align='left', width=28, style='dim'))
 
     elif command == '/exit':
@@ -884,7 +884,7 @@ def get_remote_version():
     response = requests.get(
         url="https://api.github.com/repos/xiaoxx970/chatgpt-in-terminal/releases", timeout=10)
     if response.status_code == 200:
-        remote_version = response.json()[0]["tag_name"]
+        remote_version = parse_version(response.json()[0]["tag_name"])
 
 
 def main():
@@ -905,7 +905,7 @@ def main():
     # try to get remote version
 
     global local_version
-    local_version = get_distribution('chatgpt-in-terminal').version
+    local_version = parse_version(get_distribution('chatgpt-in-terminal').version)
     # get local version from pkg resource
 
     # 从 .env 文件中读取 OPENAI_API_KEY
@@ -955,9 +955,10 @@ def main():
     console.print(
         "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
     
-    if remote_version and local_version and parse_version(remote_version) > parse_version(local_version):
+    if remote_version and local_version and remote_version > local_version:
         console.print(
-            f"[dim]New version available: [red]v{local_version}[/] -> [green]{remote_version}[/]")
+            f"[dim]New version available: [red]v{local_version}[/] -> [green]v{remote_version}[/]")
+    # here: versions have already been parsed, just compare
 
     if args.model:
         chat_gpt.set_model(args.model)
