@@ -3,6 +3,7 @@ chat.log
 .env
 chat*.json
 .vscode
+*.bat
 *.code-workspace
 # ignore vscode workspace file
 
