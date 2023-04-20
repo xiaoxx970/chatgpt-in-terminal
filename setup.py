@@ -1,8 +1,5 @@
 from setuptools import find_packages, setup
 
-with open("VERSION", 'r') as f:
-    __version__ = f.read().strip()
-
 with open("README.md", 'r', encoding='utf-8') as f:
     long_description = f.read()
 
@@ -18,7 +15,7 @@ install_requires = [
 
 setup(
     name="chatgpt-in-terminal",
-    version=__version__,
+    version="0.9.0",
     packages=find_packages(),
     description="Use ChatGPT in terminal",
     long_description=long_description,
