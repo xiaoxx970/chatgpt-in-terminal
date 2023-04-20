@@ -12,6 +12,7 @@ import threading
 import time
 from datetime import datetime, date, timedelta
 from queue import Queue
+from setuptools.config import read_configuration
 from typing import Dict, List
 
 import pyperclip
@@ -853,27 +854,27 @@ def strtobool(val: str):
         raise ValueError("invalid truth value %r" % (val,))
     
 
-def get_remote_local_version():
-    """Get remote VERSION from GitHub, local VERSION from ~/VERSION
-    Version contains by ~/VERSION file
+def get_remote_version():
+    """Get remote VERSION from GitHub
+    Version contains by ~/setup.cfg and VERSION file
     """
     global remote_version
-    global local_version
 
     response = requests.get(
         url="https://raw.githubusercontent.com/Ace-Radom/chatgpt-in-terminal/version_ext/VERSION", timeout=5)
     if response.status_code == 200:
         remote_version = response.text.strip()
-    
-    if os.path.exists("VERSION"):
-        with open("VERSION", "r") as f:
-            local_version = f.read().strip()
 
 
 def main(args: argparse.Namespace):
-    get_remote_local_version_thread = threading.Thread(target=get_remote_local_version)
-    get_remote_local_version_thread.start()
-    # try to get remote and local version
+    get_remote_version_thread = threading.Thread(target=get_remote_version)
+    get_remote_version_thread.start()
+    # try to get remote version
+
+    global local_version
+
+    config = read_configuration('setup.cfg')
+    local_version = config['metadata']['version']
 
     # 从 .env 文件中读取 OPENAI_API_KEY
     load_dotenv()
@@ -917,7 +918,7 @@ def main(args: argparse.Namespace):
     gen_title_daemon_thread.start()
     log.debug("Title generation daemon thread started")
 
-    get_remote_local_version_thread.join()
+    get_remote_version_thread.join()
 
     console.print(
         "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
