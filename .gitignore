@@ -5,3 +5,7 @@ chat*.json
 .vscode
 *.code-workspace
 # ignore vscode workspace file
+
+build
+*.egg-info/
+dist
