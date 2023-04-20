@@ -14,12 +14,12 @@ from datetime import date, datetime, timedelta
 from queue import Queue
 from typing import Dict, List
 
-import pkg_resources
 import pyperclip
 import requests
 import sseclient
 import tiktoken
 from dotenv import load_dotenv
+from pkg_resources import get_distribution, parse_version
 from prompt_toolkit import PromptSession, prompt
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.key_binding import KeyBindings
@@ -792,7 +792,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             chat_gpt.delete_first_conversation()
 
     elif command == '/version':
-        console.print(Panel(f"[bold blue]Local Version:[/]\t{local_version}\n"
+        console.print(Panel(f"[bold blue]Local Version:[/]\tv{local_version}\n"
                             f"[bold green]Remote Version:[/]\t{remote_version}",
                             title='Version', title_align='left', width=28, style='dim'))
 
@@ -877,15 +877,11 @@ def strtobool(val: str):
     
 
 def get_remote_version():
-    """Get remote VERSION from GitHub
-    Version contains by ~/setup.cfg and VERSION file
-    """
     global remote_version
-
     response = requests.get(
-        url="https://raw.githubusercontent.com/Ace-Radom/chatgpt-in-terminal/version_ext/VERSION", timeout=5)
+        url="https://api.github.com/repos/xiaoxx970/chatgpt-in-terminal/releases", timeout=10)
     if response.status_code == 200:
-        remote_version = response.text.strip()
+        remote_version = response.json()[0]["tag_name"]
 
 
 def main():
@@ -906,7 +902,8 @@ def main():
     # try to get remote version
 
     global local_version
-    local_version = pkg_resources.get_distribution('chatgpt-in-terminal').version
+    local_version = get_distribution('chatgpt-in-terminal').version
+    # get local version from pkg resource
 
     # 从 .env 文件中读取 OPENAI_API_KEY
     load_dotenv(f"{user_home}/.env")
@@ -955,9 +952,9 @@ def main():
     console.print(
         "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
     
-    if remote_version and remote_version != local_version:
+    if remote_version and local_version and parse_version(remote_version) > parse_version(local_version):
         console.print(
-            f"[dim]New version available: [red]{local_version}[/] -> [green]{remote_version}[/]")
+            f"[dim]New version available: [red]v{local_version}[/] -> [green]{remote_version}[/]")
 
     if args.model:
         chat_gpt.set_model(args.model)

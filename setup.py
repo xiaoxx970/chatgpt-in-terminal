@@ -15,7 +15,7 @@ install_requires = [
 
 setup(
     name="chatgpt-in-terminal",
-    version="0.9.0",
+    version="v0.9.0",
     packages=find_packages(),
     description="Use ChatGPT in terminal",
     long_description=long_description,
