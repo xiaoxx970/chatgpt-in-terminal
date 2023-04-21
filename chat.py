@@ -304,7 +304,7 @@ class ChatGPT:
         # this is a silent sub function, only for sub thread which auto-generates title when first conversation is made and debug functions
         # it SHOULD NOT be triggered or used by any other functions or commands
         # because of the usage of this subfunction, no check for messages list length and title appearance is needed
-        prompt = f'Generate a minimal title for the following content in content\'s language, then remove all reserved characters in Windows AND Linux in the result, also DO NOT include line-break. \n\nContent: """\n{content}\n"""'
+        prompt = f'Generate title shorter than 10 words for the following content in content\'s language. The tilte contains ONLY words. DO NOT include line-break. \n\nContent: """\n{content}\n"""'
         messages = [{"role": "user", "content": prompt}]
         data = {
             "model": "gpt-3.5-turbo",
@@ -355,7 +355,7 @@ class ChatGPT:
 
     def save_chat_history(self, filename):
         try:
-            with open(f"{config_dir}/{filename}", 'w', encoding='utf-8') as f:
+            with open(f"{filename}", 'w', encoding='utf-8') as f:
                 json.dump(self.messages, f, ensure_ascii=False, indent=4)
             console.print(
                 f"[dim]Chat history saved to: [bright_magenta]{filename}", highlight=False)
@@ -718,7 +718,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         else:
             gen_filename = chat_gpt.gen_title()
             if gen_filename:
-                gen_filename = gen_filename.replace('"', '')
+                gen_filename = re.sub(r'[\/\\\*\?\"\<\>\|\:]', '', gen_filename)
                 gen_filename = f"{chat_save_perfix}{gen_filename}.json"
             # here: if title is already generated or generating, just use it
             # but title auto generation can also be disabled; therefore when title is not generated then try generating a new one
@@ -830,8 +830,6 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
 
 def load_chat_history(file_path):
     '''从 file_path 加载聊天记录'''
-    if not os.path.isabs(file_path):
-        file_path = config_dir + "/" + file_path
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             chat_history = json.load(f)
