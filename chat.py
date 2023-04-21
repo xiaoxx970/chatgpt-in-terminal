@@ -890,11 +890,6 @@ def check_remote_update():
     remote_version = parse_version(response.json()[0]["tag_name"])
     threadlock_remote_version.release()
 
-    if remote_version and remote_version > local_version:
-        with open(f"{config_dir}/new_version", 'w') as f:
-            f.write(str(remote_version))
-    # here: versions have already been parsed, just compare
-
 
 def main():
     log.info("ChatGPT-in-Terminal start")
@@ -912,13 +907,6 @@ def main():
     global local_version
     local_version = parse_version(get_distribution('chatgpt-in-terminal').version)
     # get local version from pkg resource
-
-    if os.path.exists(f"{config_dir}/new_version"):
-        with open(f"{config_dir}/new_version", 'r') as f:
-            new_version = parse_version(f.read().strip())
-            if new_version > local_version:
-                console.print(
-                    f"[dim]New version found last time: [red]v{local_version}[/] -> [green]v{new_version}[/]\n")
 
     check_remote_update_thread = threading.Thread(target=check_remote_update)
     check_remote_update_thread.start()
