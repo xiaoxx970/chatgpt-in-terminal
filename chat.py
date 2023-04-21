@@ -905,18 +905,27 @@ def check_remote_update():
 
     log.debug(f"Remote version: {str(remote_version)}")
 
+def set_usr_config(args: argparse.Namespace):
+    pass
+
 def main():
     log.info("ChatGPT-in-Terminal start")
     parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
-    parser.add_argument('--load', metavar='FILE', type=str,
-                        help='Load chat history from file')
-    parser.add_argument('--key', type=str, help='choose the API key to load')
-    parser.add_argument('--model', type=str, help='choose the AI model to use')
-    parser.add_argument('-m', '--multi', action='store_true',
-                        help='Enable multi-line mode')
-    parser.add_argument('-r', '--raw', action='store_true',
-                        help='Enable raw mode')
+    parser.add_argument(      '--load',  metavar='FILE',      type=str, help='Load chat history from file')
+    parser.add_argument(      '--key',                        type=str, help='Choose the API key to load' )
+    parser.add_argument(      '--model',                      type=str, help='Choose the AI model to use' )
+    parser.add_argument('-m', '--multi', action='store_true',           help='Enable multi-line mode'     )
+    parser.add_argument('-r', '--raw',   action='store_true',           help='Enable raw mode'            )
+    # normal function args
+
+    parser.add_argument('--set-apikey',                        type=str,   help='Set OPENAI_API_KEY in .env'                                         )
+    parser.add_argument('--set-timeout',                       type=float, help='Set OPENAI_API_TIMEOUT in .env (default 30)'                        )
+    parser.add_argument('--set-gentitle', action='store_true',             help='Turn on or off auto title generation function (boolean args)'       )
+    parser.add_argument('--set-perfix',                        type=str,   help='Set chat history file\'s save perfix (default "./chat_history_")'   )
+    parser.add_argument('--set-loglevel',                      type=str,   help='Set log level: DEBUG, INFO, WARNING, ERROR, CRITICAL (default INFO)')
+    # setting args
     args = parser.parse_args()
+    set_usr_config(args)
 
     load_dotenv(f"{config_dir}/.env")
 
