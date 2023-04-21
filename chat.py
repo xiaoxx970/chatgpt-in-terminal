@@ -905,6 +905,17 @@ def check_remote_update():
 
     log.debug(f"Remote version: {str(remote_version)}")
 
+def set_env_item(env_strlist: list, config: dict['tag': str, 'data': str]) -> list:
+    for i in range(len(env_strlist)):
+        thisline = env_strlist[i]
+        if config['tag'] in thisline and thisline.strip().index(config['tag']) == 0:
+            env_strlist[i] = f"{config['tag']}={config['data']}"
+            break
+    # check each line of .env, see if this config tag appears in this line AND IF the tag starts at position 0 (after strip()).
+    # the function may also find the config tag in comments first, and that will cause a huge problem
+    # therefore only these tags start at line-pos 0 (after strip()) will be note as a 'real' config tag
+    return env_strlist
+
 def set_usr_config(args: argparse.Namespace):
     config_need_to_set = list()
 
@@ -924,29 +935,20 @@ def set_usr_config(args: argparse.Namespace):
     # nothing to set
 
     with open(f"{config_dir}/.env", 'r') as f:
-        env_strip = f.read().strip()
-    env_strlist = env_strip.splitlines()
+        env_strlist = f.read().strip().splitlines()
 
     for config in config_need_to_set:
-        for i in range(len(env_strlist)):
-            thisline = env_strlist[i]
-            if config['tag'] in thisline and thisline.strip().index(config['tag']) == 0:
-                env_strlist[i] = f"{config['tag']}={config['data']}"
-        # check each line of .env, see if this config tag appears in this line AND IF the tag starts at position 0 (after strip()).
-        # the function may also find the config tag in comments first, and that will cause a huge problem
-        # therefore only these tags start at line-pos 0 (after strip()) will be note as a 'real' config tag
+        env_strlist = set_env_item(env_strlist, config)
         console.print(
             f"Config item `[bright_magenta]{config['tag']}[/]` is set to [green]{config['data']}[/]")
 
-    env_strip = "\n".join(env_strlist)
     with open(f"{config_dir}/.env", 'w') as f:
-        f.write(env_strip)
+        f.write("\n".join(env_strlist))
 
     exit(0)
 
 
 def main():
-    log.info("ChatGPT-in-Terminal start")
     parser = argparse.ArgumentParser(description='Use ChatGPT in terminal')
     parser.add_argument(      '--load',  metavar='FILE',      type=str, help='Load chat history from file')
     parser.add_argument(      '--key',                        type=str, help='Choose the API key to load' )
@@ -966,6 +968,8 @@ def main():
     load_dotenv(f"{config_dir}/.env")
 
     set_usr_config(args)
+
+    log.info("ChatGPT-in-Terminal start")
 
     try:
         log_level = getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper())
@@ -997,6 +1001,11 @@ def main():
     if not api_key:
         log.debug("API Key not found, waiting for input")
         api_key = prompt("OpenAI API Key not found, please input: ")
+        with open(f"{config_dir}/.env", 'r') as f:
+            env_strlist = f.read().strip().splitlines()
+        set_env_item(env_strlist, {'tag': "OPENAI_API_KEY", 'data': api_key})
+        with open(f"{config_dir}/.env", 'w') as f:
+            f.write("\n".join(env_strlist))
 
     api_key_log = api_key[:3] + '*' * (len(api_key) - 7) + api_key[-4:]
     log.debug(f"Loaded API Key: {api_key_log}")
