@@ -50,7 +50,7 @@ if not os.path.exists(f"{config_dir}/.env"):
             "# At the same time, the prefix can also be specified as a directory + / to allow the program to save the chat history in a folder (note that the corresponding folder needs to be created in advance), for example: CHAT_SAVE_PERFIX=chat_history/\n"
             "CHAT_SAVE_PERFIX=./chat_history_\n"
             "# Log level, default is INFO, available value: DEBUG, INFO, WARNING, ERROR, CRITICAL\n"
-            "LOG_LEVEL=INFO\n"
+            "LOG_LEVEL=INFO"
         )
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
