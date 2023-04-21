@@ -885,11 +885,25 @@ def check_remote_update():
     response = requests.get(
         url="https://api.github.com/repos/xiaoxx970/chatgpt-in-terminal/releases", timeout=10)
     if response.status_code != 200:
+        log.error("Get remote version failed")
         return
     threadlock_remote_version.acquire()
     remote_version = parse_version(response.json()[0]["tag_name"])
     threadlock_remote_version.release()
 
+    # try:
+    #     response = requests.get(
+    #         "https://pypi.org/pypi/chatgpt-in-terminal/json", timeout=10)
+    #     response.raise_for_status()
+    #     threadlock_remote_version.acquire()
+    #     remote_version = parse_version(response.json()["info"]["version"])
+    #     threadlock_remote_version.release()
+    # except requests.RequestException as e:
+    #     log.error("Get remote version failed")
+    #     log.exception(e)
+    #     return
+
+    log.debug(f"Remote version: {str(remote_version)}")
 
 def main():
     log.info("ChatGPT-in-Terminal start")
@@ -904,15 +918,6 @@ def main():
                         help='Enable raw mode')
     args = parser.parse_args()
 
-    global local_version
-    local_version = parse_version(get_distribution('chatgpt-in-terminal').version)
-    # get local version from pkg resource
-
-    check_remote_update_thread = threading.Thread(target=check_remote_update)
-    check_remote_update_thread.start()
-    # try to get remote version and check update
-
-    # 从 .env 文件中读取 OPENAI_API_KEY
     load_dotenv(f"{config_dir}/.env")
 
     try:
@@ -922,6 +927,17 @@ def main():
             f"[dim]Invalid log level: {e}, check .env file. Set log level to INFO.")
         log_level = logging.INFO
     log.setLevel(log_level)
+    # log level set must be before debug logs, because default log level is INFO, and before new log level being set debug logs will not be written to log file
+
+    global local_version
+    local_version = parse_version(get_distribution('chatgpt-in-terminal').version)
+    log.debug(f"Local version: {str(local_version)}")
+    # get local version from pkg resource
+
+    check_remote_update_thread = threading.Thread(target=check_remote_update)
+    check_remote_update_thread.start()
+    log.debug("Remote version get thread started")
+    # try to get remote version and check update
 
     # if 'key' arg triggered, load the api key from .env with the given key-name;
     # otherwise load the api key with the key-name "OPENAI_API_KEY"
@@ -1019,7 +1035,7 @@ def main():
     if remote_version and remote_version > local_version:
         console.print(
             f"New Version Available: [red]v{str(local_version)}[/] -> [green]v{str(remote_version)}[/]\n"
-            "Use `[bright_magenta]pip install --upgrade chatgpt-in-terminal[/]` to upgrade to newest version.\n"
+            "Use `[bright_magenta]pip install --upgrade chatgpt-in-terminal[/]` to upgrade to latest version.\n"
             "Visit our GitHub Site https://github.com/xiaoxx970/chatgpt-in-terminal to see what have been changed!")
     threadlock_remote_version.release()
 
