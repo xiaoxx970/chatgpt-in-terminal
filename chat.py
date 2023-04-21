@@ -50,7 +50,7 @@ if not os.path.exists(f"{config_dir}/.env"):
             "# At the same time, the prefix can also be specified as a directory + / to allow the program to save the chat history in a folder (note that the corresponding folder needs to be created in advance), for example: CHAT_SAVE_PERFIX=chat_history/\n"
             "CHAT_SAVE_PERFIX=./chat_history_\n"
             "# Log level, default is INFO, available value: DEBUG, INFO, WARNING, ERROR, CRITICAL\n"
-            "LOG_LEVEL=INFO"
+            "LOG_LEVEL=INFO\n"
         )
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
@@ -906,11 +906,48 @@ def check_remote_update():
     log.debug(f"Remote version: {str(remote_version)}")
 
 def set_usr_config(args: argparse.Namespace):
-    pass
+    config_need_to_set = list()
+
+    if args.set_apikey:     config_need_to_set.append({'tag': "OPENAI_API_KEY",     'data': args.set_apikey      })
+    if args.set_timeout:    config_need_to_set.append({'tag': "OPENAI_API_TIMEOUT", 'data': str(args.set_timeout)})
+    if args.set_saveperfix: config_need_to_set.append({'tag': "CHAT_SAVE_PERFIX",   'data': args.set_saveperfix  })
+    if args.set_loglevel:   config_need_to_set.append({'tag': "LOG_LEVEL",          'data': args.set_loglevel    })
+
+    if args.set_gentitle: 
+        if strtobool(os.environ.get("AUTO_GENERATE_TITLE", "True")):
+            config_need_to_set.append({'tag': "AUTO_GENERATE_TITLE", 'data': "False"})
+        else:
+            config_need_to_set.append({'tag': "AUTO_GENERATE_TITLE", 'data': "True" })
+
+    if len(config_need_to_set) == 0:
+        return
+    # nothing to set
+
+    with open(f"{config_dir}/.env", 'r') as f:
+        env_strip = f.read().strip()
+    env_strlist = env_strip.splitlines()
+
+    for config in config_need_to_set:
+        for i in range(len(env_strlist)):
+            thisline = env_strlist[i]
+            if config['tag'] in thisline and thisline.strip().index(config['tag']) == 0:
+                env_strlist[i] = f"{config['tag']}={config['data']}"
+        # check each line of .env, see if this config tag appears in this line AND IF the tag starts at position 0 (after strip()).
+        # the function may also find the config tag in comments first, and that will cause a huge problem
+        # therefore only these tags start at line-pos 0 (after strip()) will be note as a 'real' config tag
+        console.print(
+            f"Config item `[bright_magenta]{config['tag']}[/]` is set to [green]{config['data']}[/]")
+
+    env_strip = "\n".join(env_strlist)
+    with open(f"{config_dir}/.env", 'w') as f:
+        f.write(env_strip)
+
+    exit(0)
+
 
 def main():
     log.info("ChatGPT-in-Terminal start")
-    parser = argparse.ArgumentParser(description='Chat with GPT-3.5')
+    parser = argparse.ArgumentParser(description='Use ChatGPT in terminal')
     parser.add_argument(      '--load',  metavar='FILE',      type=str, help='Load chat history from file')
     parser.add_argument(      '--key',                        type=str, help='Choose the API key to load' )
     parser.add_argument(      '--model',                      type=str, help='Choose the AI model to use' )
@@ -918,16 +955,17 @@ def main():
     parser.add_argument('-r', '--raw',   action='store_true',           help='Enable raw mode'            )
     # normal function args
 
-    parser.add_argument('--set-apikey',                        type=str,   help='Set OPENAI_API_KEY in .env'                                         )
-    parser.add_argument('--set-timeout',                       type=float, help='Set OPENAI_API_TIMEOUT in .env (default 30)'                        )
-    parser.add_argument('--set-gentitle', action='store_true',             help='Turn on or off auto title generation function (boolean args)'       )
-    parser.add_argument('--set-perfix',                        type=str,   help='Set chat history file\'s save perfix (default "./chat_history_")'   )
-    parser.add_argument('--set-loglevel',                      type=str,   help='Set log level: DEBUG, INFO, WARNING, ERROR, CRITICAL (default INFO)')
+    parser.add_argument('--set-apikey',                        type=str, help='Set OPENAI_API_KEY in .env'                                         )
+    parser.add_argument('--set-timeout',                       type=int, help='Set OPENAI_API_TIMEOUT in .env (default 30)'                        )
+    parser.add_argument('--set-gentitle', action='store_true',           help='Turn on or off auto title generation function (boolean args)'       )
+    parser.add_argument('--set-saveperfix',                    type=str, help='Set chat history file\'s save perfix (default "./chat_history_")'   )
+    parser.add_argument('--set-loglevel',                      type=str, help='Set log level: DEBUG, INFO, WARNING, ERROR, CRITICAL (default INFO)')
     # setting args
     args = parser.parse_args()
-    set_usr_config(args)
 
     load_dotenv(f"{config_dir}/.env")
+
+    set_usr_config(args)
 
     try:
         log_level = getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper())
