@@ -15,21 +15,23 @@ install_requires = [
 
 setup(
     name="chatgpt-in-terminal",
-    version="v0.9.0",
-    packages=find_packages(),
+    version="0.9.0",
+    author="xiaoxx970",
     description="Use ChatGPT in terminal",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=install_requires,
-    license="MIT",
     url="https://github.com/xiaoxx970/chatgpt-in-terminal",
-    author="xiaoxx970",
+    license="MIT",
+
+    packages=find_packages(),
     py_modules=["chat"],
+    install_requires=install_requires,
     entry_points={
         "console_scripts": [
             "chatgpt-in-terminal=chat:main"
         ]
     },
+    python_requires=">=3.8",
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
