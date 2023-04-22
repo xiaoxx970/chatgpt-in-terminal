@@ -864,7 +864,7 @@ def check_remote_update():
 
     # try:
     #     response = requests.get(
-    #         "https://pypi.org/pypi/chatgpt-in-terminal/json", timeout=10)
+    #         "https://pypi.org/pypi/gpt-term/json", timeout=10)
     #     response.raise_for_status()
     #     threadlock_remote_version.acquire()
     #     remote_version = parse_version(response.json()["info"]["version"])
@@ -935,7 +935,7 @@ def main():
     log.setLevel(log_level)
     # log level set must be before debug logs, because default log level is INFO, and before new log level being set debug logs will not be written to log file
 
-    log.info("ChatGPT-in-Terminal start")
+    log.info("GPT-Term start")
 
     global local_version
     try:
