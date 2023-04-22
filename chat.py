@@ -895,7 +895,7 @@ def set_config_by_args(args: argparse.Namespace, config_ini: ConfigParser):
     # nothing to set
 
     for key, val in config_need_to_set.items():
-        config_ini['DEFAULT'][key] = val
+        config_ini['DEFAULT'][key] = str(val)
         console.print(f"Config item `[bright_magenta]{key}[/]` is set to [green]{val}[/]")
 
     write_config(config_ini)
