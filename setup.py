@@ -5,7 +5,6 @@ with open("README.md", 'r', encoding='utf-8') as f:
 
 install_requires = [
     "requests",
-    "python-dotenv",
     "pyperclip",
     "rich>=13.3.1",
     "prompt_toolkit>=3.0",
@@ -14,7 +13,7 @@ install_requires = [
 ]
 
 setup(
-    name="chatgpt-in-terminal",
+    name="gpt-term",
     version="0.9.0",
     author="xiaoxx970",
     description="Use ChatGPT in terminal",
@@ -28,9 +27,10 @@ setup(
     install_requires=install_requires,
     entry_points={
         "console_scripts": [
-            "chatgpt-in-terminal=chat:main"
+            "gpt-term=chat:main"
         ]
     },
+    data_files=[('', ['config.ini'])],
     python_requires=">=3.8",
     classifiers=[
         'Programming Language :: Python :: 3',

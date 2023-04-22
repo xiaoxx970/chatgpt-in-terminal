@@ -7,9 +7,11 @@ import logging
 import os
 import platform
 import re
+import shutil
 import sys
 import threading
 import time
+from configparser import ConfigParser
 from datetime import date, datetime, timedelta
 from queue import Queue
 from typing import Dict, List
@@ -18,8 +20,7 @@ import pyperclip
 import requests
 import sseclient
 import tiktoken
-from dotenv import load_dotenv
-from pkg_resources import get_distribution, parse_version
+from pkg_resources import get_distribution, parse_version, DistributionNotFound
 from prompt_toolkit import PromptSession, prompt
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.key_binding import KeyBindings
@@ -33,28 +34,13 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 
-config_dir = os.path.expanduser("~") + "/.chatgpt-in-terminal"
-if not os.path.exists(config_dir):
-    os.makedirs(config_dir)
-
-if not os.path.exists(f"{config_dir}/.env"):
-    with open(f"{config_dir}/.env", "w", encoding='utf-8') as f:
-        f.write(
-            "# API key for OpenAI\n"
-            "OPENAI_API_KEY=\n"
-            "# The maximum waiting time for API requests, the default is 30s\n"
-            "OPENAI_API_TIMEOUT=30\n"
-            "# Whether to automatically generate titles for conversations, enabled by default (generating titles will consume a small amount of tokens)\n"
-            "AUTO_GENERATE_TITLE=True\n"
-            "# Define the default file prefix when the /save command saves the chat history. The default value is \"./chat_history_\", which means that the chat history will be saved in the file starting with \"chat_history_\" in the current directory\n"
-            "# At the same time, the prefix can also be specified as a directory + / to allow the program to save the chat history in a folder (note that the corresponding folder needs to be created in advance), for example: CHAT_SAVE_PERFIX=chat_history/\n"
-            "CHAT_SAVE_PERFIX=./chat_history_\n"
-            "# Log level, default is INFO, available value: DEBUG, INFO, WARNING, ERROR, CRITICAL\n"
-            "LOG_LEVEL=INFO"
-        )
+data_dir = os.path.expanduser("~") + "/.gpt-term"
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir)
+    shutil.copy('config.ini', data_dir)
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
-logging.basicConfig(filename=f'{config_dir}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
+logging.basicConfig(filename=f'{data_dir}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO, encoding="UTF-8")
 
 log = logging.getLogger("chat")
@@ -367,7 +353,7 @@ class ChatGPT:
             return
 
     def save_chat_history_urgent(self):
-        filename = f'{sys.path[0]}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json'
+        filename = f'{data_dir}/chat_history_backup_{datetime.now().strftime("%Y-%m-%d_%H,%M,%S")}.json'
         with open(f"{filename}", 'w', encoding='utf-8') as f:
             json.dump(self.messages, f, ensure_ascii=False, indent=4)
         console.print(
@@ -664,7 +650,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         chat_gpt.threadlock_total_tokens_spent.acquire()
         console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chat_gpt.total_tokens_spent}\n"
                             f"[bold green]Current Tokens:[/]\t\t{chat_gpt.current_tokens}/[bold]{chat_gpt.tokens_limit}",
-                            title='token_summary', title_align='left', width=40, style='dim'))
+                            title='token_summary', title_align='left', width=40))
         chat_gpt.threadlock_total_tokens_spent.release()
 
     elif command == '/usage':
@@ -674,7 +660,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         console.print(Panel(f"[bold green]Total Granted:[/]\t\t${format(chat_gpt.credit_total_granted, '.2f')}\n"
                             f"[bold cyan]Used This Month:[/]\t${format(chat_gpt.credit_used_this_month, '.2f')}\n"
                             f"[bold blue]Used Total:[/]\t\t${format(chat_gpt.credit_total_used, '.2f')}",
-                            title="Credit Summary", title_align='left', subtitle=f"[blue]Plan: {chat_gpt.credit_plan}", width=35, style='dim'))
+                            title="Credit Summary", title_align='left', subtitle=f"[blue]Plan: {chat_gpt.credit_plan}", width=35))
 
     elif command.startswith('/model'):
         args = command.split()
@@ -797,9 +783,9 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
 
     elif command == '/version':
         threadlock_remote_version.acquire()
-        console.print(Panel(f"[bold blue]Local Version:[/]\tv{str(local_version)}\n"
-                            f"[bold green]Remote Version:[/]\tv{str(remote_version)}",
-                            title='Version', title_align='left', width=28, style='dim'))
+        console.print(Panel(f"[bold blue]Local Version:[/]\t{str(local_version)}\n"
+                            f"[bold green]Remote Version:[/]\t{str(remote_version)}",
+                            title='Version', title_align='left', width=28))
         threadlock_remote_version.release()
 
     elif command == '/exit':
@@ -823,7 +809,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
     /undo                    - Undo the last question and remove its answer
     /delete (first)          - Delete the first conversation in current chat
     /delete all              - Clear all messages and conversations current chat
-    /version                 - Show chatgpt-in-terminal local and remote version
+    /version                 - Show gpt-term local and remote version
     /help                    - Show this help message
     /exit                    - Exit the application''')
 
@@ -863,21 +849,6 @@ def create_key_bindings():
             buffer.insert_text('\n')
 
     return key_bindings
-
-
-def strtobool(val: str):
-    """Convert a string representation of truth to True or False.
-    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
-    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
-    'val' is anything else.
-    """
-    val = val.lower()
-    if val in ('y', 'yes', 't', 'true', 'on', '1'):
-        return True
-    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
-        return False
-    else:
-        raise ValueError("invalid truth value %r" % (val,))
     
 
 def check_remote_update():
@@ -905,83 +876,72 @@ def check_remote_update():
 
     log.debug(f"Remote version: {str(remote_version)}")
 
-def set_env_item(env_strlist: list, config: dict['tag': str, 'data': str]) -> list:
-    for i in range(len(env_strlist)):
-        thisline = env_strlist[i]
-        if config['tag'] in thisline and thisline.strip().index(config['tag']) == 0:
-            env_strlist[i] = f"{config['tag']}={config['data']}"
-            break
-    # check each line of .env, see if this config tag appears in this line AND IF the tag starts at position 0 (after strip()).
-    # the function may also find the config tag in comments first, and that will cause a huge problem
-    # therefore only these tags start at line-pos 0 (after strip()) will be note as a 'real' config tag
-    return env_strlist
 
-def set_usr_config(args: argparse.Namespace):
-    config_need_to_set = list()
+def write_config(config_ini: ConfigParser):
+    with open(f'{data_dir}/config.ini', 'w') as configfile:
+        config_ini.write(configfile)
 
-    if args.set_apikey:     config_need_to_set.append({'tag': "OPENAI_API_KEY",     'data': args.set_apikey      })
-    if args.set_timeout:    config_need_to_set.append({'tag': "OPENAI_API_TIMEOUT", 'data': str(args.set_timeout)})
-    if args.set_saveperfix: config_need_to_set.append({'tag': "CHAT_SAVE_PERFIX",   'data': args.set_saveperfix  })
-    if args.set_loglevel:   config_need_to_set.append({'tag': "LOG_LEVEL",          'data': args.set_loglevel    })
+def set_config_by_args(args: argparse.Namespace, config_ini: ConfigParser):
+    config_need_to_set = {}
 
-    if args.set_gentitle: 
-        if strtobool(os.environ.get("AUTO_GENERATE_TITLE", "True")):
-            config_need_to_set.append({'tag': "AUTO_GENERATE_TITLE", 'data': "False"})
-        else:
-            config_need_to_set.append({'tag': "AUTO_GENERATE_TITLE", 'data': "True" })
+    if args.set_apikey:     config_need_to_set.update({"OPENAI_API_KEY"      : args.set_apikey})
+    if args.set_timeout:    config_need_to_set.update({"OPENAI_API_TIMEOUT"  : args.set_timeout})
+    if args.set_saveperfix: config_need_to_set.update({"CHAT_SAVE_PERFIX"    : args.set_saveperfix})
+    if args.set_loglevel:   config_need_to_set.update({"LOG_LEVEL"           : args.set_loglevel})
+    if args.set_gentitle:   config_need_to_set.update({"AUTO_GENERATE_TITLE" : args.set_gentitle})
 
     if len(config_need_to_set) == 0:
         return
     # nothing to set
 
-    with open(f"{config_dir}/.env", 'r') as f:
-        env_strlist = f.read().strip().splitlines()
+    for key, val in config_need_to_set.items():
+        config_ini['DEFAULT'][key] = val
+        console.print(f"Config item `[bright_magenta]{key}[/]` is set to [green]{val}[/]")
 
-    for config in config_need_to_set:
-        env_strlist = set_env_item(env_strlist, config)
-        console.print(
-            f"Config item `[bright_magenta]{config['tag']}[/]` is set to [green]{config['data']}[/]")
-
-    with open(f"{config_dir}/.env", 'w') as f:
-        f.write("\n".join(env_strlist))
-
+    write_config(config_ini)
     exit(0)
 
 
 def main():
     parser = argparse.ArgumentParser(description='Use ChatGPT in terminal')
-    parser.add_argument(      '--load',  metavar='FILE',      type=str, help='Load chat history from file')
-    parser.add_argument(      '--key',                        type=str, help='Choose the API key to load' )
-    parser.add_argument(      '--model',                      type=str, help='Choose the AI model to use' )
-    parser.add_argument('-m', '--multi', action='store_true',           help='Enable multi-line mode'     )
-    parser.add_argument('-r', '--raw',   action='store_true',           help='Enable raw mode'            )
+    parser.add_argument('--load', metavar='FILE', type=str, help='Load chat history from file')
+    parser.add_argument('--key', type=str, help='Choose the API key to load')
+    parser.add_argument('--model', type=str, help='Choose the AI model to use')
+    parser.add_argument('-m', '--multi', action='store_true', help='Enable multi-line mode')
+    parser.add_argument('-r', '--raw', action='store_true', help='Enable raw mode')
     # normal function args
 
-    parser.add_argument('--set-apikey',                        type=str, help='Set OPENAI_API_KEY in .env'                                         )
-    parser.add_argument('--set-timeout',                       type=int, help='Set OPENAI_API_TIMEOUT in .env (default 30)'                        )
-    parser.add_argument('--set-gentitle', action='store_true',           help='Turn on or off auto title generation function (boolean args)'       )
-    parser.add_argument('--set-saveperfix',                    type=str, help='Set chat history file\'s save perfix (default "./chat_history_")'   )
-    parser.add_argument('--set-loglevel',                      type=str, help='Set log level: DEBUG, INFO, WARNING, ERROR, CRITICAL (default INFO)')
+    parser.add_argument('--set-apikey', metavar='KEY', type=str, help='Set API key for OpenAI')
+    parser.add_argument('--set-timeout', metavar='SEC', type=int, help='Set maximum waiting time for API requests')
+    parser.add_argument('--set-gentitle', metavar='BOOL', type=str, help='Set whether to automatically generate a title for chat')
+    parser.add_argument('--set-saveperfix', metavar='PERFIX', type=str, help='Set chat history file\'s save perfix')
+    parser.add_argument('--set-loglevel', metavar='LEVEL', type=str, help='Set log level: DEBUG, INFO, WARNING, ERROR, CRITICAL')
     # setting args
     args = parser.parse_args()
 
-    load_dotenv(f"{config_dir}/.env")
+    # 读取配置文件
+    config_ini = ConfigParser()
+    config_ini.read(f'{data_dir}/config.ini', encoding='utf-8')
+    config = config_ini['DEFAULT']
 
-    set_usr_config(args)
-
-    log.info("ChatGPT-in-Terminal start")
+    set_config_by_args(args, config_ini)
 
     try:
-        log_level = getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper())
+        log_level = getattr(logging, config.get("LOG_LEVEL", "INFO").upper())
     except AttributeError as e:
         console.print(
-            f"[dim]Invalid log level: {e}, check .env file. Set log level to INFO.")
+            f"[dim]Invalid log level: {e}, check config.ini file. Set log level to INFO.")
         log_level = logging.INFO
     log.setLevel(log_level)
     # log level set must be before debug logs, because default log level is INFO, and before new log level being set debug logs will not be written to log file
 
+    log.info("ChatGPT-in-Terminal start")
+
     global local_version
-    local_version = parse_version(get_distribution('chatgpt-in-terminal').version)
+    try:
+        local_version = parse_version(get_distribution('gpt-term').version)
+    except DistributionNotFound:
+        local_version = 'unknown'
     log.debug(f"Local version: {str(local_version)}")
     # get local version from pkg resource
 
@@ -990,34 +950,32 @@ def main():
     log.debug("Remote version get thread started")
     # try to get remote version and check update
 
-    # if 'key' arg triggered, load the api key from .env with the given key-name;
+    # if 'key' arg triggered, load the api key from config.ini with the given key-name;
     # otherwise load the api key with the key-name "OPENAI_API_KEY"
     if args.key:
-        log.debug(f"Try loading API key with {args.key} from .env")
-        api_key = os.environ.get(args.key)
+        log.debug(f"Try loading API key with {args.key} from config.ini")
+        api_key = config.get(args.key)
     else:
-        api_key = os.environ.get("OPENAI_API_KEY")
+        api_key = config.get("OPENAI_API_KEY")
 
     if not api_key:
         log.debug("API Key not found, waiting for input")
         api_key = prompt("OpenAI API Key not found, please input: ")
-        with open(f"{config_dir}/.env", 'r') as f:
-            env_strlist = f.read().strip().splitlines()
-        set_env_item(env_strlist, {'tag': "OPENAI_API_KEY", 'data': api_key})
-        with open(f"{config_dir}/.env", 'w') as f:
-            f.write("\n".join(env_strlist))
+        confirm('Write API Key to config file?')
+        config["OPENAI_API_KEY"] = api_key
+        write_config(config_ini)
 
     api_key_log = api_key[:3] + '*' * (len(api_key) - 7) + api_key[-4:]
     log.debug(f"Loaded API Key: {api_key_log}")
 
-    api_timeout = int(os.environ.get("OPENAI_API_TIMEOUT", "30"))
+    api_timeout = config.getfloat("OPENAI_API_TIMEOUT", 30)
     log.debug(f"API Timeout set to {api_timeout}")
 
-    chat_save_perfix = os.environ.get("CHAT_SAVE_PERFIX", "./chat_history_")
+    chat_save_perfix = config.get("CHAT_SAVE_PERFIX", "./chat_history_")
 
     chat_gpt = ChatGPT(api_key, api_timeout)
 
-    if not strtobool(os.environ.get("AUTO_GENERATE_TITLE", "True")):
+    if not config.getboolean("AUTO_GENERATE_TITLE", True):
         chat_gpt.auto_gen_title_background_enable = False
         log.debug("Auto title generation disabled")
 
@@ -1088,10 +1046,10 @@ def main():
         f"[bright_magenta]Total tokens spent: [bold]{chat_gpt.total_tokens_spent}")
     
     threadlock_remote_version.acquire()
-    if remote_version and remote_version > local_version:
+    if remote_version and local_version !='unknown' and remote_version > local_version:
         console.print(
             f"New Version Available: [red]v{str(local_version)}[/] -> [green]v{str(remote_version)}[/]\n"
-            "Use `[bright_magenta]pip install --upgrade chatgpt-in-terminal[/]` to upgrade to latest version.\n"
+            "Use `[bright_magenta]pip install --upgrade gpt-term[/]` to upgrade to latest version.\n"
             "Visit our GitHub Site https://github.com/xiaoxx970/chatgpt-in-terminal to see what have been changed!")
     threadlock_remote_version.release()
 
