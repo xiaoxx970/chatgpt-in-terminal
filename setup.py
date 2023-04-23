@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+from gpt_term import __version__
 
 with open("README.md", 'r', encoding='utf-8') as f:
     long_description = f.read()
@@ -14,7 +15,7 @@ install_requires = [
 
 setup(
     name="gpt-term",
-    version="0.9.1",
+    version=__version__,
     author="xiaoxx970",
     description="Use ChatGPT in terminal",
     long_description=long_description,
@@ -27,11 +28,11 @@ setup(
     install_requires=install_requires,
     entry_points={
         "console_scripts": [
-            "gpt-term=chat:main"
+            "gpt-term=gpt_term.main:main"
         ]
     },
     data_files=[('', ['config.ini'])],
-    python_requires=">=3.8",
+    python_requires=">=3.7",
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
