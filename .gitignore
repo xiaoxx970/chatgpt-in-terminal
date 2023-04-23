@@ -1,7 +1,12 @@
 .DS_Store
 chat.log
-.env
 chat*.json
 .vscode
+*.bat
 *.code-workspace
 # ignore vscode workspace file
+
+__pycache__
+build
+*.egg-info/
+dist

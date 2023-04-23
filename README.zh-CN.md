@@ -17,18 +17,22 @@
 
 > 注意，终端需能正常访问外网（配置代理的环境变量）才能运行代码，如系统已开启代理但没有配置终端代理，API 请求就会从国内 IP 发起，可能导致账号停用 ([#2](https://github.com/xiaoxx970/chatgpt-in-terminal/issues/2))
 
-![example](README.assets/small.gif)
+![example](https://github.com/xiaoxx970/chatgpt-in-terminal/raw/main/README.assets/small.gif)
 
 默认使用 [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) 模型，也就是 ChatGPT(免费版) 所使用的模型。
 
 ## 更新记录
 
-### 2023-04-15
+### 2023-04-23
 
-- 新增在单行模式下换行功能，现在可以使用 `Esc` + `Enter` 在单行模式下换行
+- 发布 `gpt-term` 到 [Pypi](https://pypi.org/project/gpt-term/)，开始版本管理，现在不需要克隆项目到本地，直接使用 `pip` 命令就可以安装 `gpt-term`
 
 <details>
   <summary>更多 Change log</summary>
+
+### 2023-04-15
+
+- 新增在单行模式下换行功能，现在可以使用 `Esc` + `Enter` 在单行模式下换行
 
 ### 2023-04-13
 
@@ -71,94 +75,75 @@
 
    OpenAI 的 API 密钥可在主页右上角点击 "View API keys" 打开的页面中生成，直达链接：https://platform.openai.com/account/api-keys
 
-   ![image-20230303233352970](README.assets/image-20230303233352970.png)
+   ![image-20230303233352970](https://github.com/xiaoxx970/chatgpt-in-terminal/raw/main/README.assets/image-20230303233352970.png)
 
-2. [Python](https://www.python.org/downloads/) 3.6 或更高版本
-3. [git](https://git-scm.com/downloads)
+2. [Python](https://www.python.org/downloads/) 3.7 或更高版本
 
 ## 安装
 
-1. 克隆 Repo 并进入目录
+1. 使用 `pip` 安装 `GPT-Term`
 
    ```shell
-   git clone https://github.com/xiaoxx970/chatgpt-in-terminal.git
-   cd ./chatgpt-in-terminal
+   pip3 install gpt-term
    ```
-
-2. 把当前目录下 `.env.example` 文件重命名为 `.env`
+   
+2. 配置 API Key
 
    ```shell
-   mv .env.example .env
+   gpt-term --set-apikey 你的API_KEY
    ```
 
-   编辑 `.env` 文件，修改 `OPENAI_API_KEY` 变量为你的 API Key
+   > 如果现在不配置  API Key，也可在运行时根据提示输入 API Key
 
-   ```shell
-   OPENAI_API_KEY=你的API_KEY
-   ```
-
-   > 如果不配置 `.env` 文件，也可在运行时直接输入 API Key，单次生效
-
-3. 通过 `pip` 命令 安装 `requirements.txt` 中的依赖
-
-   ```shell
-   pip3 install -r requirements.txt
-   ```
 
 ## 更新
 
-如果要把脚本更新为最新版本，在本项目目录下运行：
+如果要把 `GPT-Term` 更新为最新版本，在命令行中运行：
 
 ```sh
-git pull
-pip3 install -r requirements.txt
+pip3 install --upgrade gpt-term
 ```
 
-> 如果 git 命令报错
->
-> ```shell
-> error: Your local changes to the following files would be overwritten by merge:
->         .env
-> Please commit your changes or stash them before you merge.
-> Aborting
-> ```
->
-> 就先从 git 取消跟踪 .env 文件（不会删除本地 .env）
->
-> ```sh
-> git rm --cache .env
-> ```
->
-> 再运行上面 `git pull` 命令即可
+> 如果有新版本，`GPT-Term` 会在退出时提示用户更新
 
 ## 如何使用
 
 使用以下命令运行：
 
 ```shell
-python3 chat.py
+gpt-term
 ```
 
 在默认的单行模式下输入提问时，使用 `Esc` + `Enter` 换行，`Enter` 提交
 
->  原始格式的对话记录会存至 `chat.log`
+>  原始格式的对话记录会存至 `~/.gpt-term/chat.log`
 
 ### 可用参数
 
 | 选项          | 功能                              | 示例                                          |
 | ------------- | --------------------------------- | --------------------------------------------- |
-| -h, --help    | 显示此帮助信息并退出              | `chat.py --help`                              |
-| --load FILE   | 从文件中加载聊天记录              | `chat.py --load chat_history_code_check.json` |
-| --key API_KEY | 选择 .env 文件中要使用的 API 密钥 | `chat.py --key OPENAI_API_KEY1`               |
-| --model MODEL | 选择要使用的 AI 模型              | `chat.py --model gpt-3.5-turbo`               |
-| -m, --multi   | 启用多行模式                      | `chat.py --multi`                             |
-| -r, --raw     | 启用原始模式                      | `chat.py --raw`                               |
+| -h, --help    | 显示此帮助信息并退出              | `gpt-term --help`                             |
+| --load FILE   | 从文件中加载聊天记录              | `gpt-term --load chat_history_code_check.json` |
+| --key API_KEY | 选择 config.ini 文件中要使用的 API 密钥 | `gpt-term --key OPENAI_API_KEY1`              |
+| --model MODEL | 选择要使用的 AI 模型              | `gpt-term --model gpt-3.5-turbo`              |
+| -m, --multi   | 启用多行模式                      | `gpt-term --multi`                            |
+| -r, --raw     | 启用原始模式                      | `gpt-term --raw`                              |
+| --set-apikey KEY        | 设置 OpenAI 的 API 密钥                          | `gpt-term --set-apikey sk-xxx` |
+| --set-timeout SEC       | 设置 API 请求的最大等待时间                         | `gpt-term --set-timeout 10` |
+| --set-gentitle BOOL     | 设置是否为聊天自动生成标题                          | `gpt-term --set-gentitle True` |
+| --set-saveperfix PERFIX | 设置聊天历史文件的保存前缀                          | `gpt-term --set-saveperfix chat_history_` |
+| --set-loglevel LEVEL    | 设置日志级别：DEBUG, INFO, WARNING, ERROR, CRITICAL | `gpt-term --set-loglevel DEBUG` |
 
 > 多行模式与 raw 模式可以同时使用
 
-### `.env` 配置文件
+### 配置文件
 
-```shell
+配置文件位于 `~/.gpt-term/config.ini`，由程序自动生成，可以通过程序 `--set` 参数修改，也可手动修改
+
+默认配置如下
+
+```ini config.ini
+[DEFAULT]
 # OpenAI 的 API 密钥
 OPENAI_API_KEY=
 
@@ -230,9 +215,11 @@ LOG_LEVEL=INFO
 
 - `/timeout [new_timeout]`：修改 API 超时时间
 
-  > 超时默认30s，也可通过 `.env` 文件中的 `OPENAI_API_TIMEOUT=` 配置默认超时
+  > 超时默认30s，也可通过 `~/.gpt-term/config.ini` 文件中的 `OPENAI_API_TIMEOUT=` 配置默认超时
 
 - `/undo`：删除上一个问题和回答
+
+- `/version`：显示 `GPT-Term` 的本地版本和远程版本
 
 - `/help`：显示可用命令
 
@@ -258,9 +245,12 @@ LOG_LEVEL=INFO
 
 感谢以下项目为本脚本提供强大的支持：
 
-- [rich](https://github.com/Textualize/rich)：用于在终端中输出富文本
-- [python-dotenv](https://github.com/theskumar/python-dotenv)：用于从 `.env` 文件加载环境变量
+- [requests](https://github.com/psf/requests)：用于处理 HTTP 请求
+- [pyperclip](https://github.com/asweigart/pyperclip)：跨平台剪贴板操作库
+- [rich](https://github.com/willmcgugan/rich)：用于在终端中输出富文本
 - [prompt_toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit)：命令行输入处理库
+- [sseclient-py](https://github.com/btubbs/sseclient-py)：用于实现回答的流式输出
+- [tiktoken](https://github.com/OpenAI/tiktoken)：用于计算和处理 OpenAI API token 的库
 
 ## 如何贡献
 
@@ -273,12 +263,17 @@ LOG_LEVEL=INFO
 
 ## 项目结构
 
-```shell
-├── README.md           # 说明文档
-├── chat.py             # 项目代码
-├── requirements.txt    # 依赖包列表
-├── chat.log            # 聊天后生成的对话日志
-└── .env                # 密钥存储以及其他设置
+```sh
+.
+├── LICENSE						# 许可证
+├── README.md					# 说明文档
+├── chat.py						# 脚本入口
+├── config.ini				# 密钥存储以及其他设置
+├── gpt_term					# 项目包文件夹
+│   ├── __init__.py
+│   └── main.py				# 主程序
+├── requirements.txt	# 依赖包列表
+└── setup.py
 ```
 
 ## 许可证

@@ -15,18 +15,21 @@ Slash (/) commands are available in the chat box to toggle multi-line submit mod
 
 Supports saving chat messages to a JSON file and loading them from the file.
 
-![example](README.assets/small.gif)
+![example](https://github.com/xiaoxx970/chatgpt-in-terminal/raw/main/README.assets/small.gif)
 
 Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) model, which is the same model used by ChatGPT (Free Edition), as default.
 
 ## Changelog
 
-### 2023-04-15
-
-- Added the ability to create a line break in single-line mode using `Esc` + `Enter`
+### 2023-04-23
+Released `gpt-term` on [Pypi](https://pypi.org/project/gpt-term/), started version control. No need to clone the project locally anymore, simply use the `pip` command to install gpt-term.
 
 <details>
   <summary>More Change log</summary>
+
+### 2023-04-15
+
+- Added the ability to create a line break in single-line mode using `Esc` + `Enter`
 
 ### 2023-04-13
 
@@ -69,94 +72,75 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
 
    OpenAI's API key can be generated on the page opened by clicking "View API keys" in the upper right corner of the homepage, direct link: https://platform.openai.com/account/api-keys
 
-   ![image-20230303233352970](README.assets/image-20230303233352970.png)
+   ![image-20230303233352970](https://github.com/xiaoxx970/chatgpt-in-terminal/raw/main/README.assets/image-20230303233352970.png)
 
-2. [Python](https://www.python.org/downloads/) version 3.6 or higher.
-3. [git](https://git-scm.com/downloads)
+2. [Python](https://www.python.org/downloads/) version 3.7 or higher.
 
 ## Installation
 
-1. Clone the repo and enter the directory
+
+1. Install `GPT-Term` using `pip`
 
    ```shell
-   git clone https://github.com/xiaoxx970/chatgpt-in-terminal.git
-   cd ./chatgpt-in-terminal
+   pip3 install gpt-term
    ```
-   
-2. Rename the `.env.example` file in the current directory to `.env`.
+
+2. Configure the API Key
 
    ```shell
-   mv .env.example .env
+   gpt-term --set-apikey YOUR_API_KEY
    ```
 
-   Edit the `.env` file and modify the `OPENAI_API_KEY` variable to your API Key.
-
-   ```shell
-   OPENAI_API_KEY=your_API_Key
-   ```
-
-   > If the `.env` file is not configured, you can also enter the API Key directly at runtime, but it will only be effective for the current session.
-   
-3. Install the dependencies in the `requirements.txt` file using the `pip` command.
-
-   ```shell
-   pip3 install -r requirements.txt
-   ```
+   > If you don't configure the API Key now, you can enter it when prompted during runtime.
 
 ## Update
 
-If you want to update the script to the latest version, run the following command in this project's directory:
+To update `GPT-Term` to the latest version, run the following command in your terminal:
 
 ```sh
-git pull
-pip3 install -r requirements.txt
+pip3 install --upgrade gpt-term
 ```
 
-> If git error is reported
->
-> ```shell
-> error: Your local changes to the following files would be overwritten by merge:
->          .env
-> Please commit your changes or stash them before you merge.
-> Aborting
-> ```
->
-> Just untrack the .env file from git first (doesn't delete the local .env file)
->
-> ```sh
-> git rm --cache .env
-> ```
->
-> Then run the `git pull` command above 
+> If there is a new version, `GPT-Term` will prompt the user to update upon exiting.
 
 ## How to Use
 
 Run with the following command:
 
 ```shell
-python3 chat.py
+gpt-term
 ```
 
 When entering a question in single-line mode, use `Esc` + `Enter` to start a new line, and use `Enter` to submit the question.
 
-> Original chat logs will be saved to `chat.log`
+> Original chat logs will be saved to `~/.gpt-term/chat.log`
 
 ### Available Arguments
 
 | Arguments     | Description                     | Example                                       |
 | ------------- | ------------------------------- | --------------------------------------------- |
-| -h, --help    | show this help message and exit | `chat.py --help`                              |
-| --load FILE   | Load chat history from file     | `chat.py --load chat_history_code_check.json` |
-| --key API_KEY | choose the API key to load      | `chat.py --key OPENAI_API_KEY1`               |
-| --model MODEL | choose the AI model to use      | `chat.py --model gpt-3.5-turbo`               |
-| -m, --multi   | Enable multi-line mode          | `chat.py --multi`                             |
-| -r, --raw     | Enable raw mode                 | `chat.py --raw`                               |
+| -h, --help    | show this help message and exit | `gpt-term --help`                             |
+| --load FILE   | Load chat history from file     | `gpt-term --load chat_history_code_check.json` |
+| --key API_KEY | choose the API key to load      | `gpt-term --key OPENAI_API_KEY1`              |
+| --model MODEL | choose the AI model to use      | `gpt-term --model gpt-3.5-turbo`              |
+| -m, --multi   | Enable multi-line mode          | `gpt-term --multi`                            |
+| -r, --raw     | Enable raw mode                 | `gpt-term --raw`                              |
+| --set-apikey KEY        | Set the OpenAI API key                                   | `gpt-term --set-apikey sk-xxx`   |
+| --set-timeout SEC       | Set the maximum wait time for API requests               | `gpt-term --set-timeout 10`      |
+| --set-gentitle BOOL     | Set whether to auto-generate a title for the chat        | `gpt-term --set-gentitle True`   |
+| --set-saveperfix PERFIX | Set the save prefix for chat history files               | `gpt-term --set-saveperfix chat_history_` |
+| --set-loglevel LEVEL    | Set the log level: DEBUG, INFO, WARNING, ERROR, CRITICAL | `gpt-term --set-loglevel DEBUG`  |
 
 > Multi-line mode and raw mode can be used simultaneously
 
-### `.env` configuration file
+### Configuration File
 
-```shell
+The configuration file is located at `~/.gpt-term/config.ini` and is autogenerated. It can be modified using the program's `--set` option or edited manually.
+
+The default configuration is as follows:
+
+```ini config.ini
+[DEFAULT]
 # API key for OpenAI
 OPENAI_API_KEY=
 
@@ -228,9 +212,11 @@ LOG_LEVEL=INFO
 
 - `/timeout [new_timeout]`: Modify API timeout.
 
-  > The default timeout is 30 seconds, it can also be configured by setting `OPENAI_API_TIMEOUT=` in the `.env` file.
+  > The default timeout is 30 seconds, it can also be configured by setting `OPENAI_API_TIMEOUT=` in the `~/.gpt-term/config.ini` file.
   
 - `/undo`: Delete the previous question and answer
+
+- `/version`: Display the local and remote versions of `GPT-Term`
 
 - `/help`: Display available commands
 
@@ -256,9 +242,12 @@ Upon exit, the token count for the chat session will be displayed.
 
 Thanks to the following projects for providing strong support for this script:
 
-- [rich](https://github.com/Textualize/rich): For rendering rich text in the terminal
-- [python-dotenv](https://github.com/theskumar/python-dotenv): For loading environment variables from `.env` file
+- [requests](https://github.com/psf/requests): For handling HTTP requests
+- [pyperclip](https://github.com/asweigart/pyperclip): A cross-platform clipboard operation library
+- [rich](https://github.com/willmcgugan/rich): For outputting rich text in the terminal
 - [prompt_toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit): Command-line input processing library
+- [sseclient-py](https://github.com/btubbs/sseclient-py): For implementing streaming output of answers
+- [tiktoken](https://github.com/OpenAI/tiktoken): A library for calculating and processing OpenAI API tokens
 
 ## Contributing
 
@@ -271,12 +260,17 @@ This project exists thanks to all the people who contribute.
 
 ## Project Structure
 
-```bash
-├── README.md           # Documentation
-├── chat.py             # Project code
-├── requirements.txt    # Dependency package list
-├── chat.log            # Chat log generated after chatting
-└── .env                # Storage API key and other settings
+```sh
+.
+├── LICENSE                   # License
+├── README.md                 # Documentation
+├── chat.py                   # Script entry point
+├── config.ini                # API key storage and other settings
+├── gpt_term                  # Project package folder
+│   ├── __init__.py
+│   └── main.py               # Main program
+├── requirements.txt          # List of dependencies
+└── setup.py
 ```
 
 ## License
