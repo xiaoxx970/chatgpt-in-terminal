@@ -20,7 +20,7 @@ import pyperclip
 import requests
 import sseclient
 import tiktoken
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 from prompt_toolkit import PromptSession, prompt
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.key_binding import KeyBindings
@@ -29,7 +29,7 @@ from prompt_toolkit.shortcuts import confirm
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import ValidationError, Validator
 from rich import print as rprint
-from rich.console import Console
+from rich.console import Console, Group
 from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -853,7 +853,7 @@ def create_key_bindings():
     return key_bindings
 
 
-def check_remote_update():
+def get_remote_version():
     global remote_version
     try:
         response = requests.get(
@@ -932,7 +932,7 @@ def main():
     log.debug(f"Local version: {str(local_version)}")
     # get local version from pkg resource
 
-    check_remote_update_thread = threading.Thread(target=check_remote_update)
+    check_remote_update_thread = threading.Thread(target=get_remote_version)
     check_remote_update_thread.start()
     log.debug("Remote version get thread started")
     # try to get remote version and check update
@@ -1034,10 +1034,11 @@ def main():
     
     threadlock_remote_version.acquire()
     if remote_version and remote_version > local_version:
-        console.print(
-            f"New Version Available: [red]v{str(local_version)}[/] -> [green]v{str(remote_version)}[/]\n"
-            "Use `[bright_magenta]pip install --upgrade gpt-term[/]` to upgrade to latest version.\n"
-            "Visit our GitHub Site https://github.com/xiaoxx970/chatgpt-in-terminal to see what have been changed!")
+        console.print(Panel(Group(
+            Markdown("Use `pip install --upgrade gpt-term` to upgrade."),
+            Markdown("Visit our [GitHub Site](https://github.com/xiaoxx970/chatgpt-in-terminal) to see what have been changed!")),
+            title=f"New Version Available: [red]v{str(local_version)}[/] -> [green]v{str(remote_version)}[/]",
+            width=58, style="blue", title_align="left"))
     threadlock_remote_version.release()
 
 if __name__ == "__main__":
