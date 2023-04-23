@@ -14,7 +14,7 @@ install_requires = [
 
 setup(
     name="gpt-term",
-    version="0.9.0",
+    version="0.9.1",
     author="xiaoxx970",
     description="Use ChatGPT in terminal",
     long_description=long_description,
