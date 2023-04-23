@@ -1,6 +1,5 @@
 .DS_Store
 chat.log
-.env
 chat*.json
 .vscode
 *.bat

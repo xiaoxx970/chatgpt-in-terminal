@@ -43,7 +43,7 @@ if not os.path.exists(data_dir):
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
 logging.basicConfig(filename=f'{data_dir}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
-                    datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO, encoding="UTF-8")
+                    datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO)
 
 log = logging.getLogger("chat")
 

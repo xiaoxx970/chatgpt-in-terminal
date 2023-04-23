@@ -119,12 +119,12 @@ When entering a question in single-line mode, use `Esc` + `Enter` to start a new
 
 | Arguments     | Description                     | Example                                       |
 | ------------- | ------------------------------- | --------------------------------------------- |
-| -h, --help    | show this help message and exit | `chat.py --help`                              |
-| --load FILE   | Load chat history from file     | `chat.py --load chat_history_code_check.json` |
-| --key API_KEY | choose the API key to load      | `chat.py --key OPENAI_API_KEY1`               |
-| --model MODEL | choose the AI model to use      | `chat.py --model gpt-3.5-turbo`               |
-| -m, --multi   | Enable multi-line mode          | `chat.py --multi`                             |
-| -r, --raw     | Enable raw mode                 | `chat.py --raw`                               |
+| -h, --help    | show this help message and exit | `gpt-term --help`                             |
+| --load FILE   | Load chat history from file     | `gpt-term --load chat_history_code_check.json` |
+| --key API_KEY | choose the API key to load      | `gpt-term --key OPENAI_API_KEY1`              |
+| --model MODEL | choose the AI model to use      | `gpt-term --model gpt-3.5-turbo`              |
+| -m, --multi   | Enable multi-line mode          | `gpt-term --multi`                            |
+| -r, --raw     | Enable raw mode                 | `gpt-term --raw`                              |
 | --set-apikey KEY        | Set the OpenAI API key                                   | `gpt-term --set-apikey sk-xxx`   |
 | --set-timeout SEC       | Set the maximum wait time for API requests               | `gpt-term --set-timeout 10`      |
 | --set-gentitle BOOL     | Set whether to auto-generate a title for the chat        | `gpt-term --set-gentitle True`   |
