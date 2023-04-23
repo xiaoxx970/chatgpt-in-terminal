@@ -938,10 +938,10 @@ def main():
     log.info("GPT-Term start")
 
     global local_version
-    try:
-        local_version = parse_version(get_distribution('gpt-term').version)
-    except DistributionNotFound:
+    if __name__ == "__main__":
         local_version = 'unknown'
+    else:
+        local_version = parse_version(get_distribution('gpt-term').version)
     log.debug(f"Local version: {str(local_version)}")
     # get local version from pkg resource
 
@@ -961,9 +961,9 @@ def main():
     if not api_key:
         log.debug("API Key not found, waiting for input")
         api_key = prompt("OpenAI API Key not found, please input: ")
-        confirm('Write API Key to config file?')
-        config["OPENAI_API_KEY"] = api_key
-        write_config(config_ini)
+        if confirm('Save API Key to config file?'):
+            config["OPENAI_API_KEY"] = api_key
+            write_config(config_ini)
 
     api_key_log = api_key[:3] + '*' * (len(api_key) - 7) + api_key[-4:]
     log.debug(f"Loaded API Key: {api_key_log}")
