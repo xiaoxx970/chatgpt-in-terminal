@@ -246,7 +246,7 @@ Thanks to the following projects for providing strong support for this script:
 - [pyperclip](https://github.com/asweigart/pyperclip): A cross-platform clipboard operation library
 - [rich](https://github.com/willmcgugan/rich): For outputting rich text in the terminal
 - [prompt_toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit): Command-line input processing library
-- [sseclient-py](https://github.com/btubbs/sseclient-py): For implementing streaming output of answers
+- [sseclient-py](https://github.com/mpetazzoni/sseclient): For implementing streaming output of answers
 - [tiktoken](https://github.com/OpenAI/tiktoken): A library for calculating and processing OpenAI API tokens
 
 ## Contributing

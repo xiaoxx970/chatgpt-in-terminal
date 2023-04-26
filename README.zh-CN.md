@@ -249,7 +249,7 @@ LOG_LEVEL=INFO
 - [pyperclip](https://github.com/asweigart/pyperclip)：跨平台剪贴板操作库
 - [rich](https://github.com/willmcgugan/rich)：用于在终端中输出富文本
 - [prompt_toolkit](https://github.com/prompt-toolkit/python-prompt-toolkit)：命令行输入处理库
-- [sseclient-py](https://github.com/btubbs/sseclient-py)：用于实现回答的流式输出
+- [sseclient-py](https://github.com/mpetazzoni/sseclient)：用于实现回答的流式输出
 - [tiktoken](https://github.com/OpenAI/tiktoken)：用于计算和处理 OpenAI API token 的库
 
 ## 如何贡献
