@@ -32,7 +32,7 @@ setup(
             "gpt-term=gpt_term.main:main"
         ]
     },
-    data_files=[('', ['config.ini'])],
+    include_package_data=True,
     python_requires=">=3.7",
     classifiers=[
         'Programming Language :: Python :: 3',

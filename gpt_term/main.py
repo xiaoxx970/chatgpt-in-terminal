@@ -7,12 +7,13 @@ import logging
 import os
 import platform
 import re
-import shutil
 import sys
 import threading
 import time
 from configparser import ConfigParser
 from datetime import date, datetime, timedelta
+from importlib.resources import read_text
+from pathlib import Path
 from queue import Queue
 from typing import Dict, List
 
@@ -36,10 +37,12 @@ from rich.panel import Panel
 
 from . import __version__
 
-data_dir = os.path.expanduser("~") + "/.gpt-term"
-if not os.path.exists(data_dir):
-    os.makedirs(data_dir)
-    shutil.copy('config.ini', data_dir)
+data_dir = Path.home() / '.gpt-term'
+data_dir.mkdir(parents=True, exist_ok=True)
+config_path = data_dir / 'config.ini'
+if not config_path.exists():
+    with config_path.open('w') as f:
+        f.write(read_text('gpt_term', 'config.ini'))
 
 # 日志记录到 chat.log，注释下面这行可不记录日志
 logging.basicConfig(filename=f'{data_dir}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
@@ -896,6 +899,7 @@ def set_config_by_args(args: argparse.Namespace, config_ini: ConfigParser):
 
 def main():
     parser = argparse.ArgumentParser(description='Use ChatGPT in terminal')
+    parser.add_argument('--version', action='version', version=f'%(prog)s v{local_version}')
     parser.add_argument('--load', metavar='FILE', type=str, help='Load chat history from file')
     parser.add_argument('--key', type=str, help='Choose the API key to load')
     parser.add_argument('--model', type=str, help='Choose the AI model to use')
@@ -932,7 +936,7 @@ def main():
     log.debug(f"Local version: {str(local_version)}")
     # get local version from pkg resource
 
-    check_remote_update_thread = threading.Thread(target=get_remote_version)
+    check_remote_update_thread = threading.Thread(target=get_remote_version, daemon=True)
     check_remote_update_thread.start()
     log.debug("Remote version get thread started")
     # try to get remote version and check update
