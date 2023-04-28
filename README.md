@@ -113,6 +113,16 @@ gpt-term
 
 When entering a question in single-line mode, use `Esc` + `Enter` to start a new line, and use `Enter` to submit the question.
 
+Here are some common shortcut keys (also shortcut keys for the shell):
+
+- `Ctrl+_`:	Undo
+- `Ctrl+L`: Clear screen, equivalent to `clear` command in shell
+- `Ctrl+C`: Stop the current answer or cancel the current input
+- `Tab`: Autocomplete commands or parameters
+- `Ctrl+U`: Delete all characters to the left of the cursor
+- `Ctrl+K`: Delete all characters to the right of the cursor
+- `Ctrl+W`: Delete the word to the left of the cursor
+
 > Original chat logs will be saved to `~/.gpt-term/chat.log`
 
 ### Available Arguments
