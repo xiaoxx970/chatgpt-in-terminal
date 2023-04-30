@@ -106,6 +106,7 @@ class ChatGPT:
         self.tokens_limit = 4096
         # as default: gpt-3.5-turbo has a tokens limit as 4096
         # when model changes, tokens will also be changed
+        self.temperature = 1
         self.total_tokens_spent = 0
         self.current_tokens = count_token(self.messages)
         self.timeout = timeout
@@ -233,7 +234,8 @@ class ChatGPT:
             data = {
                 "model": self.model,
                 "messages": self.messages,
-                "stream": ChatMode.stream_mode
+                "stream": ChatMode.stream_mode,
+                "temperature": self.temperature
             }
             response = self.send_request(data)
             if response is None:
@@ -501,10 +503,22 @@ class ChatGPT:
             return
         console.print(f"[dim]API timeout set to [green]{timeout}s[/].")
 
+    def set_temperature(self, temperature):
+        try:
+            new_temperature = float(temperature)
+        except ValueError:
+            console.print("[red]Input must be a number between 0 and 2")
+            return
+        if new_temperature > 2 or new_temperature < 0:
+            console.print("[red]Input must be a number between 0 and 2")
+            return
+        self.temperature = new_temperature
+        console.print(f"[dim]Temperature set to [green]{temperature}[/].")
+
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/title', '/timeout', '/undo', '/delete', '/version', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/temper', '/title', '/timeout', '/undo', '/delete', '/version', '/help', '/exit'
     ]
 
     copy_actions = [
@@ -730,6 +744,18 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         else:
             console.print("[dim]No change.")
 
+    elif command.startswith('/temper'):
+        args = command.split()
+        if len(args) > 1:
+            new_temperature = args[1]
+        else:
+            new_temperature = prompt(
+                "New temperature: ", default=str(chat_gpt.temperature), style=style)
+        if new_temperature != str(chat_gpt.temperature):
+            chat_gpt.set_temperature(new_temperature)
+        else:
+            console.print("[dim]No change.")            
+
     elif command.startswith('/title'):
         args = command.split()
         if len(args) > 1:
@@ -809,6 +835,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
     /save \[filename_or_path] - Save the chat history to a file, suggest title if filename_or_path not provided
     /model \[model_name]      - Change AI model
     /system \[new_prompt]     - Modify the system prompt
+    /temper \[temperature]    - Set Model sampling temperature (0~2)
     /title \[new_title]       - Set title for this chat, if new_title is not provided, a new title will be generated
     /timeout \[new_timeout]   - Modify the api timeout
     /undo                    - Undo the last question and remove its answer
