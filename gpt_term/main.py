@@ -513,12 +513,12 @@ class ChatGPT:
             console.print("[red]Input must be a number between 0 and 2")
             return
         self.temperature = new_temperature
-        console.print(f"[dim]Temperature set to [green]{temperature}[/].")
+        console.print(f"[dim]Randomness set to [green]{temperature}[/].")
 
 
 class CustomCompleter(Completer):
     commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/temper', '/title', '/timeout', '/undo', '/delete', '/version', '/help', '/exit'
+        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/rand', '/title', '/timeout', '/undo', '/delete', '/version', '/help', '/exit'
     ]
 
     copy_actions = [
@@ -744,13 +744,13 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         else:
             console.print("[dim]No change.")
 
-    elif command.startswith('/temper'):
+    elif command.startswith('/rand'):
         args = command.split()
         if len(args) > 1:
             new_temperature = args[1]
         else:
             new_temperature = prompt(
-                "New temperature: ", default=str(chat_gpt.temperature), style=style)
+                "New Randomness: ", default=str(chat_gpt.temperature), style=style)
         if new_temperature != str(chat_gpt.temperature):
             chat_gpt.set_temperature(new_temperature)
         else:
@@ -835,7 +835,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
     /save \[filename_or_path] - Save the chat history to a file, suggest title if filename_or_path not provided
     /model \[model_name]      - Change AI model
     /system \[new_prompt]     - Modify the system prompt
-    /temper \[temperature]    - Set Model sampling temperature (0~2)
+    /rand \[randomness]       - Set Model sampling temperature (0~2)
     /title \[new_title]       - Set title for this chat, if new_title is not provided, a new title will be generated
     /timeout \[new_timeout]   - Modify the api timeout
     /undo                    - Undo the last question and remove its answer
