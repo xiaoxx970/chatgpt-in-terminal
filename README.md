@@ -21,11 +21,15 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
 
 ## Changelog
 
-### 2023-04-23
-Released `gpt-term` on [Pypi](https://pypi.org/project/gpt-term/), started version control. No need to clone the project locally anymore, simply use the `pip` command to install gpt-term.
+### 2023-05-05
+
+- Add `/rand` command to set temperature parameter
 
 <details>
   <summary>More Change log</summary>
+
+### 2023-04-23
+Released `gpt-term` on [Pypi](https://pypi.org/project/gpt-term/), started version control. No need to clone the project locally anymore, simply use the `pip` command to install gpt-term.
 
 ### 2023-04-15
 
@@ -215,6 +219,8 @@ LOG_LEVEL=INFO
   > If no filename or path is provided, the client will generate one, and if generation fails, the filename `chat_history_YEAR-MONTH-DAY_HOUR,MINUTE,SECOND.json` is suggested on input.
 
 - `/system [new_prompt]`: Modify the system prompt
+
+- `/rand [randomness]`: Set Model sampling temperature (0~2), higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
 
 - `/title [new_title]`: Set terminal title for this chat
 

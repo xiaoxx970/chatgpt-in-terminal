@@ -23,12 +23,16 @@
 
 ## 更新记录
 
-### 2023-04-23
+### 2023-05-05
 
-- 发布 `gpt-term` 到 [Pypi](https://pypi.org/project/gpt-term/)，开始版本管理，现在不需要克隆项目到本地，直接使用 `pip` 命令就可以安装 `gpt-term`
+- 添加`/rand`命令设置temperature参数
 
 <details>
   <summary>更多 Change log</summary>
+
+### 2023-04-23
+
+- 发布 `gpt-term` 到 [Pypi](https://pypi.org/project/gpt-term/)，开始版本管理，现在不需要克隆项目到本地，直接使用 `pip` 命令就可以安装 `gpt-term`
 
 ### 2023-04-15
 
@@ -218,6 +222,8 @@ LOG_LEVEL=INFO
   > 如果未提供文件名或路径，客户端将生成一个，如果生成失败，则在输入时建议使用文件名 `chat_history_年-月-日_时,分,秒.json`
 
 - `/system [new_prompt]`：修改系统提示语
+
+- `/rand [randomness]`: 设置对话随机程度（0~2），较高的值如 0.8 将使输出更随机，而较低的值如 0.2 将使回答更集中和确定
 
 - `/title [new_title]`: 为这个聊天终端设置标题
 
