@@ -27,6 +27,8 @@
 
 - 添加`/rand`命令设置temperature参数
 
+- 为 `/stream` 命令添加 overflow 模式切换，现在可以运行命令 `/stream visible` 切换到始终可见模式。在这个模式下，超出屏幕的内容将被向上滚动，新内容会一直输出直到完成
+
 <details>
   <summary>更多 Change log</summary>
 
@@ -191,6 +193,14 @@ LOG_LEVEL=INFO
 
   > 在流式传输模式下，回复将在客户端收到第一部分回应后开始逐字输出，减少等待时间。流式传输默认为开启。
 
+  - `/stream ellipsis` （默认）
+
+    > 切换流式输出的模式为自动省略，当输出内容超过屏幕时，将在屏幕下方显示三个小点并等待直到输出完成
+
+  - `/stream visible`
+
+    > 切换流式输出的模式为始终可见，在这个模式下，超出屏幕的内容将被向上滚动，新内容会一直输出直到完成。注意在这个模式下终端将无法正确清理超出屏幕的内容。
+
 - `/tokens`：显示已花费的 API token 数统计和本次对话的 token 长度
 
   > GPT-3.5的对话token限制为4096，可通过此命令实时查看是否接近限制
@@ -284,9 +294,9 @@ LOG_LEVEL=INFO
 ├── LICENSE						# 许可证
 ├── README.md					# 说明文档
 ├── chat.py						# 脚本入口
-├── config.ini				# 密钥存储以及其他设置
 ├── gpt_term					# 项目包文件夹
 │   ├── __init__.py
+│   ├── config.ini	  # 密钥存储以及其他设置
 │   └── main.py				# 主程序
 ├── requirements.txt	# 依赖包列表
 └── setup.py

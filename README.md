@@ -25,6 +25,8 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
 
 - Add `/rand` command to set temperature parameter
 
+- Add overflow mode switch for `/stream` command, now you can run command `/stream visible` to switch to always visible mode. In this mode, the content that exceeds the screen will be scrolled up, and the new content will be output until it is completed
+
 <details>
   <summary>More Change log</summary>
 
@@ -188,6 +190,14 @@ LOG_LEVEL=INFO
 
    > In stream mode, the answer will start outputting as soon as the first response arrives, which can reducing waiting time. Stream mode is on by default.
 
+   - `/stream ellipsis` (default)
+
+     > Switch the mode of streaming output to auto omission, when the output content exceeds the screen, three small dots will be displayed at the bottom of the screen and wait until the output is completed
+
+   - `/stream visible`
+
+      > Toggle the streaming output mode to always visible, in this mode, the content that exceeds the screen will be scrolled up, and the new content will be output until it is completed. Note that in this mode the terminal will not properly clean up off-screen content.
+
 - `/tokens`: Display the total tokens spent and the tokens for the current conversation
 
   > GPT-3.5 has a token limit of 4096; use this command to check if you're approaching the limit
@@ -281,9 +291,9 @@ This project exists thanks to all the people who contribute.
 ├── LICENSE                   # License
 ├── README.md                 # Documentation
 ├── chat.py                   # Script entry point
-├── config.ini                # API key storage and other settings
 ├── gpt_term                  # Project package folder
 │   ├── __init__.py
+│   ├── config.ini            # API key storage and other settings
 │   └── main.py               # Main program
 ├── requirements.txt          # List of dependencies
 └── setup.py

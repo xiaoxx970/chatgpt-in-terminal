@@ -70,26 +70,26 @@ class ChatMode:
     def toggle_raw_mode(cls):
         cls.raw_mode = not cls.raw_mode
         console.print(
-            f"[dim]Raw mode {'enabled' if cls.raw_mode else 'disabled'}, use `/last` to display the last answer.")
+            f"[dim]Raw mode {'[green]enabled[/]' if cls.raw_mode else '[bright_red]disabled[/]'}, use `[bright_magenta]/last[/]` to display the last answer.")
 
     @classmethod
     def toggle_stream_mode(cls):
         cls.stream_mode = not cls.stream_mode
         if cls.stream_mode:
             console.print(
-                f"[dim]Stream mode enabled, the answer will start outputting as soon as the first response arrives.")
+                f"[dim]Stream mode [green]enabled[/], the answer will start outputting as soon as the first response arrives.")
         else:
             console.print(
-                f"[dim]Stream mode disabled, the answer is being displayed after the server finishes responding.")
+                f"[dim]Stream mode [bright_red]disabled[/], the answer is being displayed after the server finishes responding.")
 
     @classmethod
     def toggle_multi_line_mode(cls):
         cls.multi_line_mode = not cls.multi_line_mode
         if cls.multi_line_mode:
             console.print(
-                f"[dim]Multi-line mode enabled, press [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] to submit.")
+                f"[dim]Multi-line mode [green]enabled[/], press [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] to submit.")
         else:
-            console.print(f"[dim]Multi-line mode disabled.")
+            console.print(f"[dim]Multi-line mode [bright_red]disabled[/].")
 
 
 class ChatGPT:
@@ -114,6 +114,7 @@ class ChatGPT:
         self.gen_title_messages = Queue()
         self.auto_gen_title_background_enable = True
         self.threadlock_total_tokens_spent = threading.Lock()
+        self.stream_overflow = 'ellipsis'
 
         self.credit_total_granted = 0
         self.credit_total_used = 0
@@ -176,7 +177,7 @@ class ChatGPT:
     def process_stream_response(self, response: requests.Response):
         reply: str = ""
         client = sseclient.SSEClient(response)
-        with Live(console=console, auto_refresh=False) as live:
+        with Live(console=console, auto_refresh=False, vertical_overflow=self.stream_overflow) as live:
             try:
                 rprint("[bold cyan]ChatGPT: ")
                 for event in client.events():
@@ -477,6 +478,26 @@ class ChatGPT:
             console.print(
                 f"[dim]No system prompt found in messages.")
 
+    def set_stream_overflow(self, new_overflow: str):
+        # turn on stream if not
+        if not ChatMode.stream_mode:
+            ChatMode.toggle_stream_mode()
+
+        if new_overflow == self.stream_overflow:
+            console.print("[dim]No change.")
+            return
+
+        old_overflow = self.stream_overflow
+        if new_overflow == 'ellipsis' or new_overflow == 'visible':
+            self.stream_overflow = new_overflow
+            console.print(
+                f"[dim]Stream overflow option has been modified from '{old_overflow}' to '{new_overflow}'.")
+            if new_overflow == 'visible':
+                console.print("[dim]Note that in this mode the terminal will not properly clean up off-screen content.")
+        else:
+            console.print(f"[dim]No such Stream overflow option, remain '{old_overflow}' unchanged.")
+        
+
     def set_model(self, new_model: str):
         old_model = self.model
         if not new_model:
@@ -531,6 +552,11 @@ class CustomCompleter(Completer):
         "all"
     ]
 
+    stream_actions = [
+        "visible",
+        "ellipsis"
+    ]
+
     available_models = [
         "gpt-3.5-turbo",
         "gpt-3.5-turbo-0301",
@@ -561,6 +587,12 @@ class CustomCompleter(Completer):
                 for delete in self.delete_actions:
                     if delete.startswith(delete_prefix):
                         yield Completion(delete, start_position=-len(delete_prefix))
+            # Check if it's a /stream command
+            elif text.startswith('/stream '):
+                stream_prefix = text[8:]
+                for stream in self.stream_actions:
+                    if stream.startswith(stream_prefix):
+                        yield Completion(stream, start_position=-len(stream_prefix))
             else:
                 for command in self.commands:
                     if command.startswith(text):
@@ -679,8 +711,13 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         ChatMode.toggle_raw_mode()
     elif command == '/multi':
         ChatMode.toggle_multi_line_mode()
-    elif command == '/stream':
-        ChatMode.toggle_stream_mode()
+
+    elif command.startswith('/stream'):
+        args = command.split()
+        if len(args) > 1:
+            chat_gpt.set_stream_overflow(args[1])
+        else:
+            ChatMode.toggle_stream_mode()
 
     elif command == '/tokens':
         chat_gpt.threadlock_total_tokens_spent.acquire()
@@ -696,7 +733,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         console.print(Panel(f"[bold green]Total Granted:[/]\t\t${format(chat_gpt.credit_total_granted, '.2f')}\n"
                             f"[bold cyan]Used This Month:[/]\t${format(chat_gpt.credit_used_this_month, '.2f')}\n"
                             f"[bold blue]Used Total:[/]\t\t${format(chat_gpt.credit_total_used, '.2f')}",
-                            title="Credit Summary", title_align='left', subtitle=f"[blue]Plan: {chat_gpt.credit_plan}", width=35))
+                            title="Credit Summary", title_align='left', subtitle=f"[bright_blue]Plan: {chat_gpt.credit_plan}", width=35))
 
     elif command.startswith('/model'):
         args = command.split()
@@ -843,7 +880,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         console.print('''[bold]Available commands:[/]
     /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)
     /multi                   - Toggle multi-line mode (allow multi-line input)
-    /stream                  - Toggle stream output mode (flow print the answer)
+    /stream \[overflow_mode]  - Toggle stream output mode (flow print the answer)
     /tokens                  - Show the total tokens spent and the tokens for the current conversation
     /usage                   - Show total credits and current credits used
     /last                    - Display last ChatGPT's reply
@@ -1012,7 +1049,7 @@ def main():
 
     if not config.getboolean("AUTO_GENERATE_TITLE", True):
         chat_gpt.auto_gen_title_background_enable = False
-        log.debug("Auto title generation disabled")
+        log.debug("Auto title generation [bright_red]disabled[/]")
 
     gen_title_daemon_thread = threading.Thread(
         target=chat_gpt.auto_gen_title_background, daemon=True)
