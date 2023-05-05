@@ -584,6 +584,23 @@ class NumberValidator(Validator):
             raise ValidationError(message="Please input an Integer!",
                                   cursor_position=len(text))
 
+class FloatRangeValidator(Validator):
+    def __init__(self, min_value=None, max_value=None):
+        self.min_value = min_value
+        self.max_value = max_value
+
+    def validate(self, document):
+        try:
+            value = float(document.text)
+        except ValueError:
+            raise ValidationError(message='Input must be a number')
+
+        if self.min_value is not None and value < self.min_value:
+            raise ValidationError(message=f'Input must be at least {self.min_value}')
+        if self.max_value is not None and value > self.max_value:
+            raise ValidationError(message=f'Input must be at most {self.max_value}')
+        
+temperature_validator = FloatRangeValidator(min_value=0.0, max_value=2.0)
 
 def print_message(message: Dict[str, str]):
     '''打印单条来自 ChatGPT 或用户的消息'''
@@ -750,7 +767,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             new_temperature = args[1]
         else:
             new_temperature = prompt(
-                "New Randomness: ", default=str(chat_gpt.temperature), style=style)
+                "New Randomness: ", default=str(chat_gpt.temperature), style=style, validator=temperature_validator)
         if new_temperature != str(chat_gpt.temperature):
             chat_gpt.set_temperature(new_temperature)
         else:
