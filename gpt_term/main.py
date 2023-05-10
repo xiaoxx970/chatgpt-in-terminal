@@ -17,6 +17,7 @@ from pathlib import Path
 from queue import Queue
 from typing import Dict, List
 
+import numpy
 import pyperclip
 import requests
 import sseclient
@@ -704,6 +705,24 @@ def change_CLI_title(new_title: str):
         # flush the stdout buffer in order to making the control sequences effective immediately
     log.debug(f"CLI Title changed to '{new_title}'")
 
+def get_levenshtein_distance(s1: str, s2: str):
+    s1_len = len(s1)
+    s2_len = len(s2)
+
+    v = numpy.zeros((s1_len+1,s2_len+1), dtype=int)
+    for i in range(0, s1_len+1):
+        for j in range(0, s2_len+1):
+            if i == 0:
+                v[i][j] = j
+            elif j == 0:
+                v[i][j] = i
+            elif s1[i-1] == s2[i-1]:
+                v[i][j] = v[i-1][j-1]
+            else:
+                v[i][j] = min(v[i-1][j-1], min(v[i][j-1], v[i-1][j])) + 1
+
+    return v[s1_len][s2_len]
+
 
 def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, chat_save_perfix: str):
     '''处理斜杠(/)命令'''
@@ -876,7 +895,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
     elif command == '/exit':
         raise EOFError
 
-    else:
+    elif command == '/help':
         console.print('''[bold]Available commands:[/]
     /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)
     /multi                   - Toggle multi-line mode (allow multi-line input)
@@ -898,6 +917,25 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
     /version                 - Show gpt-term local and remote version
     /help                    - Show this help message
     /exit                    - Exit the application''')
+        
+    else:
+        set_command = set(command)
+        min_levenshtein_distance = len(command)
+        most_similar_command = str()
+        for slash_command in CustomCompleter.commands:
+            this_levenshtein_distance = get_levenshtein_distance(command, slash_command)
+            if this_levenshtein_distance < min_levenshtein_distance:
+                set_slash_command = set( slash_command )
+                if len(set_command & set_slash_command) / len(set_command | set_slash_command) >= 0.75:
+                    most_similar_command = slash_command
+                    min_levenshtein_distance = this_levenshtein_distance
+        
+        console.print(f"Unrecognized Slash Command `[bold red]{command}[/]`", end=" ")
+        if len(most_similar_command) != 0:
+            console.print(f"Do you mean `[bright magenta]{most_similar_command}[/]`?")
+        else:
+            console.print("")
+        console.print("Use `[bright magenta]/help[/]` to see all available slash commands")
 
 
 def load_chat_history(file_path):
