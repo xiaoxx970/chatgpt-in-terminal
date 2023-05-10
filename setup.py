@@ -5,6 +5,7 @@ with open("README.md", 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 install_requires = [
+    "numpy",
     "requests",
     "pyperclip",
     "rich>=13.3.1",
