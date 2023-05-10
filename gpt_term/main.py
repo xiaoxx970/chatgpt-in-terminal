@@ -716,7 +716,7 @@ def get_levenshtein_distance(s1: str, s2: str):
                 v[i][j] = j
             elif j == 0:
                 v[i][j] = i
-            elif s1[i-1] == s2[i-1]:
+            elif s1[i-1] == s2[j-1]:
                 v[i][j] = v[i-1][j-1]
             else:
                 v[i][j] = min(v[i-1][j-1], min(v[i][j-1], v[i-1][j])) + 1
