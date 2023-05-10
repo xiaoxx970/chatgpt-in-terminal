@@ -23,7 +23,8 @@ import sseclient
 import tiktoken
 from packaging.version import parse as parse_version
 from prompt_toolkit import PromptSession, prompt
-from prompt_toolkit.completion import Completer, Completion
+from prompt_toolkit.completion import (Completer, Completion, NestedCompleter,
+                                       PathCompleter)
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.shortcuts import confirm
@@ -228,6 +229,14 @@ class ChatGPT:
                 f"[dim]First question: '{truncated_question}' and it's answer has been deleted, saved tokens: {tokens_saved}")
         else:
             console.print("[red]No conversations yet.")
+    
+    def delete_all_conversation(self):
+        del self.messages[1:]
+        self.title = None
+        # recount current tokens
+        self.current_tokens = count_token(self.messages)
+        os.system('cls' if os.name == 'nt' else 'clear')
+        console.print("[dim]Current chat cleared.")
 
     def handle(self, message: str):
         try:
@@ -512,7 +521,7 @@ class ChatGPT:
         elif "gpt-3.5-turbo" in self.model:
             self.tokens_limit = 4096
         else:
-            self.tokens_limit = -1
+            self.tokens_limit = float('nan')
         console.print(
             f"[dim]Model has been set from '{old_model}' to '{new_model}'.")
 
@@ -537,66 +546,52 @@ class ChatGPT:
         console.print(f"[dim]Randomness set to [green]{temperature}[/].")
 
 
-class CustomCompleter(Completer):
-    commands = [
-        '/raw', '/multi', '/stream', '/tokens', '/usage', '/last', '/copy', '/model', '/save', '/system', '/rand', '/title', '/timeout', '/undo', '/delete', '/version', '/help', '/exit'
-    ]
+class CommandCompleter(Completer):
+    def __init__(self):
+        self.nested_completer = NestedCompleter.from_nested_dict({
+            '/raw': None,
+            '/multi': None,
+            '/stream': {"visible", "ellipsis"},
+            '/tokens': None,
+            '/usage': None,
+            '/last': None,
+            '/copy': {"code", "all"},
+            '/model': {
+                "gpt-3.5-turbo",
+                "gpt-3.5-turbo-0301",
+                "gpt-4",
+                "gpt-4-0314",
+                "gpt-4-32k",
+                "gpt-4-32k-031"},
+            '/save': PathCompleter(file_filter=self.path_filter),
+            '/system': None,
+            '/rand': None,
+            '/temperature': None,
+            '/title': None,
+            '/timeout': None,
+            '/undo': None,
+            '/delete': {"first", "all"},
+            '/reset': None,
+            '/version': None,
+            '/help': None,
+            '/exit': None,
+        })
 
-    copy_actions = [
-        "code",
-        "all"
-    ]
-
-    delete_actions = [
-        "first",
-        "all"
-    ]
-
-    stream_actions = [
-        "visible",
-        "ellipsis"
-    ]
-
-    available_models = [
-        "gpt-3.5-turbo",
-        "gpt-3.5-turbo-0301",
-        "gpt-4",
-        "gpt-4-0314",
-        "gpt-4-32k",
-        "gpt-4-32k-0314",
-    ]
+    def path_filter(self, filename):
+        # 路径自动补全，只补全json文件和文件夹
+        return filename.endswith(".json") or os.path.isdir(filename)
 
     def get_completions(self, document, complete_event):
         text = document.text_before_cursor
         if text.startswith('/'):
-            # Check if it's a /model command
-            if text.startswith('/model '):
-                model_prefix = text[7:]
-                for model in self.available_models:
-                    if model.startswith(model_prefix):
-                        yield Completion(model, start_position=-len(model_prefix))
-            # Check if it's a /copy command
-            elif text.startswith('/copy '):
-                copy_prefix = text[6:]
-                for copy in self.copy_actions:
-                    if copy.startswith(copy_prefix):
-                        yield Completion(copy, start_position=-len(copy_prefix))
-            # Check if it's a /delete command
-            elif text.startswith('/delete '):
-                delete_prefix = text[8:]
-                for delete in self.delete_actions:
-                    if delete.startswith(delete_prefix):
-                        yield Completion(delete, start_position=-len(delete_prefix))
-            # Check if it's a /stream command
-            elif text.startswith('/stream '):
-                stream_prefix = text[8:]
-                for stream in self.stream_actions:
-                    if stream.startswith(stream_prefix):
-                        yield Completion(stream, start_position=-len(stream_prefix))
-            else:
-                for command in self.commands:
-                    if command.startswith(text):
-                        yield Completion(command, start_position=-len(text))
+            for cmd in self.nested_completer.options.keys():
+                # 如果匹配到第一层命令
+                if text in cmd:
+                    yield Completion(cmd, start_position=-len(text))
+            # 如果匹配到第n层命令
+            if ' ' in text:
+                for sub_cmd in self.nested_completer.get_completions(document, complete_event):
+                    yield sub_cmd
 
 
 def count_token(messages: List[Dict[str, str]]):
@@ -798,7 +793,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         else:
             console.print("[dim]No change.")
 
-    elif command.startswith('/rand'):
+    elif command.startswith('/rand') or command.startswith('/temperature'):
         args = command.split()
         if len(args) > 1:
             new_temperature = args[1]
@@ -849,17 +844,16 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         else:
             console.print("[dim]Nothing to undo.")
 
+    elif command.startswith('/reset'):
+        chat_gpt.delete_all_conversation()
+
     elif command.startswith('/delete'):
         args = command.split()
         if len(args) > 1:
             if args[1] == 'first':
                 chat_gpt.delete_first_conversation()
             elif args[1] == 'all':
-                del chat_gpt.messages[1:]
-                chat_gpt.title = None
-                chat_gpt.current_tokens = count_token(chat_gpt.messages)
-                # recount current tokens
-                console.print("[dim]Current chat deleted.")
+                chat_gpt.delete_all_conversation()
             else:
                 console.print(
                     "[dim]Nothing to do. Avaliable delete command: `[bright_magenta]/delete first[/]` or `[bright_magenta]/delete all[/]`")
@@ -1083,7 +1077,7 @@ def main():
     session = PromptSession()
 
     # 自定义命令补全，保证输入‘/’后继续显示补全
-    commands = CustomCompleter()
+    command_completer = CommandCompleter()
 
     # 绑定回车事件，达到自定义多行模式的效果
     key_bindings = create_key_bindings()
@@ -1091,7 +1085,7 @@ def main():
     while True:
         try:
             message = session.prompt(
-                '> ', completer=commands, complete_while_typing=True, key_bindings=key_bindings)
+                '> ', completer=command_completer, complete_while_typing=True, key_bindings=key_bindings)
 
             if message.startswith('/'):
                 command = message.strip().lower()
