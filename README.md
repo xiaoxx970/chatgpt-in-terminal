@@ -21,6 +21,10 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
 
 ## Changelog
 
+### 2023-05-11
+
+- Find the command the user most likely intended to enter when typing an unrecognized command
+
 ### 2023-05-05
 
 - Add `/rand` command to set temperature parameter
