@@ -17,7 +17,6 @@ from pathlib import Path
 from queue import Queue
 from typing import Dict, List
 
-import numpy
 import pyperclip
 import requests
 import sseclient
@@ -709,7 +708,7 @@ def get_levenshtein_distance(s1: str, s2: str):
     s1_len = len(s1)
     s2_len = len(s2)
 
-    v = numpy.zeros((s1_len+1,s2_len+1), dtype=int)
+    v = [[0 for _ in range(s2_len+1)] for _ in range(s1_len+1)]
     for i in range(0, s1_len+1):
         for j in range(0, s2_len+1):
             if i == 0:
@@ -921,17 +920,17 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
     else:
         set_command = set(command)
         min_levenshtein_distance = len(command)
-        most_similar_command = str()
+        most_similar_command = ""
         for slash_command in CustomCompleter.commands:
             this_levenshtein_distance = get_levenshtein_distance(command, slash_command)
             if this_levenshtein_distance < min_levenshtein_distance:
-                set_slash_command = set( slash_command )
+                set_slash_command = set(slash_command)
                 if len(set_command & set_slash_command) / len(set_command | set_slash_command) >= 0.75:
                     most_similar_command = slash_command
                     min_levenshtein_distance = this_levenshtein_distance
         
         console.print(f"Unrecognized Slash Command `[bold red]{command}[/]`", end=" ")
-        if len(most_similar_command) != 0:
+        if most_similar_command:
             console.print(f"Do you mean `[bright magenta]{most_similar_command}[/]`?")
         else:
             console.print("")
