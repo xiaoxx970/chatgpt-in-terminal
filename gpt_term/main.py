@@ -915,7 +915,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         set_command = set(command)
         min_levenshtein_distance = len(command)
         most_similar_command = ""
-        for slash_command in CustomCompleter.commands:
+        for slash_command in CommandCompleter.commands:
             this_levenshtein_distance = get_levenshtein_distance(command, slash_command)
             if this_levenshtein_distance < min_levenshtein_distance:
                 set_slash_command = set(slash_command)
