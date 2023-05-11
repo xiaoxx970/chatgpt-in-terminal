@@ -594,6 +594,9 @@ class CommandCompleter(Completer):
                     yield sub_cmd
 
 
+# 自定义命令补全，保证输入‘/’后继续显示补全
+command_completer = CommandCompleter()
+
 def count_token(messages: List[Dict[str, str]]):
     '''计算 messages 占用的 token
     `cl100k_base` 编码适用于: gpt-4, gpt-3.5-turbo, text-embedding-ada-002'''
@@ -915,7 +918,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         set_command = set(command)
         min_levenshtein_distance = len(command)
         most_similar_command = ""
-        for slash_command in CommandCompleter.commands:
+        for slash_command in command_completer.nested_completer.options.keys():
             this_levenshtein_distance = get_levenshtein_distance(command, slash_command)
             if this_levenshtein_distance < min_levenshtein_distance:
                 set_slash_command = set(slash_command)
@@ -1112,9 +1115,6 @@ def main():
                 f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
 
     session = PromptSession()
-
-    # 自定义命令补全，保证输入‘/’后继续显示补全
-    command_completer = CommandCompleter()
 
     # 绑定回车事件，达到自定义多行模式的效果
     key_bindings = create_key_bindings()
