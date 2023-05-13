@@ -10,6 +10,7 @@ import re
 import sys
 import threading
 import time
+import poe
 from configparser import ConfigParser
 from datetime import date, datetime, timedelta
 from importlib.resources import read_text
@@ -20,7 +21,7 @@ from typing import Dict, List
 import pyperclip
 import requests
 import sseclient
-import tiktoken
+
 from packaging.version import parse as parse_version
 from prompt_toolkit import PromptSession, prompt
 from prompt_toolkit.completion import (Completer, Completion, NestedCompleter,
@@ -36,7 +37,15 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 
-from . import __version__
+if not (__name__ == "__main__"):
+    from . import __version__
+
+
+Use_tiktoken = 0    #临时设定的变量(用于解决tiktoken库无法使用的问题)
+
+if Use_tiktoken:
+    import tiktoken
+
 
 data_dir = Path.home() / '.gpt-term'
 data_dir.mkdir(parents=True, exist_ok=True)
@@ -58,7 +67,10 @@ style = Style.from_dict({
 })
 
 remote_version = None
-local_version = parse_version(__version__)
+if not (__name__ == "__main__"):
+    local_version = parse_version(__version__)
+else:
+    local_version = "test"
 threadlock_remote_version = threading.Lock()
 
 
@@ -95,7 +107,9 @@ class ChatMode:
 
 class ChatGPT:
     def __init__(self, api_key: str, timeout: float):
+        self.key_mode = "poe"   #   而且有且只有poe 与 openai 两个模式
         self.api_key = api_key
+        self.api_key = ""
         self.endpoint = "https://api.openai.com/v1/chat/completions"
         self.headers = {
             "Content-Type": "application/json",
@@ -121,6 +135,11 @@ class ChatGPT:
         self.credit_total_used = 0
         self.credit_used_this_month = 0
         self.credit_plan = ""
+        if not (self.key_mode == "poe" or self.key_mode=="openai"):
+            self.key_mode = "openai"
+        if self.key_mode == "poe":
+            poe.logger.setLevel(logging.INFO)
+            self.client = poe.Client(self.api_key)
 
     def add_total_tokens(self, tokens: int):
         self.threadlock_total_tokens_spent.acquire()
@@ -128,31 +147,35 @@ class ChatGPT:
         self.threadlock_total_tokens_spent.release()
 
     def send_request(self, data):
-        try:
-            with console.status(f"[bold cyan]ChatGPT is thinking..."):
-                response = requests.post(
-                    self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=ChatMode.stream_mode)
-            # 匹配4xx错误，显示服务器返回的具体原因
-            if response.status_code // 100 == 4:
-                error_msg = response.json()['error']['message']
-                console.print(f"[red]Error: {error_msg}")
-                log.error(error_msg)
+        if self.key_mode == "openai":
+            try:
+                with console.status(f"[bold cyan]ChatGPT is thinking..."):
+                    response = requests.post(
+                        self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=ChatMode.stream_mode)
+                # 匹配4xx错误，显示服务器返回的具体原因
+                if response.status_code // 100 == 4:
+                    error_msg = response.json()['error']['message']
+                    console.print(f"[red]Error: {error_msg}")
+                    log.error(error_msg)
+                    return None
+
+                response.raise_for_status()
+                return response
+            except KeyboardInterrupt:
+                console.print("[bold cyan]Aborted.")
+                raise
+            except requests.exceptions.ReadTimeout as e:
+                console.print(
+                    f"[red]Error: API read timed out ({self.timeout}s). You can retry or increase the timeout.", highlight=False)
                 return None
-
-            response.raise_for_status()
-            return response
-        except KeyboardInterrupt:
-            console.print("[bold cyan]Aborted.")
-            raise
-        except requests.exceptions.ReadTimeout as e:
-            console.print(
-                f"[red]Error: API read timed out ({self.timeout}s). You can retry or increase the timeout.", highlight=False)
-            return None
-        except requests.exceptions.RequestException as e:
-            console.print(f"[red]Error: {str(e)}")
-            log.exception(e)
-            return None
-
+            except requests.exceptions.RequestException as e:
+                console.print(f"[red]Error: {str(e)}")
+                log.exception(e)
+                return None
+        else:
+            for chunk in self.client.send_message("capybara", data, with_chat_break=True):
+                pass
+            return chunk['text']
     def send_request_silent(self, data):
         # this is a silent sub function, for sending request without outputs (silently)
         # it SHOULD NOT be triggered or used by not-silent functions
@@ -251,24 +274,34 @@ class ChatGPT:
             if response is None:
                 self.messages.pop()
                 if self.current_tokens >= self.tokens_limit:
-                    if confirm("Reached tokens limit, do you want me to forget the earliest message of current chat?"):
+                    if confirm("Reached tokens limit, do you want me to for the earliest message of current chat?"):
                         self.delete_first_conversation()
                 return
 
-            reply_message = self.process_response(response)
+            if self.key_mode == "openai":
+                reply_message = self.process_response(response)
+            elif self.key_mode == "poe":
+                reply_message = response
             if reply_message is not None:
-                log.info(f"ChatGPT: {reply_message['content']}")
-                self.messages.append(reply_message)
-                self.current_tokens = count_token(self.messages)
-                self.add_total_tokens(self.current_tokens)
+                if self.key_mode == "openai":
+                    log.info(f"ChatGPT: {reply_message['content']}")
+                    self.messages.append(reply_message)
+                    self.current_tokens = count_token(self.messages)
+                    self.add_total_tokens(self.current_tokens)
 
-                if len(self.messages) == 3 and self.auto_gen_title_background_enable:
-                    self.gen_title_messages.put(self.messages[1]['content'])
+                    if len(self.messages) == 3 and self.auto_gen_title_background_enable:
+                        self.gen_title_messages.put(self.messages[1]['content'])
 
-                if self.tokens_limit - self.current_tokens in range(1, 500):
-                    console.print(
-                        f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left")
-                # approaching tokens limit (less than 500 left), show info
+                    if self.tokens_limit - self.current_tokens in range(1, 500):
+                        console.print(
+                            f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left")
+                    # approaching tokens limit (less than 500 left), show info
+                elif self.key_mode == "poe":
+                    log.info(f"ChatGPT: {reply_message}")
+                    self.messages.append(reply_message)
+                    if len(self.messages) == 3 and self.auto_gen_title_background_enable:
+                        self.gen_title_messages.put(self.messages)
+
 
         except Exception as e:
             console.print(
@@ -597,14 +630,17 @@ class CommandCompleter(Completer):
 # 自定义命令补全，保证输入‘/’后继续显示补全
 command_completer = CommandCompleter()
 
-def count_token(messages: List[Dict[str, str]]):
+def count_token(messages: List[Dict[str, str]],Use_tiktoken = 0):
     '''计算 messages 占用的 token
     `cl100k_base` 编码适用于: gpt-4, gpt-3.5-turbo, text-embedding-ada-002'''
-    encoding = tiktoken.get_encoding("cl100k_base")
-    length = 0
-    for message in messages:
-        length += len(encoding.encode(str(message)))
-    return length
+    if Use_tiktoken:
+        encoding = tiktoken.get_encoding("cl100k_base")
+        length = 0
+        for message in messages:
+            length += len(encoding.encode(str(message)))
+        return length
+    else:
+        return 0
 
 
 class NumberValidator(Validator):

@@ -5,3 +5,5 @@ prompt_toolkit>=3.0
 sseclient-py>=1.7.2
 tiktoken
 packaging
+poe-api
+python-i18n
