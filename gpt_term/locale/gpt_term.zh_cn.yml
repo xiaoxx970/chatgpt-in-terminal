@@ -1,0 +1,30 @@
+zh_cn:
+  welcome: "[dim]你好,欢迎和GPT聊天。输入`[bright_magenta]/help[/]`显示可用命令。"
+  raw_mode_enabled: "[dim]原始模式[green]已启用[/],使用`/last`来显示上一个回答,使用`[bright_magenta]/last[/]`来显示最后一个回答."
+  raw_mode_disabled: "[dim]原始模式[bright_red]已关闭[/],使用`/last`来显示上一个回答,使用`[bright_magenta]/last[/]`来显示最后一个回答."
+  lang_no_arg: "[dim]输入要切换的语言,例如:`[bright_magenta]/lange en[/]`."
+  lang_switch: "[dim]已经切换至[bright_magenta]简体中文[/]."
+  help_text: "[bold]可用命令：[/]\n/raw                     - 切换原始模式 (显示ChatGPT回复的原始文本)\n/multi                   - 切换多行模式 (允许多行输入)\n/stream \\[overflow_mode]  - 切换流输出模式 (连续打印回答)\n/tokens                  - 显示已使用的总令牌数和当前对话的令牌数\n/usage                   - 显示总积分和已使用的当前积分\n/last                    - 显示ChatGPT上次的回复\n/copy (all)              - 将ChatGPT的完整上次回复 (原始格式)复制到剪贴板\n/copy code \\[index]       - 复制ChatGPT上次回复中的代码到剪贴板\n/save \\[filename_or_path] - 将聊天记录保存到文件中,如果未提供filename_or_path则建议标题\n/model\\[model_name]       - 更改AI模型\n/system \\[new_prompt]     - 修改系统提示\n/rand \\[randomness]       - 设置模型采样温度 (0〜2)\n/title \\[new_title]       - 为此聊天设置标题,如果未提供new_title,则将生成新标题\n/timeout\\[new_timeout]    - 修改api超时时间\n/undo                    - 撤消上次问题并删除其答案\n/delete (first)          - 删除当前聊天中的第一个对话\n/delete all              - 清除当前聊天中的所有消息和对话\n/version                 - 显示gpt-term的本地和远程版本\n/lang                    - 切换语言\n/help                    - 显示此帮助消息\n/exit                    - 退出应用程序"
+
+#help_text: "[bold]Available commands:[/]
+#    /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)
+#    /multi                   - Toggle multi-line mode (allow multi-line input)
+#    /stream \\[overflow_mode]  - Toggle stream output mode (flow print the answer)
+#    /tokens                  - Show the total tokens spent and the tokens for the current conversation
+#    /usage                   - Show total credits and current credits used
+#    /last                    - Display last ChatGPT's reply
+#    /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
+#    /copy code \\[index]       - Copy the code in ChatGPT's last reply to Clipboard
+#    /save \\[filename_or_path] - Save the chat history to a file, suggest title if filename_or_path not provided
+#    /model \\[model_name]      - Change AI model
+#    /system \\[new_prompt]     - Modify the system prompt
+#    /rand \\[randomness]       - Set Model sampling temperature (0~2)
+#    /title \\[new_title]       - Set title for this chat, if new_title is not provided, a new title will be generated
+#    /timeout \\[new_timeout]   - Modify the api timeout
+#    /undo                    - Undo the last question and remove its answer
+#    /delete (first)          - Delete the first conversation in current chat
+#    /delete all              - Clear all messages and conversations current chat
+#    /version                 - Show gpt-term local and remote version
+#    /lang                    - Switch language
+#    /help                    - Show this help message
+#    /exit                    - Exit the application"

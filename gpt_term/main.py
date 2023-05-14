@@ -37,6 +37,9 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 
 from . import __version__
+from .locale import set_lang
+
+_ = set_lang("zh_cn")
 
 data_dir = Path.home() / '.gpt-term'
 data_dir.mkdir(parents=True, exist_ok=True)
@@ -70,8 +73,11 @@ class ChatMode:
     @classmethod
     def toggle_raw_mode(cls):
         cls.raw_mode = not cls.raw_mode
-        console.print(
-            f"[dim]Raw mode {'[green]enabled[/]' if cls.raw_mode else '[bright_red]disabled[/]'}, use `[bright_magenta]/last[/]` to display the last answer.")
+        a=123
+        if cls.raw_mode:
+            console.print(_("gpt_term.raw_mode_enabled"))
+        else:
+            console.print(_("gpt_term.raw_mode_disabled"))
 
     @classmethod
     def toggle_stream_mode(cls):
@@ -572,6 +578,7 @@ class CommandCompleter(Completer):
             '/undo': None,
             '/delete': {"first", "all"},
             '/reset': None,
+            '/lang' : {"zh_cn","en"},
             '/version': None,
             '/help': None,
             '/exit': None,
@@ -887,32 +894,21 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
                             f"[bold green]Remote Version:[/]\tv{str(remote_version)}",
                             title='Version', title_align='left', width=28))
         threadlock_remote_version.release()
+    
+    elif command.startswith('/lang'):
+        global _
+        args = command.split()
+        if len(args) == 1:
+            console.print(_("gpt_term.lang_no_arg"))
+        elif args[1]:
+            _=set_lang(args[1])
+            console.print(_("gpt_term.lang_switch"))
 
     elif command == '/exit':
         raise EOFError
 
     elif command == '/help':
-        console.print('''[bold]Available commands:[/]
-    /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)
-    /multi                   - Toggle multi-line mode (allow multi-line input)
-    /stream \[overflow_mode]  - Toggle stream output mode (flow print the answer)
-    /tokens                  - Show the total tokens spent and the tokens for the current conversation
-    /usage                   - Show total credits and current credits used
-    /last                    - Display last ChatGPT's reply
-    /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
-    /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
-    /save \[filename_or_path] - Save the chat history to a file, suggest title if filename_or_path not provided
-    /model \[model_name]      - Change AI model
-    /system \[new_prompt]     - Modify the system prompt
-    /rand \[randomness]       - Set Model sampling temperature (0~2)
-    /title \[new_title]       - Set title for this chat, if new_title is not provided, a new title will be generated
-    /timeout \[new_timeout]   - Modify the api timeout
-    /undo                    - Undo the last question and remove its answer
-    /delete (first)          - Delete the first conversation in current chat
-    /delete all              - Clear all messages and conversations current chat
-    /version                 - Show gpt-term local and remote version
-    /help                    - Show this help message
-    /exit                    - Exit the application''')
+        console.print(_("gpt_term.help_text"))
         
     else:
         set_command = set(command)
@@ -1091,7 +1087,7 @@ def main():
     log.debug("Title generation daemon thread started")
 
     console.print(
-        "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
+        _("gpt_term.welcome"))
 
     if args.model:
         chat_gpt.set_model(args.model)
