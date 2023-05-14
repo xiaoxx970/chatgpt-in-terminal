@@ -10,7 +10,6 @@ import re
 import sys
 import threading
 import time
-import poe
 from configparser import ConfigParser
 from datetime import date, datetime, timedelta
 from importlib.resources import read_text
@@ -77,11 +76,6 @@ if not (__name__ == "__main__"):
 else:
     local_version = "test"
 threadlock_remote_version = threading.Lock()
-
-
-
-
-
 
 
 class CommandCompleter(Completer):
@@ -576,7 +570,6 @@ def main():
         log_level = logging.INFO
     log.setLevel(log_level)
     # log level set must be before debug logs, because default log level is INFO, and before new log level being set debug logs will not be written to log file
-
     log.info("GPT-Term start")
 
     log.debug(f"Local version: {str(local_version)}")
@@ -610,9 +603,10 @@ def main():
 
     chat_save_perfix = config.get("CHAT_SAVE_PERFIX", "./chat_history_")
 
-    api_key="sk-"
-    api_key="%3D%3D"
-    chat_gpt = poe_mode(api_key,console=console,timeout=api_timeout,log=log,data_dir=data_dir,Use_tiktoken=1)
+    openai_api_key="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"
+    poe_api_key="tKSUqU_FYfgznLgFkudAmw%3D%3D"
+    chat_gpt = poe_mode(api_key=poe_api_key,console=console,timeout=api_timeout,log=log,data_dir=data_dir,Use_tiktoken=1)
+    #chat_gpt = openai(api_key=openai_api_key,console=console,timeout=api_timeout,log=log,data_dir=data_dir,Use_tiktoken=1)
 
     if not config.getboolean("AUTO_GENERATE_TITLE", True):
         chat_gpt.auto_gen_title_background_enable = False
