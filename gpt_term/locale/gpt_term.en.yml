@@ -1,7 +1,64 @@
 en:
   welcome: "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands."
+  #
   raw_mode_enabled: "[dim]Raw mode [green]enabled[/], use `/last` to display the last answer, use `[bright_magenta]/last[/]` to display the last answer."
   raw_mode_disabled: "[dim]Raw mode [bright_red]disabled[/], use `/last` to display the last answer, use `[bright_magenta]/last[/]` to display the last answer."
+  #
+  stream_mode_enabled: "[dim]Stream mode [green]enabled[/], the answer will start outputting as soon as the first response arrives."
+  stream_mode_disabled: "[dim]Stream mode [bright_red]disabled[/], the answer is being displayed after the server finishes responding."
+  #
+  multi_line_enabled: "[dim]Multi-line mode [green]enabled[/], press [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] to submit."
+  multi_line_disabled: "[dim]Multi-line mode [bright_red]disabled[/]."
+  #
+  ChatGPT_thinking: "[bold cyan]ChatGPT is thinking..."
+  #
+  #_("gpt_term.Aborted")
+  #_("gpt_term.Error_message",error_msg=str(e))
+  Aborted: "[bold cyan]Aborted."
+  Error_message: "[red]Error: %{error_msg}"
+  Error_timeout: "[red]Error: API read timed out (%{timeout}s). You can retry or increase the timeout."
+  Error_look_log: "[red]Error: %{error_msg}. Check log for more information"
+  Error_get_url: "[red]Get %{url} Error: %{error_msg}"
+  Error_input_number: "[red]Input must be a number"
+  Error_input_least: "Input must be at least %{min_value}"
+  Error_input_most: "Input must be at most %{max_value}"
+  No_change: "[dim]No change."
+  Error_input_int: "Please input an Integer!"
+  #
+  system_prompt_modified: "[dim]System prompt has been modified from '%{old_content}' to '%{new_content}'."
+  system_prompt_note: "[dim]Note this is not a new chat, modifications to the system prompt have limited impact on answers."
+  system_prompt_found: "[dim]No system prompt found in messages."
+  #
+  title_waiting_gen: "[bold cyan]Waiting last generationg to finish..."
+  title_gening: "[bold cyan]Generating title... [/](Ctrl-C to skip)"
+  title_skip_gen: "[bold cyan]Skip wait."
+  title_gen_fail: "[red]Failed to generate title."
+  title_changed: "[dim]CLI Title changed to '%{title}'"
+  title_auto_gen_fail: "[red]Background Title auto-generation Error: %{error_msg}. Check log for more information"
+  #
+  save_history_success: "[dim]Chat history saved to: [bright_magenta]%{filename}"
+  save_history_urgent_success: "[dim]Chat history urgently saved to: [bright_magenta]{filename}"
+  #
+  timeout_prompt: "OpenAI API timeout: "
+  timeout_changed: "[dim]API timeout set to [green]%{timeout}s[/]."
+  #
+  undo_removed: "[dim]Last question: '%{truncated_question}' and it's answer has been removed."
+  undo_nothing: "[dim]Nothing to undo."
+  #
+  temperature_must_between: "[red]Input must be a number between 0 and 2"
+  temperature_set: "[dim]Randomness set to [green]%{temperature}[/]."
+  #
+  delete_first_conversation_yes: "[dim]First question: '%{truncated_question}' and it's answer has been deleted, saved tokens: %{tokens_saved}"
+  delete_first_conversation_no: "[red]No conversations yet."
+  delete_all: "[dim]Current chat cleared."
+  delete_nothing: "[dim]Nothing to do. Avaliable delete command: `[bright_magenta]/delete first[/]` or `[bright_magenta]/delete all[/]`"
+  #
+  version_all: "[bold blue]Local Version:[/]\tv%{local_version}\n[bold green]Remote Version:[/]\tv%{remote_version}"
+  version_name: "Version"
+  #
+  tokens_reached: "Reached tokens limit, do you want me to forget the earliest message of current chat?"
+  tokens_approaching : "[dim]Approaching the tokens limit: %{token_left} tokens left"
+  #
   lang_no_arg: "[dim]Please enter the language you want to switch to, for example: `[bright_magenta]/lange en[/]`."
   lang_switch: "[dim]Already switched to [bright_magenta]English[/]."
   help_text: "[bold]Available commands:[/]\n/raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)\n/multi                   - Toggle multi-line mode (allow multi-line input)\n/stream \\[overflow_mode]  - Toggle stream output mode (flow print the answer)\n/tokens                  - Show the total tokens spent and the tokens for the current conversation\n/usage                   - Show total credits and current credits used\n/last                    - Display last ChatGPT's reply\n/copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard\n/copy code \\[index]       - Copy the code in ChatGPT's last reply to Clipboard\n/save \\[filename_or_path] - Save the chat history to a file, suggest title if filename_or_path not provided\n/model \\[model_name]      - Change AI model\n/system \\[new_prompt]     - Modify the system prompt\n/rand \\[randomness]       - Set Model sampling temperature (0~2)\n/title \\[new_title]       - Set title for this chat, if new_title is not provided, a new title will be generated\n/timeout \\[new_timeout]   - Modify the api timeout\n/undo                    - Undo the last question and remove its answer\n/delete (first)          - Delete the first conversation in current chat\n/delete all              - Clear all messages and conversations current chat\n/version                 - Show gpt-term local and remote version\n/lang                    - Switch language\n/help                    - Show this help message\n/exit                    - Exit the application"

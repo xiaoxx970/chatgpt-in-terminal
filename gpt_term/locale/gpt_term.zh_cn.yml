@@ -1,7 +1,63 @@
-zh_cn:
+zh_CN:
   welcome: "[dim]你好,欢迎和GPT聊天。输入`[bright_magenta]/help[/]`显示可用命令。"
+  #
   raw_mode_enabled: "[dim]原始模式[green]已启用[/],使用`/last`来显示上一个回答,使用`[bright_magenta]/last[/]`来显示最后一个回答."
   raw_mode_disabled: "[dim]原始模式[bright_red]已关闭[/],使用`/last`来显示上一个回答,使用`[bright_magenta]/last[/]`来显示最后一个回答."
+  #
+  stream_mode_enabled: "[dim]流模式[green]已启用[/],答案将在第一个响应到达时开始输出。"
+  stream_mode_disabled: "[dim]流模式[bright_red]已禁用[/],答案将在服务器完成响应后显示。"
+  #
+  multi_line_enabled: "[dim]多行模式[green]已启用[/]，按[[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]]提交。" 
+  multi_line_disabled: "[dim]多行模式[bright_red]已禁用[/]。"
+  #
+  ChatGPT_thinking: "[bold cyan]ChatGPT正在思考..."
+  #
+  
+
+  Aborted: "[bold cyan]中断."
+  Error_message: "[red]错误: %{error_msg}"
+  Error_timeout: "[red]错误:API读取超时(%{timeout}s).您可以重试或增加超时时间."
+  Error_look_log: "[red]错误：%{error_msg}.请查看日志获取更多信息."
+  Error_get_url: "[red]获取 %{url} 错误: %{error_msg}"
+  Error_input_number: "[red]输入必须是数字"
+  Error_input_least: "输入必须至少为 %{min_value}" 
+  Error_input_most: "输入必须最多为 %{max_value}"
+  No_change: "[dim]与原值一样,不修改."
+  #
+  system_prompt_modified: "[dim]系统提示已从 '%{old_content}' 修改为 '%{new_content}'."
+  system_prompt_note: "[dim]请注意，这不是一个新的聊天，对系统提示的修改对回答的影响有限."
+  system_prompt_found: "[dim]未在消息中找到系统提示."
+  #
+  title_waiting_gen: "[bold cyan]等待上一次生成完成..."
+  title_gening: "[bold cyan]正在生成标题... [/]（按 Ctrl-C 跳过）"
+  title_skip_gen: "[bold cyan]跳过等待."
+  title_gen_fail: "[red]生成标题失败."
+  title_changed: "[dim]CLI标题已更改为'%{title}'"
+  title_auto_gen_fail: "[red]背景标题自动生成错误:%{error_msg}.查看日志获取更多信息."
+  #
+  save_history_success: "[dim]聊天记录已保存至: [bright_magenta]%{filename}"
+  save_history_urgent_success: "[dim]聊天记录已紧急保存至: [bright_magenta]{filename}"
+  #
+  timeout_prompt: "OpenAI API 超时时间: "
+  timeout_changed: "[dim]API 超时时间已设置为:[green]%{timeout}s[/]."
+  #
+  undo_removed: "[dim]上一个问题: '{truncated_question}' 及其答案已被删除。"
+  undo_nothing: "[dim]无需撤消任何操作。"
+  #
+  temperature_must_between: "[red]输入必须为 0 到 2 之间的数字"
+  temperature_set: "[dim]随机性已设置为[green]%{temperature}[/]."
+  #
+  delete_first_conversation_yes: "[dim]第一个问题：'%{truncated_question}'及其答案已被删除，已保存令牌:%{tokens_saved}"
+  delete_first_conversation_no: "[red]还没有对话."
+  delete_all: "[dim]当前聊天已清除."
+  delete_nothing: "[dim]无事可做。可用的删除命令：[bright_magenta]/delete first[/]或者[bright_magenta]/delete all[/]。"
+  #
+  version_all: "[bold blue]本地版本:[/]\tv%{local_version}\n[bold green]远程版本:[/]\tv%{remote_version}" 
+  version_name: "版本"
+  #
+  tokens_reached: "已达到令牌限制,您是否要让我删除当前聊天中最早的消息?"
+  tokens_approaching: "[dim]接近令牌限制:%{token_left}个令牌剩余"
+  #
   lang_no_arg: "[dim]输入要切换的语言,例如:`[bright_magenta]/lange en[/]`."
   lang_switch: "[dim]已经切换至[bright_magenta]简体中文[/]."
   help_text: "[bold]可用命令：[/]\n/raw                     - 切换原始模式 (显示ChatGPT回复的原始文本)\n/multi                   - 切换多行模式 (允许多行输入)\n/stream \\[overflow_mode]  - 切换流输出模式 (连续打印回答)\n/tokens                  - 显示已使用的总令牌数和当前对话的令牌数\n/usage                   - 显示总积分和已使用的当前积分\n/last                    - 显示ChatGPT上次的回复\n/copy (all)              - 将ChatGPT的完整上次回复 (原始格式)复制到剪贴板\n/copy code \\[index]       - 复制ChatGPT上次回复中的代码到剪贴板\n/save \\[filename_or_path] - 将聊天记录保存到文件中,如果未提供filename_or_path则建议标题\n/model\\[model_name]       - 更改AI模型\n/system \\[new_prompt]     - 修改系统提示\n/rand \\[randomness]       - 设置模型采样温度 (0〜2)\n/title \\[new_title]       - 为此聊天设置标题,如果未提供new_title,则将生成新标题\n/timeout\\[new_timeout]    - 修改api超时时间\n/undo                    - 撤消上次问题并删除其答案\n/delete (first)          - 删除当前聊天中的第一个对话\n/delete all              - 清除当前聊天中的所有消息和对话\n/version                 - 显示gpt-term的本地和远程版本\n/lang                    - 切换语言\n/help                    - 显示此帮助消息\n/exit                    - 退出应用程序"

@@ -22,6 +22,12 @@ def set_lang(lang:str):
     i18n.load_path.append(locale_directory)
     return i18n.t
 
+def test_lang():
+    package_directory = os.path.dirname(os.path.abspath(__file__))
+    locale_directory = os.path.join(package_directory, 'locale')
+    i18n.load_path.append(locale_directory)
+    return i18n.t
+
 
 if __name__ == "__main__":
     _=set_lang("en")
