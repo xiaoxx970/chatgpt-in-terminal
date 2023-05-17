@@ -929,7 +929,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         
         console.print(_("gpt_term.help_uncommand",command=command), end=" ")
         if most_similar_command:
-            console.print(_("gpt_term.help_mean_help",most_similar_command=most_similar_command))
+            console.print(_("gpt_term.help_mean_command",most_similar_command=most_similar_command))
         else:
             console.print("")
         console.print(_("gpt_term.help_use_help"))

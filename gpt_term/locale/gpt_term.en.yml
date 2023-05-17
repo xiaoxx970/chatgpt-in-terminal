@@ -64,7 +64,7 @@ en:
   system_prompt_note: "[dim]Note this is not a new chat, modifications to the system prompt have limited impact on answers."
   system_prompt_found: "[dim]No system prompt found in messages."
   #
-  title_waiting_gen: "[bold cyan]Waiting last generationg to finish..."
+  title_waiting_gen: "[bold cyan]Waiting last generation to finish..."
   title_gening: "[bold cyan]Generating title... [/](Ctrl-C to skip)"
   title_skip_gen: "[bold cyan]Skip wait."
   title_gen_fail: "[red]Failed to generate title."
