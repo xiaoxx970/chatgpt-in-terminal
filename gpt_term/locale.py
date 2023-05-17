@@ -1,4 +1,4 @@
-import gettext,os
+import os
 # 选择语言
 
 """def set_lang(lang:str,app_name:str):
