@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+
+[project]
+name = "gpt-term"
+dynamic = ["version", "dependencies"]
+description = "Chat with GPT in Terminal"
+authors = [{name="xiaoxx970"}, {name="Ace-Radom"}]
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+]
+requires-python = ">=3.7"
+license = {file = "LICENSE"}
+
+[project.urls]
+Homepage = "https://github.com/xiaoxx970/chatgpt-in-terminal/"
+
+[project.scripts]
+gpt-term = "gpt_term.main:main"
+
+[tool.setuptools]
+packages = ["gpt_term"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}
+
+[tool.setuptools_scm]
+write_to="gpt_term/_version.py"
