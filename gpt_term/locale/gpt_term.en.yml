@@ -22,8 +22,8 @@ en:
   code_last_copy: "[dim]Last reply copied to Clipboard"
   code_copy_fail: "[dim]Nothing to do. Available copy command: `[bright_magenta]/copy code \\[index][/]` or `[bright_magenta]/copy all[/]`"
   #
-  raw_mode_enabled: "[dim]Raw mode [green]enabled[/], use `/last` to display the last answer, use `[bright_magenta]/last[/]` to display the last answer."
-  raw_mode_disabled: "[dim]Raw mode [bright_red]disabled[/], use `/last` to display the last answer, use `[bright_magenta]/last[/]` to display the last answer."
+  raw_mode_enabled: "[dim]Raw mode [green]enabled[/], use `[bright_magenta]/last[/]` to display the last answer."
+  raw_mode_disabled: "[dim]Raw mode [bright_red]disabled[/], use `[bright_magenta]/last[/]` to display the last answer."
   #
   stream_mode_enabled: "[dim]Stream mode [green]enabled[/], the answer will start outputting as soon as the first response arrives."
   stream_mode_disabled: "[dim]Stream mode [bright_red]disabled[/], the answer is being displayed after the server finishes responding."

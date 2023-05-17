@@ -22,11 +22,11 @@ jp:
   code_last_copy: "[dim]前回の返信がクリップボードにコピーされました"
   code_copy_fail: "[dim]何もコピーできません。利用可能なコピーコマンドは、`[bright_magenta]/copy code \\[index][/]`または`[bright_magenta]/copy all[/]`です"
   #
-  raw_mode_enabled: "[dim][green]Rawモードが有効になりました[/]、`/last`を使用して前回の回答を表示し、`[bright_magenta]/last[/]`を使用して前回の回答を表示してください。"
-  raw_mode_disabled: "[dim][bright_red]Rawモードが無効になりました[/]、`/last`を使用して前回の回答を表示し、`[bright_magenta]/last[/]`を使用して前回の回答を表示してください。"
+  raw_mode_enabled: "[dim]ローモードは[green]有効[/]です。`[bright_magenta]/last[/]`を使用して最後の回答を表示します。"
+  raw_mode_disabled: "[dim]ローモードは[bright_red]無効[/]です。`[bright_magenta]/last[/]`を使用して最後の回答を表示します。"
   #
-  stream_mode_enabled: "[dim][green]ストリームモードが有効になりました[/]、最初の応答が到着すると回答がすぐに出力されます。"
-  stream_mode_disabled: "[dim][bright_red]ストリームモードが無効になりました[/]、サーバーが応答を完了した後に回答が表示されます。"
+  stream_mode_enabled: "[dim]ストリームモードは[green]有効[/]です。最初の応答が到着すると回答が出力されます。"
+  stream_mode_disabled: "[dim]ストリームモードは[bright_red]無効[/]です。サーバーが応答を完了した後に回答が表示されます。"
   stream_overflow_modified: "[dim]ストリームオーバーフローオプションが'%{old_overflow}'から'%{new_overflow}'に変更されました。"
   stream_overflow_visible: "[dim]このモードでは、ターミナルは画面外のコンテンツを正しくクリーンアップしません。"
   stream_overflow_no_changed: "[dim]このようなストリームオーバーフローオプションは存在しません。'%{old_overflow}'は変更されません。"

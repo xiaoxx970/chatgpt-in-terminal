@@ -22,8 +22,8 @@ zh_CN:
   code_last_copy: "[dim]上一条回复已复制到剪贴板"
   code_copy_fail: "[dim]无操作可执行。可用的复制命令为: `[bright_magenta]/copy code \\[index][/]` 或 `[bright_magenta]/copy all[/]`"
   #
-  raw_mode_enabled: "[dim]原始模式[green]已启用[/],使用`/last`来显示上一个回答,使用`[bright_magenta]/last[/]`来显示最后一个回答."
-  raw_mode_disabled: "[dim]原始模式[bright_red]已关闭[/],使用`/last`来显示上一个回答,使用`[bright_magenta]/last[/]`来显示最后一个回答."
+  raw_mode_enabled: "[dim]原始模式[green]已启用[/],使用`[bright_magenta]/last[/]`来显示最后一个回答."
+  raw_mode_disabled: "[dim]原始模式[bright_red]已关闭[/],使用`[bright_magenta]/last[/]`来显示最后一个回答."
   #
   stream_mode_enabled: "[dim]流模式[green]已启用[/],答案将在第一个响应到达时开始输出。"
   stream_mode_disabled: "[dim]流模式[bright_red]已禁用[/],答案将在服务器完成响应后显示。"
