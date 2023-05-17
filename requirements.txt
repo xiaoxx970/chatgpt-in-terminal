@@ -6,3 +6,4 @@ sseclient-py>=1.7.2
 tiktoken
 packaging
 python-i18n
+pyyaml

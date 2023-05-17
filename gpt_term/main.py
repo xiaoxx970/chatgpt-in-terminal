@@ -509,18 +509,18 @@ class ChatGPT:
         if new_overflow == 'ellipsis' or new_overflow == 'visible':
             self.stream_overflow = new_overflow
             console.print(
-                f"[dim]Stream overflow option has been modified from '{old_overflow}' to '{new_overflow}'.")
+                _("gpt_term.stream_overflow_modified",old_overflow=old_overflow,new_overflow=new_overflow))
             if new_overflow == 'visible':
-                console.print("[dim]Note that in this mode the terminal will not properly clean up off-screen content.")
+                console.print(_("gpt_term.stream_overflow_visible"))
         else:
-            console.print(f"[dim]No such Stream overflow option, remain '{old_overflow}' unchanged.")
+            console.print(_("gpt_term.stream_overflow_no_changed",old_overflow=old_overflow))
         
 
     def set_model(self, new_model: str):
         old_model = self.model
         if not new_model:
             console.print(
-                f"[dim]Empty input, the model remains '{old_model}'.")
+                _("gpt_term.model_set"),old_model=old_model)
             return
         self.model = str(new_model)
         if "gpt-4-32k" in self.model:
@@ -532,7 +532,7 @@ class ChatGPT:
         else:
             self.tokens_limit = float('nan')
         console.print(
-            f"[dim]Model has been set from '{old_model}' to '{new_model}'.")
+            _("gpt_term.model_changed",old_model=old_model,new_model=new_model))
 
     def set_timeout(self, timeout):
         try:
@@ -660,7 +660,7 @@ def copy_code(message: Dict[str, str], select_code_idx: int = None):
     '''Copy the code in ChatGPT's last reply to Clipboard'''
     code_list = re.findall(r'```[\s\S]*?```', message["content"])
     if len(code_list) == 0:
-        console.print("[dim]No code found")
+        console.print(_("gpt_term.code_not_found"))
         return
 
     if len(code_list) == 1 and select_code_idx is None:
@@ -669,28 +669,28 @@ def copy_code(message: Dict[str, str], select_code_idx: int = None):
     else:
         if select_code_idx is None:
             console.print(
-                "[dim]There are more than one code in ChatGPT's last reply")
+                _("gpt_term.code_too_many_found"))
             code_num = 0
             for codes in code_list:
                 code_num += 1
-                console.print(f"[yellow]Code {code_num}:")
+                console.print(_("gpt_term.code_num",code_num=code_num))
                 console.print(Markdown(codes))
 
             select_code_idx = prompt(
-                "Please select which code to copy: ", style=style, validator=NumberValidator())
+                _("gpt_term.code_select"), style=style, validator=NumberValidator())
             # get the number of the selected code
         try:
             selected_code = code_list[int(select_code_idx)-1]
         except ValueError:
-            console.print("[red]Code index must be an Integer")
+            console.print(_("gpt_term.code_index_must_int"))
             return
         except IndexError:
             if len(code_list) == 1:
                 console.print(
-                    "[red]Index out of range: There is only one code in ChatGPT's last reply")
+                    _("gpt_term.code_index_out_range_one"))
             else:
                 console.print(
-                    f"[red]Index out of range: You should input an Integer in range 1 ~ {len(code_list)}")
+                    _("gpt_term.code_index_out_range_many",len(code_list)))
                 # show idx range
                 # use len(code_list) instead of code_num as the max of idx
                 # in order to avoid error 'UnboundLocalError: local variable 'code_num' referenced before assignment' when inputing select_code_idx directly
@@ -700,7 +700,7 @@ def copy_code(message: Dict[str, str], select_code_idx: int = None):
     epos = selected_code.rfind('```')  # code end pos.
     pyperclip.copy(''.join(selected_code[bpos+1:epos-1]))
     # erase code begin and end sign
-    console.print("[dim]Code copied to Clipboard")
+    console.print(_("gpt_term.code_copy"))
 
 
 def change_CLI_title(new_title: str):
@@ -754,7 +754,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         chat_gpt.threadlock_total_tokens_spent.release()
 
     elif command == '/usage':
-        with console.status("[cyan]Getting credit usage..."):
+        with console.status(_("gpt_term.usage_getting")):
             if not chat_gpt.get_credit_usage():
                 return
         console.print(Panel(f"[bold green]Total Granted:[/]\t\t${format(chat_gpt.credit_total_granted, '.2f')}\n"
@@ -784,7 +784,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         if len(args) > 1:
             if args[1] == 'all':
                 pyperclip.copy(reply["content"])
-                console.print("[dim]Last reply copied to Clipboard")
+                console.print(_("gpt_term.code_last_copy"))
             elif args[1] == 'code':
                 if len(args) > 2:
                     copy_code(reply, args[2])
@@ -795,7 +795,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
                     "[dim]Nothing to do. Available copy command: `[bright_magenta]/copy code \[index][/]` or `[bright_magenta]/copy all[/]`")
         else:
             pyperclip.copy(reply["content"])
-            console.print("[dim]Last reply copied to Clipboard")
+            console.print(_("gpt_term.code_last_copy"))
 
     elif command.startswith('/save'):
         args = command.split()
@@ -927,12 +927,12 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
                     most_similar_command = slash_command
                     min_levenshtein_distance = this_levenshtein_distance
         
-        console.print(f"Unrecognized Slash Command `[bold red]{command}[/]`", end=" ")
+        console.print(_("gpt_term.help_uncommand",command=command), end=" ")
         if most_similar_command:
-            console.print(f"Do you mean `[bright magenta]{most_similar_command}[/]`?")
+            console.print(_("gpt_term.help_mean_help",most_similar_command=most_similar_command))
         else:
             console.print("")
-        console.print("Use `[bright magenta]/help[/]` to see all available slash commands")
+        console.print(_("gpt_term.help_use_help"))
 
 
 def load_chat_history(file_path):
@@ -942,9 +942,9 @@ def load_chat_history(file_path):
             chat_history = json.load(f)
         return chat_history
     except FileNotFoundError:
-        console.print(f"[bright_red]File not found: {file_path}")
+        console.print(_("gpt_term.load_file_not",file_path=file_path))
     except json.JSONDecodeError:
-        console.print(f"[bright_red]Invalid JSON format in file: {file_path}")
+        console.print(_("gpt_term.load_json_error",file_path=file_path))
     return None
 
 
@@ -1007,7 +1007,7 @@ def set_config_by_args(args: argparse.Namespace, config_ini: ConfigParser):
 
     for key, val in config_need_to_set.items():
         config_ini['DEFAULT'][key] = str(val)
-        console.print(f"Config item `[bright_magenta]{key}[/]` is set to [green]{val}[/]")
+        console.print(_("gpt_term.config_key_to_shell_key",key=key,val=val))
 
     write_config(config_ini)
     exit(0)
@@ -1042,7 +1042,7 @@ def main():
         log_level = getattr(logging, config.get("LOG_LEVEL", "INFO").upper())
     except AttributeError as e:
         console.print(
-            f"[dim]Invalid log level: {e}, check config.ini file. Set log level to INFO.")
+            _("gpt_term.log_level_error"))
         log_level = logging.INFO
     log.setLevel(log_level)
     # log level set must be before debug logs, because default log level is INFO, and before new log level being set debug logs will not be written to log file
@@ -1066,8 +1066,8 @@ def main():
 
     if not api_key:
         log.debug("API Key not found, waiting for input")
-        api_key = prompt("OpenAI API Key not found, please input: ")
-        if confirm('Save API Key to config file?'):
+        api_key = prompt(_("gpt_term.input_api_key"))
+        if confirm(_("gpt_term.save_api_key")):
             config["OPENAI_API_KEY"] = api_key
             write_config(config_ini)
 
@@ -1112,7 +1112,7 @@ def main():
             chat_gpt.current_tokens = count_token(chat_gpt.messages)
             log.info(f"Chat history successfully loaded from: {args.load}")
             console.print(
-                f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
+                _("gpt_term.load_chat_history",load=args.load), highlight=False)
 
     session = PromptSession()
 
@@ -1141,12 +1141,12 @@ def main():
         except KeyboardInterrupt:
             continue
         except EOFError:
-            console.print("Exiting...")
+            console.print(_("gpt_term.exit"))
             break
 
     log.info(f"Total tokens spent: {chat_gpt.total_tokens_spent}")
     console.print(
-        f"[bright_magenta]Total tokens spent: [bold]{chat_gpt.total_tokens_spent}")
+        _("gpt_term.spent_token",total_tokens_spent=chat_gpt.total_tokens_spent))
     
     threadlock_remote_version.acquire()
     if remote_version and remote_version > local_version:
