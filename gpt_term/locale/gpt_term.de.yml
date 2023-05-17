@@ -1,0 +1,25 @@
+de:
+  welcome: "[dim]Hallo, willkommen zum Chat mit GPT. Tippen `[bright_magenta]/help[/] ein um verfügbare Befehle zu sehen."
+  exit: "Beenden..."
+  spent_token: "[bright_magenta]Insgesamt ausgegebene Tokens: [bold]%{total_tokens_spent}"
+  save_api_key: "Wirst Du API-Schlüssel in der Konfigurationsdatei speichern?"
+  input_api_key: "API-Schlüssel nicht gefunden, bitte eintippen:"
+  config_key_to_shell_key: "Konfig-Element `[bright_magenta]%{key_word}[/]` ist auf [green]%{val}[/] gesetzt"
+  log_level_error: "[dim]Ungültige Log-stufe: %{e}, bitte mal config.ini Datei prüfen und die Log-stufe auf INFO setzen"
+  system_prompt: "System-Eingabeaufforderung: "
+  new_temperature: "Neue Zufälligkeit: "
+  #
+  load_chat_history: "[dim]Chatverlauf erfolgreich von [bright_magenta]%{load} geladen"
+  #
+  code_not_found: "[dim]Code nicht gefunden"
+  code_too_many_found: "[dim]Es gibt mehr als einen Code in der letzten Antwort des ChatGPTs"
+  code_num: "[yellow]Code %{code_num}: "
+  code_select: "Bitte wählen den Code zu kopieren aus: "
+  code_index_must_int: "[red]Der Index der Codes muss eine ganze Zahl sein"
+  code_index_out_range_one: "[red]Index außer Reichweite: Es gibt nur einen Code in der letzten Antwort des ChatGPTs"
+  code_index_out_range_many: "[red]Index außer Reichweite: Bitte eine ganze Zahl zwischen 1 und %{len_code_list} eingeben"
+  code_copy: "[dim]Der Code wurde schon in die Zwischenablage kopiert"
+  code_last_copy: "[dim]Letzte Antwort wurde schon in die Zwischenablage kopiert"
+  code_copy_fail: "[dim]Es gibt keine zu tun. Verfügbarer Kopier-Befehl: `[bright_magenta]/copy code \\[index][/]` oder `[bright_magenta]/copy all[/]`"
+  #
+  stream_mode_enabled: 
