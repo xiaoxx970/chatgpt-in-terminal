@@ -748,19 +748,18 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
 
     elif command == '/tokens':
         chat_gpt.threadlock_total_tokens_spent.acquire()
-        console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chat_gpt.total_tokens_spent}\n"
-                            f"[bold green]Current Tokens:[/]\t\t{chat_gpt.current_tokens}/[bold]{chat_gpt.tokens_limit}",
-                            title='token_summary', title_align='left', width=40))
+        console.print(Panel(_("gpt_term.tokens_used",total_tokens_spent=chat_gpt.total_tokens_spent,current_tokens=chat_gpt.current_tokens,tokens_limit=chat_gpt.tokens_limit),
+                            title=_("gpt_term.tokens_title"), title_align='left', width=40))
         chat_gpt.threadlock_total_tokens_spent.release()
 
     elif command == '/usage':
         with console.status(_("gpt_term.usage_getting")):
             if not chat_gpt.get_credit_usage():
                 return
-        console.print(Panel(f"[bold green]Total Granted:[/]\t\t${format(chat_gpt.credit_total_granted, '.2f')}\n"
-                            f"[bold cyan]Used This Month:[/]\t${format(chat_gpt.credit_used_this_month, '.2f')}\n"
-                            f"[bold blue]Used Total:[/]\t\t${format(chat_gpt.credit_total_used, '.2f')}",
-                            title="Credit Summary", title_align='left', subtitle=f"[bright_blue]Plan: {chat_gpt.credit_plan}", width=35))
+        console.print(Panel(_("gpt_term.usage_granted",credit_total_granted=format(chat_gpt.credit_total_granted,".2f"))+"\n"+
+                            _("gpt_term.usage_used_month",credit_used_this_month=format(chat_gpt.credit_used_this_month,'.2f'))+"\n"+
+                            _("gpt_term.usage_total",credit_total_used=format(chat_gpt.credit_total_used,'.2f')),
+                            title=_("gpt_term.usage_title"), title_align='left', subtitle=_("gpt_term.usage_plan",credit_plan=chat_gpt.credit_plan), width=35))
 
     elif command.startswith('/model'):
         args = command.split()
@@ -792,7 +791,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
                     copy_code(reply)
             else:
                 console.print(
-                    "[dim]Nothing to do. Available copy command: `[bright_magenta]/copy code \[index][/]` or `[bright_magenta]/copy all[/]`")
+                    _("gpt_term.code_copy_fail"))
         else:
             pyperclip.copy(reply["content"])
             console.print(_("gpt_term.code_last_copy"))
@@ -819,7 +818,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             new_content = ' '.join(args[1:])
         else:
             new_content = prompt(
-                "System prompt: ", default=chat_gpt.messages[0]['content'], style=style, key_bindings=key_bindings)
+                _("gpt_term.system_prompt"), default=chat_gpt.messages[0]['content'], style=style, key_bindings=key_bindings)
         if new_content != chat_gpt.messages[0]['content']:
             chat_gpt.modify_system_prompt(new_content)
         else:
@@ -831,7 +830,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             new_temperature = args[1]
         else:
             new_temperature = prompt(
-                "New Randomness: ", default=str(chat_gpt.temperature), style=style, validator=temperature_validator)
+                _("gpt_term.new_temperature"), default=str(chat_gpt.temperature), style=style, validator=temperature_validator)
         if new_temperature != str(chat_gpt.temperature):
             chat_gpt.set_temperature(new_temperature)
         else:
@@ -994,48 +993,70 @@ def write_config(config_ini: ConfigParser):
 
 
 def set_config_by_args(args: argparse.Namespace, config_ini: ConfigParser):
+    global _
     config_need_to_set = {}
     if args.set_apikey:     config_need_to_set.update({"OPENAI_API_KEY"      : args.set_apikey})
     if args.set_timeout:    config_need_to_set.update({"OPENAI_API_TIMEOUT"  : args.set_timeout})
     if args.set_saveperfix: config_need_to_set.update({"CHAT_SAVE_PERFIX"    : args.set_saveperfix})
     if args.set_loglevel:   config_need_to_set.update({"LOG_LEVEL"           : args.set_loglevel})
     if args.set_gentitle:   config_need_to_set.update({"AUTO_GENERATE_TITLE" : args.set_gentitle})
+    # 新的语言设置:
+    if args.set_lang:       config_need_to_set.update({"LANGUAGE"            : args.set_lang})
 
     if len(config_need_to_set) == 0:
         return
     # nothing to set
-
     for key, val in config_need_to_set.items():
         config_ini['DEFAULT'][key] = str(val)
-        console.print(_("gpt_term.config_key_to_shell_key",key=key,val=val))
+        console.print(_("gpt_term.config_key_to_shell_key",key_word=str(key),val=str(val)))
 
     write_config(config_ini)
     exit(0)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Use ChatGPT in terminal')
-    parser.add_argument('--version', action='version', version=f'%(prog)s v{local_version}')
-    parser.add_argument('--load', metavar='FILE', type=str, help='Load chat history from file')
-    parser.add_argument('--key', type=str, help='Choose the API key to load')
-    parser.add_argument('--model', type=str, help='Choose the AI model to use')
-    parser.add_argument('-m', '--multi', action='store_true', help='Enable multi-line mode')
-    parser.add_argument('-r', '--raw', action='store_true', help='Enable raw mode')
-    # normal function args
-
-    parser.add_argument('--set-apikey', metavar='KEY', type=str, help='Set API key for OpenAI')
-    parser.add_argument('--set-timeout', metavar='SEC', type=int, help='Set maximum waiting time for API requests')
-    parser.add_argument('--set-gentitle', metavar='BOOL', type=str, help='Set whether to automatically generate a title for chat')
-    parser.add_argument('--set-saveperfix', metavar='PERFIX', type=str, help='Set chat history file\'s save perfix')
-    parser.add_argument('--set-loglevel', metavar='LEVEL', type=str, help='Set log level: DEBUG, INFO, WARNING, ERROR, CRITICAL')
-    # setting args
-    args = parser.parse_args()
+    global _
 
     # 读取配置文件
     config_ini = ConfigParser()
     config_ini.read(f'{data_dir}/config.ini', encoding='utf-8')
     config = config_ini['DEFAULT']
 
+    # 读取语言配置
+    if config.get("language"):
+        if config.get("language") == "zh":
+            _=set_lang("zh_CN")
+        elif config.get("language") == "en":
+            _=set_lang("en")
+
+    parser = argparse.ArgumentParser(description=_("gpt_term.help_description"),add_help=False)
+    parser.add_argument('-h', '--help',action='help', help=_("gpt_term.help_help"))
+    parser.add_argument('-v','--version', action='version', version=_("gpt_term.v",local_version=local_version),help=_("gpt_term.help_v"))
+    parser.add_argument('--load', metavar='FILE', type=str, help=_("gpt_term.help_load"))
+    parser.add_argument('--key', type=str, help=_("gpt_term.help_key"))
+    parser.add_argument('--model', type=str, help=_("gpt_term.help_model"))
+    parser.add_argument('-m', '--multi', action='store_true', help=_("gpt_term.help_m"))
+    parser.add_argument('-r', '--raw', action='store_true', help=_("gpt_term.help_r"))
+    ## 新添加的选项：--lang
+    parser.add_argument('-l','--lang', type=str, choices=['en', 'zh'], help=_("gpt_term.help_lang"))
+    # normal function args
+
+    parser.add_argument('--set-apikey', metavar='KEY', type=str, help=_("gpt_term.help_set_key"))
+    parser.add_argument('--set-timeout', metavar='SEC', type=int, help=_("gpt_term.help_set_timeout"))
+    parser.add_argument('--set-gentitle', metavar='BOOL', type=str, help=_("gpt_term.help_set_gentitle"))
+    ## 新添加的选项：--set-lang
+    parser.add_argument('--set-lang', type=str, choices=['en', 'zh'], help=_("gpt_term.help_set_lang"))
+    parser.add_argument('--set-saveperfix', metavar='PERFIX', type=str, help=_("gpt_term.help_set_saveperfix"))
+    parser.add_argument('--set-loglevel', metavar='LEVEL', type=str, help=_("gpt_term.help_set_loglevel")+'DEBUG, INFO, WARNING, ERROR, CRITICAL')
+    # setting args
+    args = parser.parse_args()
+
+    
+    if args.set_lang:
+        if args.set_lang == "zh":
+            _=set_lang("zh_CN")
+        elif args.set_lang == "en":
+            _=set_lang("en")
     set_config_by_args(args, config_ini)
 
     try:
@@ -1090,9 +1111,8 @@ def main():
     gen_title_daemon_thread.start()
     log.debug("Title generation daemon thread started")
 
-    console.print(
-        _("gpt_term.welcome"))
-
+    if not args.lang:
+        args.lang = config.get("LANGUAGE")
     if args.model:
         chat_gpt.set_model(args.model)
 
@@ -1113,6 +1133,14 @@ def main():
             log.info(f"Chat history successfully loaded from: {args.load}")
             console.print(
                 _("gpt_term.load_chat_history",load=args.load), highlight=False)
+    if args.lang:
+        if args.lang == "zh":
+            _=set_lang("zh_CN")
+        elif args.lang == "en":
+            _=set_lang("en")
+
+    console.print(
+        _("gpt_term.welcome"))
 
     session = PromptSession()
 
@@ -1151,9 +1179,9 @@ def main():
     threadlock_remote_version.acquire()
     if remote_version and remote_version > local_version:
         console.print(Panel(Group(
-            Markdown("Use `pip install --upgrade gpt-term` to upgrade."),
-            Markdown("Visit our [GitHub Site](https://github.com/xiaoxx970/chatgpt-in-terminal) to see what have been changed!")),
-            title=f"New Version Available: [red]v{str(local_version)}[/] -> [green]v{str(remote_version)}[/]",
+            Markdown(_("gpt_term.upgrade_use_command")),
+            Markdown(_("gpt_term.upgrade_see_git"))),
+            title=_("gpt_term.upgrade_title",local_version=str(local_version),remote_version=str(remote_version)),
             width=58, style="blue", title_align="left"))
     threadlock_remote_version.release()
 
