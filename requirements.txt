@@ -7,4 +7,3 @@ tiktoken
 packaging
 python-i18n
 pyyaml
-poe-api

@@ -20,7 +20,7 @@ from typing import Dict, List
 import pyperclip
 import requests
 import sseclient
-
+import tiktoken
 from packaging.version import parse as parse_version
 from prompt_toolkit import PromptSession, prompt
 from prompt_toolkit.completion import (Completer, Completion, NestedCompleter,
@@ -44,12 +44,6 @@ language, encoding = locale.getdefaultlocale()
 _ = set_lang(language)
 #_ = test_lang("zh_cn")
 
-
-from .Ai.AiClass import ChatMode
-from .Ai.OpenAi import openai
-from .Ai.Poe import poe_mode
-
-
 data_dir = Path.home() / '.gpt-term'
 data_dir.mkdir(parents=True, exist_ok=True)
 config_path = data_dir / 'config.ini'
@@ -57,25 +51,21 @@ if not config_path.exists():
     with config_path.open('w') as f:
         f.write(read_text('gpt_term', 'config.ini'))
 
-# 日志记录到 chat.log，注释下面这行可不记录日志,如果要注释Poe模式下的注释,请到Poe类定义处
+# 日志记录到 chat.log，注释下面这行可不记录日志
 logging.basicConfig(filename=f'{data_dir}/chat.log', format='%(asctime)s %(name)s: %(levelname)-6s %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]', level=logging.INFO)
 
 log = logging.getLogger("chat")
 
 console = Console()
-ChatMode.init(console=console)
+
 style = Style.from_dict({
     "prompt": "ansigreen",  # 将提示符设置为绿色
 })
 
 remote_version = None
-if not (__name__ == "__main__"):
-    local_version = parse_version(__version__)
-else:
-    local_version = "test"
+local_version = parse_version(__version__)
 threadlock_remote_version = threading.Lock()
-
 
 
 class ChatMode:
@@ -565,8 +555,6 @@ class ChatGPT:
         console.print(_("gpt_term.temperature_set",temperature=temperature))
 
 
-
-
 class CommandCompleter(Completer):
     def __init__(self):
         self.nested_completer = NestedCompleter.from_nested_dict({
@@ -619,7 +607,14 @@ class CommandCompleter(Completer):
 # 自定义命令补全，保证输入‘/’后继续显示补全
 command_completer = CommandCompleter()
 
-
+def count_token(messages: List[Dict[str, str]]):
+    '''计算 messages 占用的 token
+    `cl100k_base` 编码适用于: gpt-4, gpt-3.5-turbo, text-embedding-ada-002'''
+    encoding = tiktoken.get_encoding("cl100k_base")
+    length = 0
+    for message in messages:
+        length += len(encoding.encode(str(message)))
+    return length
 
 
 class NumberValidator(Validator):
@@ -736,7 +731,7 @@ def get_levenshtein_distance(s1: str, s2: str):
     return v[s1_len][s2_len]
 
 
-def handle_command(command: str, chat_gpt: openai or poe_mode, key_bindings: KeyBindings, chat_save_perfix: str):
+def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, chat_save_perfix: str):
     '''处理斜杠(/)命令'''
     global _
     if command == '/raw':
@@ -877,7 +872,6 @@ def handle_command(command: str, chat_gpt: openai or poe_mode, key_bindings: Key
             console.print(
                 _("gpt_term.undo_removed",truncated_question=truncated_question))
             chat_gpt.current_tokens = count_token(chat_gpt.messages)
-
         else:
             console.print(_("gpt_term.undo_nothing"))
 
@@ -1082,6 +1076,7 @@ def main():
         log_level = logging.INFO
     log.setLevel(log_level)
     # log level set must be before debug logs, because default log level is INFO, and before new log level being set debug logs will not be written to log file
+
     log.info("GPT-Term start")
     log.debug(f"Local version: {str(local_version)}")
     # get local version from pkg resource
@@ -1114,10 +1109,7 @@ def main():
 
     chat_save_perfix = config.get("CHAT_SAVE_PERFIX", "./chat_history_")
 
-    openai_api_key="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"
-    poe_api_key="tKSUqU_FYfgznLgFkudAmw%3D%3D"
-    chat_gpt = poe_mode(api_key=poe_api_key,console=console,timeout=api_timeout,log=log,data_dir=data_dir,Use_tiktoken=1)
-    #chat_gpt = openai(api_key=openai_api_key,console=console,timeout=api_timeout,log=log,data_dir=data_dir,Use_tiktoken=1)
+    chat_gpt = ChatGPT(api_key, api_timeout)
 
     if not config.getboolean("AUTO_GENERATE_TITLE", True):
         chat_gpt.auto_gen_title_background_enable = False
@@ -1146,7 +1138,7 @@ def main():
             chat_gpt.messages = chat_history
             for message in chat_gpt.messages:
                 print_message(message)
-            chat_gpt.current_tokens = chat_gpt.count_token(chat_gpt.messages)
+            chat_gpt.current_tokens = count_token(chat_gpt.messages)
             log.info(f"Chat history successfully loaded from: {args.load}")
             console.print(
                 _("gpt_term.load_chat_history",load=args.load), highlight=False)
@@ -1182,7 +1174,6 @@ def main():
                     continue
 
                 log.info(f"> {message}")
-                
                 chat_gpt.handle(message)
 
                 if message.lower() in ['再见', 'bye', 'goodbye', '结束', 'end', '退出', 'exit', 'quit']:
@@ -1209,4 +1200,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
