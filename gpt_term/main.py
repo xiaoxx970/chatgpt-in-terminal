@@ -1056,10 +1056,12 @@ def main():
 
     
     if args.set_lang:
-        if args.set_lang == "zh_cn":
+        if args.set_lang == "zh_CN":
             _=set_lang("zh_CN")
         elif args.set_lang == "en":
             _=set_lang("en")
+        elif args.set_lang == "jp":
+            _=set_lang("jp")
     set_config_by_args(args, config_ini)
 
     try:
@@ -1141,6 +1143,8 @@ def main():
             _=set_lang("zh_CN")
         elif args.lang == "en":
             _=set_lang("en")
+        elif args.lang == "jp":
+            _=set_lang("jp")
 
     console.print(
         _("gpt_term.welcome"))
