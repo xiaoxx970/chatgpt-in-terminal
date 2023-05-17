@@ -581,7 +581,7 @@ class CommandCompleter(Completer):
             '/undo': None,
             '/delete': {"first", "all"},
             '/reset': None,
-            '/lang' : {"zh_CN","en","jp"},
+            '/lang' : {"zh_CN","en","jp","de"},
             '/version': None,
             '/help': None,
             '/exit': None,
@@ -1031,6 +1031,8 @@ def main():
             _=set_lang("en")
         elif config.get("language") == "jp":
             _=set_lang("jp")
+        elif config.get("language") == "de":
+            _=set_lang("de")
 
     parser = argparse.ArgumentParser(description=_("gpt_term.help_description"),add_help=False)
     parser.add_argument('-h', '--help',action='help', help=_("gpt_term.help_help"))
@@ -1041,14 +1043,14 @@ def main():
     parser.add_argument('-m', '--multi', action='store_true', help=_("gpt_term.help_m"))
     parser.add_argument('-r', '--raw', action='store_true', help=_("gpt_term.help_r"))
     ## 新添加的选项：--lang
-    parser.add_argument('-l','--lang', type=str, choices=['en', 'zh_CN', 'jp'], help=_("gpt_term.help_lang"))
+    parser.add_argument('-l','--lang', type=str, choices=['en', 'zh_CN', 'jp', 'de'], help=_("gpt_term.help_lang"))
     # normal function args
 
     parser.add_argument('--set-apikey', metavar='KEY', type=str, help=_("gpt_term.help_set_key"))
     parser.add_argument('--set-timeout', metavar='SEC', type=int, help=_("gpt_term.help_set_timeout"))
     parser.add_argument('--set-gentitle', metavar='BOOL', type=str, help=_("gpt_term.help_set_gentitle"))
     ## 新添加的选项：--set-lang
-    parser.add_argument('--set-lang', type=str, choices=['en', 'zh_CN', 'jp'], help=_("gpt_term.help_set_lang"))
+    parser.add_argument('--set-lang', type=str, choices=['en', 'zh_CN', 'jp', 'de'], help=_("gpt_term.help_set_lang"))
     parser.add_argument('--set-saveperfix', metavar='PERFIX', type=str, help=_("gpt_term.help_set_saveperfix"))
     parser.add_argument('--set-loglevel', metavar='LEVEL', type=str, help=_("gpt_term.help_set_loglevel")+'DEBUG, INFO, WARNING, ERROR, CRITICAL')
     # setting args
@@ -1062,6 +1064,8 @@ def main():
             _=set_lang("en")
         elif args.set_lang == "jp":
             _=set_lang("jp")
+        elif args.set_lang == "de":
+            _=set_lang("de")
     set_config_by_args(args, config_ini)
 
     try:
@@ -1145,6 +1149,8 @@ def main():
             _=set_lang("en")
         elif args.lang == "jp":
             _=set_lang("jp")
+        elif args.lang == "de":
+            _=set_lang("de")
 
     console.print(
         _("gpt_term.welcome"))
