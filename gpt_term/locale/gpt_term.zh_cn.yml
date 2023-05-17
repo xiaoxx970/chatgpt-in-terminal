@@ -49,8 +49,6 @@ zh_CN:
   #
   ChatGPT_thinking: "[bold cyan]ChatGPT正在思考..."
   #
-  
-
   Aborted: "[bold cyan]中断."
   Error_message: "[red]错误: %{error_msg}"
   Error_timeout: "[red]错误:API读取超时(%{timeout}s).您可以重试或增加超时时间."

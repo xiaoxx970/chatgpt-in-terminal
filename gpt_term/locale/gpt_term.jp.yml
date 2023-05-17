@@ -1,0 +1,128 @@
+jp:
+  welcome: "[dim]こんにちは、GPTとのチャットへようこそ。使用可能なコマンドを表示するには、`[bright_magenta]/help[/]`を入力してください。"
+  exit: "終了中..."
+  spent_token: "[bright_magenta]使用されたトークンの合計：[bold]%{total_tokens_spent}"
+  save_api_key: "APIキーを設定ファイルに保存しますか？"
+  input_api_key: "OpenAI APIキーが見つかりませんでした。入力してください："
+  config_key_to_shell_key: "設定項目`[bright_magenta]%{key_word}[/]`は、[green]%{val}[/]に設定されています。"
+  log_level_error: "[dim]ログレベルが無効です：%{e}、config.iniファイルを確認してください。ログレベルをINFOに設定します。"
+  system_prompt: "システムプロンプト："
+  new_temperature: "新しい乱数："
+  #
+  load_chat_history: "[dim]チャット履歴が正常に読み込まれました：[bright_magenta]%{load}"
+  #
+  code_not_found: "[dim]コードが見つかりません"
+  code_too_many_found: "[dim]ChatGPTの前回の返信には複数のコードがあります"
+  code_num: "[yellow]コード%{code_num}:"
+  code_select: "コピーするコードを選択してください："
+  code_index_must_int: "[red]コードインデックスは整数である必要があります"
+  code_index_out_range_one: "[red]インデックスが範囲外です：ChatGPTの前回の返信にはコードが1つしかありません"
+  code_index_out_range_many: "[red]インデックスが範囲外です：1〜%{len_code_list}の範囲内の整数を入力する必要があります"
+  code_copy: "[dim]コードがクリップボードにコピーされました"
+  code_last_copy: "[dim]前回の返信がクリップボードにコピーされました"
+  code_copy_fail: "[dim]何もコピーできません。利用可能なコピーコマンドは、`[bright_magenta]/copy code \\[index][/]`または`[bright_magenta]/copy all[/]`です"
+  #
+  raw_mode_enabled: "[dim][green]Rawモードが有効になりました[/]、`/last`を使用して前回の回答を表示し、`[bright_magenta]/last[/]`を使用して前回の回答を表示してください。"
+  raw_mode_disabled: "[dim][bright_red]Rawモードが無効になりました[/]、`/last`を使用して前回の回答を表示し、`[bright_magenta]/last[/]`を使用して前回の回答を表示してください。"
+  #
+  stream_mode_enabled: "[dim][green]ストリームモードが有効になりました[/]、最初の応答が到着すると回答がすぐに出力されます。"
+  stream_mode_disabled: "[dim][bright_red]ストリームモードが無効になりました[/]、サーバーが応答を完了した後に回答が表示されます。"
+  stream_overflow_modified: "[dim]ストリームオーバーフローオプションが'%{old_overflow}'から'%{new_overflow}'に変更されました。"
+  stream_overflow_visible: "[dim]このモードでは、ターミナルは画面外のコンテンツを正しくクリーンアップしません。"
+  stream_overflow_no_changed: "[dim]このようなストリームオーバーフローオプションは存在しません。'%{old_overflow}'は変更されません。"
+  #
+  tokens_title: "トークンの概要"
+  tokens_used: "[bold bright_magenta]使用されたトークンの総数：[/]\t%{total_tokens_spent}\n[bold green]現在のトークン：[/]\t\t%{current_tokens}/[bold]%{tokens_limit}"
+  #
+  usage_getting: "[cyan]クレジット使用状況の取得中..."
+  usage_granted: "[bold green]合計付与額：[/]\t\t$%{credit_total_granted}"
+  usage_used_month: "[bold cyan]今月の使用額：[/]\t$%{credit_used_this_month}"
+  usage_total: "[bold blue]合計使用額：[/]\t\t$%{credit_total_used}"
+  usage_title: "クレジットの概要"
+  usage_plan: "[bright_blue]プラン： %{credit_plan}"
+  #
+  model_set: "[dim]空の入力です。モデルは'%{old_model}'のままです。"
+  model_changed: "[dim]モデルが'%{old_model}'から'%{new_model}'に変更されました。"
+  #
+  multi_line_enabled: "[dim][green]マルチラインモードが有効になりました[/]、[[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]]を押して送信してください。"
+  multi_line_disabled: "[dim][bright_red]マルチラインモードが無効になりました[/]。"
+  #
+  ChatGPT_thinking: "[bold cyan]ChatGPTが考え中です...[/]"
+  #
+  Aborted: "[bold cyan]中止されました。"
+  Error_message: "[red]エラー： %{error_msg}"
+  Error_timeout: "[red]エラー：APIの読み取りがタイムアウトしました（%{timeout}s）。再試行するか、タイムアウトを増やしてください。"
+  Error_look_log: "[red]エラー： %{error_msg}。詳細についてはログを確認してください。"
+  Error_get_url: "[red]Get %{url} エラー：%{error_msg}"
+  Error_input_number: "[red]数字を入力してください"
+  Error_input_least: "最低でも%{min_value}を入力してください"
+  Error_input_most: "最大でも%{max_value}を入力してください"
+  No_change: "[dim]変更なし。"
+  Error_input_int: "整数を入力してください！"
+  #
+  system_prompt_modified: "[dim]システムプロンプトが'%{old_content}'から'%{new_content}'に変更されました。"
+  system_prompt_note: "[dim]これは新しいチャットではありません。システムプロンプトの変更は回答に限定的な影響があります。"
+  system_prompt_found: "[dim]メッセージにシステムプロンプトが見つかりませんでした。"
+  #
+  title_waiting_gen: "[bold cyan]最後の生成が完了するのを待っています..."
+  title_gening: "[bold cyan]タイトルを生成中...[/]（Ctrl-Cでスキップ）"
+  title_skip_gen: "[bold cyan]待たずにスキップする。"
+  title_gen_fail: "[red]タイトルの生成に失敗しました。"
+  title_changed: "[dim]CLIのタイトルが'%{title}'に変更されました。"
+  title_auto_gen_fail: "[red]バックグラウンドのタイトル自動生成エラー：%{error_msg}。詳細についてはログを確認してください。"
+  #
+  save_history_success: "[dim]チャット履歴を保存しました：[bright_magenta]%{filename}"
+  save_history_urgent_success: "[dim]緊急時のチャット履歴を保存しました：[bright_magenta]%{filename}"
+  #
+  timeout_prompt: "OpenAI APIのタイムアウト："
+  timeout_changed: "[dim]APIタイムアウトが[green]%{timeout}s[/]に設定されました。"
+  #
+  undo_removed: "[dim]前回の質問：'%{truncated_question}'とその回答が削除されました。"
+  undo_nothing: "[dim]元に戻すものはありません。"
+  #
+  temperature_must_between: "[red]0から2の間の数字を入力してください"
+  temperature_set: "[dim]ランダム性を[green]%{temperature}[/]に設定しました。"
+  #
+  delete_first_conversation_yes: "[dim]最初の質問：'%{truncated_question}'とその回答が削除されました。保存されたトークン：%{tokens_saved}"
+  delete_first_conversation_no: "[red]まだ会話がありません。"
+  delete_all: "[dim]現在のチャットがクリアされました。"
+  delete_nothing: "[dim]何も削除するものはありません。利用可能な削除コマンド：`[bright_magenta]/delete first[/]`または`[bright_magenta]/delete all[/]`"
+  #
+  version_all: "[bold blue]ローカルバージョン：[/]\tv%{local_version}\n[bold green]リモートバージョン：[/]\tv%{remote_version}"
+  version_name: "バージョン"
+  #
+  tokens_reached: "トークン制限に達しました。現在のチャットの最初のメッセージを忘れてもよろしいですか？"
+  tokens_approaching : "[dim]トークン制限に近づいています：残り%{token_left}トークン"
+  #
+  load_file_not: "[bright_red]ファイルが見つかりません：%{file_path}"
+  load_json_error: "[bright_red]ファイル内の無効なJSON形式です：%{file_path}"
+  
+  #
+  lang_no_arg: "[dim]切り替えたい言語を入力してください。例：`[bright_magenta]/lang en[/]`。"
+  lang_switch: "[dim]すでに[bright_magenta]日本語[/]に切り替わっています。"
+  #
+  upgrade_title: "新しいバージョンが利用可能です：[red]v%{local_version}[/] -> [green]v%{remote_version}[/]"
+  upgrade_use_command: "`pip install --upgrade gpt-term`\nを使用してアップグレードしてください。"
+  upgrade_see_git: "変更内容を確認するには、[GitHubサイト](https://github.com/xiaoxx970/chatgpt-in-terminal)を訪問してください！"
+  #
+  help_description: 'ターミナルでChatGPTを使用する'
+  help_help: "このヘルプメッセージを表示して終了する"
+  v: '%(prog)s v%{local_version}'
+  help_v: "プログラムのバージョン番号を表示して終了する"
+  help_load: 'チャット履歴をファイルから読み込む'
+  help_key: "読み込むAPIキーを選択します"
+  help_model: '使用するAIモデルを選択する'
+  help_m: 'マルチラインモードを有効にする'
+  help_r: 'ロー モードを有効にする'
+  help_lang: "言語を選択する"
+  help_set_key: 'OpenAIのAPIキーを設定する'
+  help_set_timeout: 'APIリクエストの最大待ち時間を設定する'
+  help_set_gentitle: 'チャットのタイトルを自動生成するかどうかを設定する'
+  help_set_lang: '言語を設定する'
+  help_set_saveperfix: "チャット履歴ファイルの保存プレフィックスを設定する"
+  help_set_loglevel: "ログレベルを設定する:"
+  #
+  help_use_help: "`[bright magenta]/help[/]`を使用して利用可能なスラッシュコマンドをすべて表示します"
+  help_uncommand: "未知のスラッシュコマンド `[bold red]%{command}[/]`"
+  help_mean_command: "`[bright magenta]%{most_similar_command}[/]`を意味しますか？"
+  help_text: "[bold]利用可能なコマンド：[/]\n/raw                     - ローモードを切り替える（ChatGPTの応答の生のテキストを表示する）\n/multi                   - マルチラインモードを切り替える（複数行の入力を許可する）\n/stream \\[overflow_mode]  - ストリーム出力モードを切り替える（回答を流れるように表示する）\n/tokens                  - 使用されたトークンの総数と現在の会話のトークン数を表示する\n/usage                   - 使用済みの総クレジットと現在のクレジットを表示する\n/last                    - 最後のChatGPTの応答を表示する\n/copy (all)              - ChatGPTの最後の応答（生）をクリップボードにコピーする\n/copy code \\[index]       - ChatGPTの最後の応答内のコードをクリップボードにコピーする\n/save \\[filename_or_path] - チャット履歴をファイルに保存する。filename_or_pathが指定されていない場合は、タイトルを提案します\n/model \\[model_name]      - AIモデルを変更する\n/system \\[new_prompt]     - システムプロンプトを変更する\n/rand \\[randomness]       - モデルのサンプリング温度を設定する（0〜2）\n/title \\[new_title]       - このチャットのタイトルを設定します。new_titleが指定されていない場合、新しいタイトルが生成されます\n/timeout \\[new_timeout]   - apiのタイムアウトを変更する\n/undo                    - 最後の質問を元に戻し、回答を削除する\n/delete (first)          - 現在のチャットで最初の会話を削除する\n/delete all              - 全メッセージと会話を削除する\n/version                 - gpt-termのローカルバージョンとリモートバージョンを表示する\n/lang                    - 言語を切り替える\n/help                    - このヘルプメッセージを表示する\n/exit                    - アプリケーションを終了する"

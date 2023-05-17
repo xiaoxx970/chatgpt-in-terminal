@@ -581,7 +581,7 @@ class CommandCompleter(Completer):
             '/undo': None,
             '/delete': {"first", "all"},
             '/reset': None,
-            '/lang' : {"zh_CN","en"},
+            '/lang' : {"zh_CN","en","jp"},
             '/version': None,
             '/help': None,
             '/exit': None,
@@ -904,7 +904,8 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             console.print(_("gpt_term.lang_no_arg"))
         elif args[1]:
             #   把最后2位修改为大写,例:"zh_cn" -> "zh_CN".主要是因为不知道为什么split后,原本的大写转为小写了,这个算是个临时解决方案
-            args[1] = args[1][:-2] + args[1][-2:].upper()
+            if len(args[1]) > 2:
+                args[1] = args[1][:-2] + args[1][-2:].upper()
             _=set_lang(args[1])
             console.print(_("gpt_term.lang_switch"))
 
@@ -1024,10 +1025,12 @@ def main():
 
     # 读取语言配置
     if config.get("language"):
-        if config.get("language") == "zh":
+        if config.get("language") == "zh_CN":
             _=set_lang("zh_CN")
         elif config.get("language") == "en":
             _=set_lang("en")
+        elif config.get("language") == "jp":
+            _=set_lang("jp")
 
     parser = argparse.ArgumentParser(description=_("gpt_term.help_description"),add_help=False)
     parser.add_argument('-h', '--help',action='help', help=_("gpt_term.help_help"))
@@ -1038,14 +1041,14 @@ def main():
     parser.add_argument('-m', '--multi', action='store_true', help=_("gpt_term.help_m"))
     parser.add_argument('-r', '--raw', action='store_true', help=_("gpt_term.help_r"))
     ## 新添加的选项：--lang
-    parser.add_argument('-l','--lang', type=str, choices=['en', 'zh'], help=_("gpt_term.help_lang"))
+    parser.add_argument('-l','--lang', type=str, choices=['en', 'zh_CN', 'jp'], help=_("gpt_term.help_lang"))
     # normal function args
 
     parser.add_argument('--set-apikey', metavar='KEY', type=str, help=_("gpt_term.help_set_key"))
     parser.add_argument('--set-timeout', metavar='SEC', type=int, help=_("gpt_term.help_set_timeout"))
     parser.add_argument('--set-gentitle', metavar='BOOL', type=str, help=_("gpt_term.help_set_gentitle"))
     ## 新添加的选项：--set-lang
-    parser.add_argument('--set-lang', type=str, choices=['en', 'zh'], help=_("gpt_term.help_set_lang"))
+    parser.add_argument('--set-lang', type=str, choices=['en', 'zh_CN', 'jp'], help=_("gpt_term.help_set_lang"))
     parser.add_argument('--set-saveperfix', metavar='PERFIX', type=str, help=_("gpt_term.help_set_saveperfix"))
     parser.add_argument('--set-loglevel', metavar='LEVEL', type=str, help=_("gpt_term.help_set_loglevel")+'DEBUG, INFO, WARNING, ERROR, CRITICAL')
     # setting args
@@ -1053,7 +1056,7 @@ def main():
 
     
     if args.set_lang:
-        if args.set_lang == "zh":
+        if args.set_lang == "zh_cn":
             _=set_lang("zh_CN")
         elif args.set_lang == "en":
             _=set_lang("en")
@@ -1134,7 +1137,7 @@ def main():
             console.print(
                 _("gpt_term.load_chat_history",load=args.load), highlight=False)
     if args.lang:
-        if args.lang == "zh":
+        if args.lang == "zh_CN":
             _=set_lang("zh_CN")
         elif args.lang == "en":
             _=set_lang("en")

@@ -49,8 +49,6 @@ en:
   #
   ChatGPT_thinking: "[bold cyan]ChatGPT is thinking..."
   #
-  #_("gpt_term.Aborted")
-  #_("gpt_term.Error_message",error_msg=str(e))
   Aborted: "[bold cyan]Aborted."
   Error_message: "[red]Error: %{error_msg}"
   Error_timeout: "[red]Error: API read timed out (%{timeout}s). You can retry or increase the timeout."
