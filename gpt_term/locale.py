@@ -9,12 +9,14 @@ def set_lang(lang:str):
     i18n.load_path.append(locale_directory)
     return i18n.t
 
-if __name__ == "__main__":
-    _=set_lang("en")
+def get_lang():
+    return i18n.get('locale')
 
-    print(_('test.hi'))
+if __name__ == "__main__":
+    print(i18n.get('locale'))
+
+    _=set_lang("en")
+    print(_('gpt_term.welcome'))
 
     _=set_lang("zh_CN")
-
-    print(_('test.hi'))
-
+    print(_('gpt_term.welcome'))

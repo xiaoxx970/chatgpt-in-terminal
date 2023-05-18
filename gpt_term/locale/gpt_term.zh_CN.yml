@@ -1,5 +1,5 @@
 zh_CN:
-  welcome: "[dim]你好, 欢迎和GPT聊天. 输入`[bright_magenta]/help[/]`显示可用命令."
+  welcome: "[dim]你好, 欢迎和GPT聊天. 输入`[bright_magenta]/help[/]` 显示可用命令."
   exit: "退出中..."
   spent_token: "[bright_magenta]已花费的 Token总数:[bold]%{total_tokens_spent}" 
   save_api_key: "将 API Key 保存到配置文件中?" 
@@ -22,8 +22,8 @@ zh_CN:
   code_last_copy: "[dim]上一条回复已复制到剪贴板"
   code_copy_fail: "[dim]无操作可执行. 可用的复制命令为: `[bright_magenta]/copy code \\[index][/]` 或 `[bright_magenta]/copy all[/]`"
   #
-  raw_mode_enabled: "[dim]原始模式[green]已启用[/], 使用`[bright_magenta]/last[/]`来显示最后一个回答."
-  raw_mode_disabled: "[dim]原始模式[bright_red]已关闭[/], 使用`[bright_magenta]/last[/]`来显示最后一个回答."
+  raw_mode_enabled: "[dim]原始模式[green]已启用[/], 使用 `[bright_magenta]/last[/]` 来显示最后一个回答."
+  raw_mode_disabled: "[dim]原始模式[bright_red]已关闭[/], 使用 `[bright_magenta]/last[/]` 来显示最后一个回答."
   #
   stream_mode_enabled: "[dim]流式传输[green]已启用[/], 回复将在第一个响应到达时开始输出."
   stream_mode_disabled: "[dim]流式传输[bright_red]已禁用[/], 回复将在服务器完成响应后显示."
@@ -57,7 +57,7 @@ zh_CN:
   Error_input_number: "[red]输入必须是数字"
   Error_input_least: "输入必须至少为 %{min_value}" 
   Error_input_most: "输入必须最多为 %{max_value}"
-  No_change: "[dim]无修改."
+  No_change: "[dim]未修改."
   Error_input_int: "请输入整数!"
   #
   system_prompt_modified: "[dim]系统提示已从 '%{old_content}' 修改为 '%{new_content}'."
@@ -97,27 +97,29 @@ zh_CN:
   load_file_not: "[bright_red]未找到文件: %{file_path}"
   load_json_error: "[bright_red]文件格式无效: %{file_path}"
   #
-  lang_no_arg: "[dim]输入要切换的语言, 例如: `[bright_magenta]/lange en[/]`."
+  new_lang_prompt: "语言: "
   lang_switch: "[dim]已经切换至[bright_magenta]简体中文[/]."
+  lang_config_unsupport: "[red]配置中不支持的语言 `%{config_lang}`, 将使用用户本地语言."
+  lang_unsupport: "[red]不支持的语言 `%{new_lang}`."
   #
   upgrade_title: "新版本可用: [red]v%{local_version}[/] -> [green]v%{remote_version}[/]"
   upgrade_use_command: "使用 `pip install --upgrade gpt-term` 命令来升级."
   upgrade_see_git: "访问我们的[GitHub仓库](https://github.com/xiaoxx970/chatgpt-in-terminal)以查看更新内容！"
   #
-  help_description: '在终端中使用ChatGPT'
-  help_help: '显示此帮助信息并退出'
+  help_description: "在终端中使用ChatGPT"
+  help_help: "显示此帮助信息并退出"
   v: '%(prog)s v%{local_version}'
   help_v: "显示程序的版本号并退出"
-  help_load: '从文件中加载聊天历史记录'
+  help_load: "从文件中加载聊天历史记录"
   help_key: "选择要加载的API密钥"
-  help_model: '选择要使用的AI模型'
-  help_m: '启用多行模式'
-  help_r: '启用原始模式'
+  help_model: "选择要使用的AI模型"
+  help_m: "启用多行模式"
+  help_r: "启用原始模式"
   help_lang: "选择语言"
-  help_set_key: '设置OpenAI的API密钥'
-  help_set_timeout: '设置API请求的最大等待时间'
-  help_set_gentitle: '设置是否自动生成聊天标题'
-  help_set_lang: '设置语言'
+  help_set_key: "设置OpenAI的API密钥"
+  help_set_timeout: "设置API请求的最大等待时间"
+  help_set_gentitle: "设置是否自动生成聊天标题"
+  help_set_lang: "设置语言"
   help_set_saveperfix: "设置聊天历史记录文件的保存前缀"
   help_set_loglevel: "设置日志级别: "
   #
@@ -126,24 +128,24 @@ zh_CN:
   help_mean_command: "您是否指的是 `[bright magenta]%{most_similar_command}[/]`?"
   help_text: |
     [bold]可用命令: [/]
-        /raw                     - 切换原始模式 (显示ChatGPT回复的原始文本)
-        /multi                   - 切换多行模式 (允许多行输入)
-        /stream \[overflow_mode]  - 切换流输出模式 (连续打印回答)
-        /tokens                  - 显示已使用的总令牌数和当前对话的令牌数
-        /usage                   - 显示总积分和已使用的当前积分
-        /last                    - 显示ChatGPT上次的回复
-        /copy (all)              - 将ChatGPT的完整上次回复 (原始格式)复制到剪贴板
-        /copy code \[index]       - 复制ChatGPT上次回复中的代码到剪贴板
-        /save \[filename_or_path] - 将聊天记录保存到文件中, 如果未提供filename_or_path则建议标题
-        /model\[model_name]       - 更改AI模型
-        /system \[new_prompt]     - 修改系统提示
-        /rand \[randomness]       - 设置模型采样温度 (0〜2)
-        /title \[new_title]       - 为此聊天设置标题, 如果未提供new_title, 则将生成新标题
-        /timeout\[new_timeout]    - 修改api超时时间
-        /undo                    - 撤消上次问题并删除其回复
-        /delete (first)          - 删除当前聊天中的第一个对话
-        /delete all              - 清除当前聊天中的所有消息和对话
-        /version                 - 显示gpt-term的本地和远程版本
-        /lang                    - 切换语言
-        /help                    - 显示此帮助消息
-        /exit                    - 退出应用程序
+      /raw                     - 切换原始模式 (显示 ChatGPT 回复的原始文本)
+      /multi                   - 切换多行模式 (允许多行输入)
+      /stream \[overflow_mode]  - 切换流输出模式 (连续显示回复)
+      /tokens                  - 显示已使用的总 token 数和当前对话的 token 数
+      /usage                   - 显示总额度和已使用的当前额度
+      /last                    - 显示 ChatGPT 上次的回复
+      /copy (all)              - 将 ChatGPT 的上次回复的所有文本复制到剪贴板
+      /copy code \[index]       - 复制 ChatGPT 上次回复中的代码到剪贴板
+      /save \[filename_or_path] - 将聊天记录保存到文件中, 如果未提供 filename_or_path 则建议标题
+      /model\[model_name]       - 更改AI模型
+      /system \[new_prompt]     - 修改系统提示
+      /rand \[randomness]       - 设置模型采样温度 (0〜2)
+      /title \[new_title]       - 为此聊天设置标题, 如果未提供 new_title, 则将生成新标题
+      /timeout \[new_timeout]   - 修改api超时时间
+      /undo                    - 撤消上次提问并删除其回复
+      /delete (first)          - 删除当前聊天中的第一个对话
+      /delete all              - 清除当前聊天中的所有消息和对话
+      /version                 - 显示 gpt-term 的本地和远程版本
+      /lang \[new_language]     - 切换语言
+      /help                    - 显示此帮助消息
+      /exit                    - 退出应用程序

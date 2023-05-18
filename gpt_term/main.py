@@ -37,11 +37,8 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 
 from . import __version__
-from .locale import set_lang
+from .locale import set_lang, get_lang
 import locale
-
-language, encoding = locale.getdefaultlocale()
-_ = set_lang(language)
 
 data_dir = Path.home() / '.gpt-term'
 data_dir.mkdir(parents=True, exist_ok=True)
@@ -75,7 +72,6 @@ class ChatMode:
     @classmethod
     def toggle_raw_mode(cls):
         cls.raw_mode = not cls.raw_mode
-        a=123
         if cls.raw_mode:
             console.print(_("gpt_term.raw_mode_enabled"))
         else:
@@ -899,14 +895,19 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
     
     elif command.startswith('/lang'):
         args = command.split()
-        if len(args) == 1:
-            console.print(_("gpt_term.lang_no_arg"))
-        elif args[1]:
-            #   把最后2位修改为大写,例:"zh_cn" -> "zh_CN".主要是因为不知道为什么split后,原本的大写转为小写了,这个算是个临时解决方案
-            if len(args[1]) > 2:
-                args[1] = args[1][:-2] + args[1][-2:].upper()
-            _=set_lang(args[1])
-            console.print(_("gpt_term.lang_switch"))
+        if len(args) > 1:
+            new_lang = args[1]
+        else:
+            new_lang = prompt(
+                _("gpt_term.new_lang_prompt"), default=get_lang(), style=style)
+        if new_lang != get_lang():
+            if new_lang in supported_langs:
+                _=set_lang(new_lang)
+                console.print(_("gpt_term.lang_switch"))
+            else:
+                console.print(_("gpt_term.lang_unsupport", new_lang=new_lang))
+        else:
+            console.print(_("gpt_term.No_change"))
 
     elif command == '/exit':
         raise EOFError
@@ -1015,7 +1016,11 @@ def set_config_by_args(args: argparse.Namespace, config_ini: ConfigParser):
 
 
 def main():
-    global _
+    global _, supported_langs
+    supported_langs = ["en","zh_CN","jp","de"]
+    local_lang = locale.getdefaultlocale()[0]
+    if local_lang not in supported_langs:
+        local_lang = "en"
 
     # 读取配置文件
     config_ini = ConfigParser()
@@ -1023,15 +1028,13 @@ def main():
     config = config_ini['DEFAULT']
 
     # 读取语言配置
-    if config.get("language"):
-        if config.get("language") == "zh_CN":
-            _=set_lang("zh_CN")
-        elif config.get("language") == "en":
-            _=set_lang("en")
-        elif config.get("language") == "jp":
-            _=set_lang("jp")
-        elif config.get("language") == "de":
-            _=set_lang("de")
+    config_lang = config.get("language", local_lang)
+    if config_lang in supported_langs:
+        _=set_lang(config_lang)
+        console.print(_("gpt_term.lang_switch"))
+    else:
+        _=set_lang(local_lang)
+        console.print(_("gpt_term.lang_config_unsupport", config_lang=config_lang))
 
     parser = argparse.ArgumentParser(description=_("gpt_term.help_description"),add_help=False)
     parser.add_argument('-h', '--help',action='help', help=_("gpt_term.help_help"))
@@ -1055,17 +1058,11 @@ def main():
     # setting args
     args = parser.parse_args()
 
-    
-    if args.set_lang:
-        if args.set_lang == "zh_CN":
-            _=set_lang("zh_CN")
-        elif args.set_lang == "en":
-            _=set_lang("en")
-        elif args.set_lang == "jp":
-            _=set_lang("jp")
-        elif args.set_lang == "de":
-            _=set_lang("de")
     set_config_by_args(args, config_ini)
+
+    if args.lang:
+        _=set_lang(args.lang)
+        console.print(_("gpt_term.lang_switch"))
 
     try:
         log_level = getattr(logging, config.get("LOG_LEVEL", "INFO").upper())
@@ -1119,8 +1116,6 @@ def main():
     gen_title_daemon_thread.start()
     log.debug("Title generation daemon thread started")
 
-    if not args.lang:
-        args.lang = config.get("LANGUAGE")
     if args.model:
         chat_gpt.set_model(args.model)
 
@@ -1141,15 +1136,6 @@ def main():
             log.info(f"Chat history successfully loaded from: {args.load}")
             console.print(
                 _("gpt_term.load_chat_history",load=args.load), highlight=False)
-    if args.lang:
-        if args.lang == "zh_CN":
-            _=set_lang("zh_CN")
-        elif args.lang == "en":
-            _=set_lang("en")
-        elif args.lang == "jp":
-            _=set_lang("jp")
-        elif args.lang == "de":
-            _=set_lang("de")
 
     console.print(
         _("gpt_term.welcome"))
@@ -1165,7 +1151,7 @@ def main():
                 '> ', completer=command_completer, complete_while_typing=True, key_bindings=key_bindings)
 
             if message.startswith('/'):
-                command = message.strip().lower()
+                command = message.strip()
                 handle_command(command, chat_gpt,
                                key_bindings, chat_save_perfix)
             else:

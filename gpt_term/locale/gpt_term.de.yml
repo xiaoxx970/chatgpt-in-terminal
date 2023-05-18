@@ -97,8 +97,11 @@ de:
   load_file_not: "[bright_red]Datei nicht gefunden: %{file_path}"
   load_json_error: "[bright_red]Ungültiges JSON-Format in der Datei: %{file_path}"
   #
-  lang_no_arg: "[dim]Bitte geben die Sprache ein, zu der Du wechseln möchtest, z.B.: `[bright_magenta]/lange en[/]`."
+  new_lang_prompt: "Sprache: "
   lang_switch: "[dim]Wechselt zu [bright_magenta]Deutsch[/]."
+  lang_config_unsupport: "[red]Nicht unterstützte Sprache in der Konfiguration `%{config_lang}`. Die Sprache des Benutzers wird verwendet."
+  lang_unsupport: "[red]Nicht unterstützte Sprache `%{new_lang}`."
+
   #
   upgrade_title: "Neue Version verfügbar: [red]v%{local_version}[/] -> [green]v%{remote_version}[/]"
   upgrade_use_command: "Verwenden `pip install --upgrade gpt-term` zum Upgrade."
@@ -124,4 +127,26 @@ de:
   help_use_help: "Verwenden `[bright_Magenta]/help[/]`, um alle verfügbaren Slash-Befehle zu sehen"
   help_uncommand: "Unerkannter Slash-Befehl `[bold red]%{command}[/]`"
   help_mean_command: "Meinst Du `[bright magenta]%{most_similar_command}[/]`?"
-  help_text: "[bold]Verfügbare Befehle:[/]\n/raw                     - Rohmode umschalten (zeigt den Rohtext der ChatGPT-Antwort an)\n/multi                   - Multi-Linie-Mode umschalten (erlaubt mehrzeilige Eingaben)\n/stream \\[overflow_mode]  - Stream-Mode umschalten (fluss-drucken der Antwort)\n/tokens                  - Zeigt die insgesamt ausgegebenen Token und die Token für die aktuelle Konversation an\n/usage                   - Zeigt das gesamte Guthaben und das aktuell verbrauchte Guthaben an\n/last                    - Zeigt die letzte Antwort des ChatGPTs an\n/copy (all)              - Kopiert die komplette letzte ChatGPT-Antwort (roh) in die Zwischenablage\n/copy code \\[index]       - Kopiert den Code in der letzten ChatGPT-Antwort in die Zwischenablage\n/save \\[filename_or_path] - speichert den Chatverlauf in eine Datei, Titel vorschlagen, wenn filename_or_path nicht angegeben wird\n/model \\[model_name]      - AI-Modell ändern\n/system \\[new_prompt]     - System-Prompt ändern\n/rand \\[randomness]       - Modellstichprobentemperatur (Zufälligkeit) einstellen (0~2)\n/title \\[new_title]       - Titel für diesen Chat einstellen, wenn new_title nicht angegeben wird, wird ein neuer Titel generiert\n/timeout \\[new_timeout]   - Ändern der API Zeitüberschreitung\n/undo                    - Löschen der letzten Frage und Entfernen ihrer Antwort\n/delete (first)          - Löschen der ersten Unterhaltung im aktuellen Chat\n/delete all              -  Löschen aller Nachrichten und Unterhaltungen im aktuellen Chat\n/version                 - Zeigen der Lokal- und der Fernersion von gpt-term an\n/lang                    - Sprache umschalten\n/help                    - Zeigen dieser Hilfemeldung an\n/exit                    - Beenden der Anwendung"
+  help_text: |
+    [bold]Verfügbare Befehle:[/]
+      /raw                     - Rohmode umschalten (zeigt den Rohtext der ChatGPT-Antwort an)
+      /multi                   - Multi-Linie-Mode umschalten (erlaubt mehrzeilige Eingaben)
+      /stream \[overflow_mode]  - Stream-Mode umschalten (fluss-drucken der Antwort)
+      /tokens                  - Zeigt die insgesamt ausgegebenen Token und die Token für die aktuelle Konversation an
+      /usage                   - Zeigt das gesamte Guthaben und das aktuell verbrauchte Guthaben an
+      /last                    - Zeigt die letzte Antwort des ChatGPTs an
+      /copy (all)              - Kopiert die komplette letzte ChatGPT-Antwort (roh) in die Zwischenablage
+      /copy code \[index]       - Kopiert den Code in der letzten ChatGPT-Antwort in die Zwischenablage
+      /save \[filename_or_path] - speichert den Chatverlauf in eine Datei, Titel vorschlagen, wenn filename_or_path nicht angegeben wird
+      /model \[model_name]      - AI-Modell ändern
+      /system \[new_prompt]     - System-Prompt ändern
+      /rand \[randomness]       - Modellstichprobentemperatur (Zufälligkeit) einstellen (0~2)
+      /title \[new_title]       - Titel für diesen Chat einstellen, wenn new_title nicht angegeben wird, wird ein neuer Titel generiert
+      /timeout \[new_timeout]   - Ändern der API Zeitüberschreitung
+      /undo                    - Löschen der letzten Frage und Entfernen ihrer Antwort
+      /delete (first)          - Löschen der ersten Unterhaltung im aktuellen Chat
+      /delete all              -  Löschen aller Nachrichten und Unterhaltungen im aktuellen Chat
+      /version                 - Zeigen der Lokal- und der Fernersion von gpt-term an
+      /lang \[new_language]     - Sprache umschalten
+      /help                    - Zeigen dieser Hilfemeldung an
+      /exit                    - Beenden der Anwendung

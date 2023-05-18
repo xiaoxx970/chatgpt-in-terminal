@@ -98,8 +98,11 @@ jp:
   load_json_error: "[bright_red]ファイル内の無効なJSON形式です：%{file_path}"
   
   #
-  lang_no_arg: "[dim]切り替えたい言語を入力してください。例：`[bright_magenta]/lang en[/]`。"
+  new_lang_prompt: "言語："
   lang_switch: "[dim]すでに[bright_magenta]日本語[/]に切り替わっています。"
+  lang_config_unsupport: "[red]設定でサポートされていない言語 `%{config_lang}` です。ユーザーのローカル言語が使用されます。"
+  lang_unsupport: "[red]サポートされていない言語 `%{new_lang}` です。"
+
   #
   upgrade_title: "新しいバージョンが利用可能です：[red]v%{local_version}[/] -> [green]v%{remote_version}[/]"
   upgrade_use_command: "`pip install --upgrade gpt-term`\nを使用してアップグレードしてください。"
@@ -125,4 +128,26 @@ jp:
   help_use_help: "`[bright magenta]/help[/]`を使用して利用可能なスラッシュコマンドをすべて表示します"
   help_uncommand: "未知のスラッシュコマンド `[bold red]%{command}[/]`"
   help_mean_command: "`[bright magenta]%{most_similar_command}[/]`を意味しますか？"
-  help_text: "[bold]利用可能なコマンド：[/]\n/raw                     - ローモードを切り替える（ChatGPTの応答の生のテキストを表示する）\n/multi                   - マルチラインモードを切り替える（複数行の入力を許可する）\n/stream \\[overflow_mode]  - ストリーム出力モードを切り替える（回答を流れるように表示する）\n/tokens                  - 使用されたトークンの総数と現在の会話のトークン数を表示する\n/usage                   - 使用済みの総クレジットと現在のクレジットを表示する\n/last                    - 最後のChatGPTの応答を表示する\n/copy (all)              - ChatGPTの最後の応答（生）をクリップボードにコピーする\n/copy code \\[index]       - ChatGPTの最後の応答内のコードをクリップボードにコピーする\n/save \\[filename_or_path] - チャット履歴をファイルに保存する。filename_or_pathが指定されていない場合は、タイトルを提案します\n/model \\[model_name]      - AIモデルを変更する\n/system \\[new_prompt]     - システムプロンプトを変更する\n/rand \\[randomness]       - モデルのサンプリング温度を設定する（0〜2）\n/title \\[new_title]       - このチャットのタイトルを設定します。new_titleが指定されていない場合、新しいタイトルが生成されます\n/timeout \\[new_timeout]   - apiのタイムアウトを変更する\n/undo                    - 最後の質問を元に戻し、回答を削除する\n/delete (first)          - 現在のチャットで最初の会話を削除する\n/delete all              - 全メッセージと会話を削除する\n/version                 - gpt-termのローカルバージョンとリモートバージョンを表示する\n/lang                    - 言語を切り替える\n/help                    - このヘルプメッセージを表示する\n/exit                    - アプリケーションを終了する"
+  help_text: |
+    [bold]利用可能なコマンド：[/]
+      /raw                     - ローモードを切り替える（ChatGPTの応答の生のテキストを表示する）
+      /multi                   - マルチラインモードを切り替える（複数行の入力を許可する）
+      /stream \[overflow_mode]  - ストリーム出力モードを切り替える（回答を流れるように表示する）
+      /tokens                  - 使用されたトークンの総数と現在の会話のトークン数を表示する
+      /usage                   - 使用済みの総クレジットと現在のクレジットを表示する
+      /last                    - 最後のChatGPTの応答を表示する
+      /copy (all)              - ChatGPTの最後の応答（生）をクリップボードにコピーする
+      /copy code \[index]       - ChatGPTの最後の応答内のコードをクリップボードにコピーする
+      /save \[filename_or_path] - チャット履歴をファイルに保存する。filename_or_pathが指定されていない場合は、タイトルを提案します
+      /model \[model_name]      - AIモデルを変更する
+      /system \[new_prompt]     - システムプロンプトを変更する
+      /rand \[randomness]       - モデルのサンプリング温度を設定する（0〜2）
+      /title \[new_title]       - このチャットのタイトルを設定します。new_titleが指定されていない場合、新しいタイトルが生成されます
+      /timeout \[new_timeout]   - apiのタイムアウトを変更する
+      /undo                    - 最後の質問を元に戻し、回答を削除する
+      /delete (first)          - 現在のチャットで最初の会話を削除する
+      /delete all              - 全メッセージと会話を削除する
+      /version                 - gpt-termのローカルバージョンとリモートバージョンを表示する
+      /lang \[new_language]     - 言語を切り替える
+      /help                    - このヘルプメッセージを表示する
+      /exit                    - アプリケーションを終了する
