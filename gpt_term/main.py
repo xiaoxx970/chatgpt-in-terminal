@@ -37,12 +37,11 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 
 from . import __version__
-from .locale import set_lang,test_lang
+from .locale import set_lang
 import locale
 
 language, encoding = locale.getdefaultlocale()
 _ = set_lang(language)
-#_ = test_lang("zh_cn")
 
 data_dir = Path.home() / '.gpt-term'
 data_dir.mkdir(parents=True, exist_ok=True)
@@ -756,9 +755,9 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         with console.status(_("gpt_term.usage_getting")):
             if not chat_gpt.get_credit_usage():
                 return
-        console.print(Panel(_("gpt_term.usage_granted",credit_total_granted=format(chat_gpt.credit_total_granted,".2f"))+"\n"+
-                            _("gpt_term.usage_used_month",credit_used_this_month=format(chat_gpt.credit_used_this_month,'.2f'))+"\n"+
-                            _("gpt_term.usage_total",credit_total_used=format(chat_gpt.credit_total_used,'.2f')),
+        console.print(Panel(f'{_("gpt_term.usage_granted",credit_total_granted=format(chat_gpt.credit_total_granted, ".2f"))}\n'
+                            f'{_("gpt_term.usage_used_month",credit_used_this_month=format(chat_gpt.credit_used_this_month, ".2f"))}\n'
+                            f'{_("gpt_term.usage_total",credit_total_used=format(chat_gpt.credit_total_used, ".2f"))}',
                             title=_("gpt_term.usage_title"), title_align='left', subtitle=_("gpt_term.usage_plan",credit_plan=chat_gpt.credit_plan), width=35))
 
     elif command.startswith('/model'):
@@ -767,7 +766,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             new_model = args[1]
         else:
             new_model = prompt(
-                "可以使用的模型:\nOpenAI API model: ", default=chat_gpt.model, style=style)
+                "OpenAI API model: ", default=chat_gpt.model, style=style)
         if new_model != chat_gpt.model:
             chat_gpt.set_model(new_model)
         else:
