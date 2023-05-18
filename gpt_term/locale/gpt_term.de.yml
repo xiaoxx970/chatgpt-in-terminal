@@ -1,0 +1,151 @@
+de:
+  welcome: "[dim]Hallo, willkommen zum Chat mit GPT. Tippen `[bright_magenta]/help[/] ein um verfügbare Befehle zu sehen."
+  exit: "Beenden..."
+  spent_token: "[bright_magenta]Gesamt ausgegebene Tokens: [bold]%{total_tokens_spent}"
+  save_api_key: "Wirst Du API-Schlüssel in der Konfigurationsdatei speichern?"
+  input_api_key: "API-Schlüssel nicht gefunden, bitte eintippen:"
+  config_key_to_shell_key: "Konfig-Element `[bright_magenta]%{key_word}[/]` ist auf [green]%{val}[/] gesetzt"
+  log_level_error: "[dim]Ungültige Log-Stufe: %{e}, bitte mal config.ini Datei prüfen und die Log-stufe auf INFO setzen"
+  system_prompt: "System-Prompt: "
+  new_temperature: "Neue Zufälligkeit: "
+  #
+  load_chat_history: "[dim]Chatverlauf erfolgreich von [bright_magenta]%{load} geladen"
+  #
+  code_not_found: "[dim]Code nicht gefunden"
+  code_too_many_found: "[dim]Es gibt mehr als einen Code in der letzten Antwort des ChatGPTs"
+  code_num: "[yellow]Code %{code_num}: "
+  code_select: "Bitte wählen den Code zu kopieren aus: "
+  code_index_must_int: "[red]Der Index der Codes muss eine ganze Zahl sein"
+  code_index_out_range_one: "[red]Index außer Reichweite: Es gibt nur einen Code in der letzten Antwort des ChatGPTs"
+  code_index_out_range_many: "[red]Index außer Reichweite: Bitte eine ganze Zahl zwischen 1 und %{len_code_list} eingeben"
+  code_copy: "[dim]Der Code wurde schon in die Zwischenablage kopiert"
+  code_last_copy: "[dim]Letzte Antwort wurde schon in die Zwischenablage kopiert"
+  code_copy_fail: "[dim]Keine zu tun. Verfügbarer Kopier-Befehl: `[bright_magenta]/copy code \\[index][/]` oder `[bright_magenta]/copy all[/]`"
+  #
+  raw_mode_enabled: "[dim]Rhomode [green]aktiviert[/]. Benutzen `/last` um die letzte Antwort anzuzeigen."
+  raw_mode_disabled: "[dim]Rhomode [bright_red]deaktiviert[/]. Benutzen `/last` um die letzte Antwort anzuzeigen."
+  #
+  stream_mode_enabled: "[dim]Stream-Mode [green]aktiviert[/], die Antwort wird ausgegeben, sobald der erste Teil der Antwort eintrifft."
+  stream_mode_disabled: "[dim]Stream-Mode [bright_red]deaktiviert[/], die Antwort wird nach die ganze Antwort eintrifft ausgegeben."
+  stream_overflow_modified: "[dim]Die Stream-Overflow Option wurde von '%{old_overflow}' auf '%{new_overflow}' geändert."
+  stream_overflow_visible: "[dim]Beachten dass das Terminal bei diesem Modus das Gehalt außerhalb des Bildschirms nicht richtig bereinigt."
+  stream_overflow_no_changed: "[dim]Ungültige Stream-Overflow Option, erhält die Option '%{old_overflow}' unverändert."
+  #
+  tokens_title: "Tokens Statistik"
+  tokens_used: "[bold bright_magenta]Ausgegebene Tokens:[/]\t%{total_tokens_spent}\n[bold green]Aktuell Tokens:[/]\t\t%{current_tokens}/[bold]%{tokens_limit}"
+  #
+  usage_getting: "[cyan]Kredit Gebrauch Infos anfordern..."
+  usage_granted: "[bold green]Insgesamt gewährt:[/]\t$%{credit_total_granted}"
+  usage_used_month: "[bold cyan]Nutzung dieses Monats:[/]\t$%{credit_used_this_month}"
+  usage_total: "[bold blue]Insgesamt Nutzung:[/]\t$%{credit_total_used}"
+  usage_title: "Kredit Statistik"
+  usage_plan: "[bright_blue]Plan: %{credit_plan}"
+  #
+  model_set: "[dim]Leere Eingabe, erhält das Modell '%{old_model}' unverändert."
+  model_changed: "[dim]Das Modell wurde von '%{old_model}' auf '%{new_model}' geändert."
+  #
+  multi_line_enable: "[dim]Multi-Linie-Mode [green]aktiviert[/], pressen [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] einzureichen."
+  multi_line_disabled: "[dim]Multi-Linie-Mode [bright_red]deaktiviert[/]."
+  #
+  ChatGPT_thinking: "[bold cyan]ChatGPT denkt nach..."
+  #
+  Aborted: "[bold cyan]Abbrechen."
+  Error_message: "[red]Fehler: %{error_msg}"
+  Error_timeout: "[red]Fehler: API hat Zeitüberschreitung (%{timeout}s) erreicht. Du kannst wiederholen oder die Zeitüberschreitung erhöhen."
+  Error_look_log: "[red]Fehler: %s{error_msg}. Sehen Log für mehren Informationen."
+  Error_get_url: "[red]Bei %{url} gab es Fehler: %{error_msg}"
+  Error_input_number: "[red]Die Eingabe muss eine Zahl sein."
+  Error_input_least: "Die Eingabe muss mindesten %{min_value} sein"
+  Error_input_most: "Die Eingabe muss zum Maximum %{max_value} sein"
+  No_change: "[dim]Keine Veränderung."
+  Error_input_int: "Bitte geben eine ganze Zahl ein!"
+  #
+  system_prompt_modified: "[dim]System-Prompt wurde von '%{old_content}' auf '%{new_content} geändert."
+  system_prompt_note: "[dim]Beachten dass es sich nicht um einen neuen Chat handelt, Änderungen an der System-Prompt haben nur begrenzte Auswirkungen auf die Antworten."
+  system_prompt_found: "[dim]Kein System-Prompt in Messages gefunden."
+  #
+  title_waiting_gen: "[bold cyan]Warten auf die letzte Titel Generierung zum Ende zu kommen..."
+  title_gening: "[bold cyan]Generieren den Titel... [/](Ctrl-C zu springen)"
+  title_skip_gen: "[bold cyan]Warten überspringen."
+  title_gen_fail: "[red]Der Titel konnte nicht generiert werden."
+  title_changed: "[red]Der Title des Kommandozeiles wurde auf '%{title}' geändert."
+  title_auto_gen_fail: "[red]Fehler bei der automatischen Erzeugung des Titels im Hintergrund: %{error_msg}. Sehen Log für weitere Informationen."
+  #
+  save_history_success: "[dim]Chatverlauf gespeichert in: [bright_magenta]%{filename}"
+  save_history_urgent_success: "[dim]Chatverlauf dringend gespeichert in: [bright_magenta]%{filename}"
+  #
+  timeout_prompt: "OpenAI API Zeitüberschreitung: "
+  timeout_changed: "[dim]API Zeitüberschreitung wurde auf [green]%{timeout}s[/] geändert."
+  #
+  undo_removed: "[dim]Die letzte Frage: '%{truncated_question}' und ihre Antwort wurden gelöscht."
+  undo_nothing: "[dim]Keine zu tun."
+  #
+  temperature_must_between: "[red]Die Eingabe muss eine Zahl zwischen 0 und 2 sein"
+  temperature_set: "[dim]Die Zufälligkeit wurde auf [green]%{temperature}[/] geändert."
+  #
+  delete_first_conversation_yes: "[dim]Die erste Frage: '%{truncated_question}' und ihre Antwort wurden gelöscht, eingespart Tokens: %{tokens_saved}"
+  delete_first_conversation_no: "[red]Keine Unterhaltung jetzt."
+  delete_all: "[dim]Aktuelle Unterhaltung gelöscht."
+  delete_nothing: "[dim]Keine zu tun. Verfügbarer Löschen-Befehl: `[bright_magenta]/delete first[/]` oder `[bright_magenta]/delete all[/]`"
+  #
+  version_all: "[bold blue]Lokale Version:[/]\tv%{local_version}\n[bold green]Fernversion:[/]\tv%{remote_version}"
+  version_name: "Version"
+  #
+  tokens_reached: "Token-Limit erreicht, soll ich die früheste Nachricht des aktuellen Chats vergessen?"
+  tokens_approaching: "[dim]Nähert sich dem Token-Limit: %{token_left} tokens übrig"
+  #
+  load_file_not: "[bright_red]Datei nicht gefunden: %{file_path}"
+  load_json_error: "[bright_red]Ungültiges JSON-Format in der Datei: %{file_path}"
+  #
+  new_lang_prompt: "Sprache: "
+  lang_switch: "[dim]Wechselt zu [bright_magenta]Deutsch[/]."
+  lang_config_unsupport: "[red]Nicht unterstützte Sprache in der Konfiguration `%{config_lang}`. Die Sprache des Benutzers wird verwendet."
+  lang_unsupport: "[red]Nicht unterstützte Sprache `%{new_lang}`."
+
+  #
+  upgrade_title: "Neue Version verfügbar: [red]v%{local_version}[/] -> [green]v%{remote_version}[/]"
+  upgrade_use_command: "Verwenden `pip install --upgrade gpt-term` zum Upgrade."
+  upgrade_see_git: "Sehen unsere [GitHub Site](https://github.com/xiaoxx970/chatgpt-in-terminal) um zu sehen, was geändert wurde!"
+  #
+  help_description: "Verwenden ChatGPT im Terminal"
+  help_help: "Zeigt diese Hilfemeldung an und beendet sich"
+  help_v: "Zeigt die Version des Programms an und beenden"
+  help_load: "Chatverlauf aus Datei laden"
+  help_key: "Wählen Sie den Namen des API-Schlüssels aus, der aus der Konfigurationsdatei geladen werden soll."
+  help_model: "Wählen das zu verwendende AI-Modell"
+  help_m: "Aktivieren den Multi-Linie-Mode"
+  help_r: "Aktivieren den Rhomode"
+  help_lang: "Sprache wählen"
+  help_set_key: "API-Schlüssel für OpenAI einstellen"
+  help_set_timeout: "Maximale Wartezeit für API-Anfragen einstellen"
+  help_set_gentitle: "Festlegen, ob automatisch ein Titel für den Chat generiert werden soll"
+  help_set_lang: "Sprache einstellen"
+  help_set_saveperfix: "Speicherperfix für die Chatverlaufsdatei einstellen"
+  help_set_loglevel: "Log-Stufe einstellen:"
+  #
+  help_use_help: "Verwenden `[bright_Magenta]/help[/]`, um alle verfügbaren Slash-Befehle zu sehen"
+  help_uncommand: "Unerkannter Slash-Befehl `[bold red]%{command}[/]`"
+  help_mean_command: "Meinst Du `[bright magenta]%{most_similar_command}[/]`?"
+  help_text: |
+    [bold]Verfügbare Befehle:[/]
+      /raw                     - Rohmode umschalten (zeigt den Rohtext der ChatGPT-Antwort an)
+      /multi                   - Multi-Linie-Mode umschalten (erlaubt mehrzeilige Eingaben)
+      /stream \[overflow_mode]  - Stream-Mode umschalten (fluss-drucken der Antwort)
+      /tokens                  - Zeigt die insgesamt ausgegebenen Token und die Token für die aktuelle Konversation an
+      /usage                   - Zeigt das gesamte Guthaben und das aktuell verbrauchte Guthaben an
+      /last                    - Zeigt die letzte Antwort des ChatGPTs an
+      /copy (all)              - Kopiert die komplette letzte ChatGPT-Antwort (roh) in die Zwischenablage
+      /copy code \[index]       - Kopiert den Code in der letzten ChatGPT-Antwort in die Zwischenablage
+      /save \[filename_or_path] - speichert den Chatverlauf in eine Datei, Titel vorschlagen, wenn filename_or_path nicht angegeben wird
+      /model \[model_name]      - AI-Modell ändern
+      /system \[new_prompt]     - System-Prompt ändern
+      /rand \[randomness]       - Modellstichprobentemperatur (Zufälligkeit) einstellen (0~2)
+      /title \[new_title]       - Titel für diesen Chat einstellen, wenn new_title nicht angegeben wird, wird ein neuer Titel generiert
+      /timeout \[new_timeout]   - Ändern der API Zeitüberschreitung
+      /undo                    - Löschen der letzten Frage und Entfernen ihrer Antwort
+      /delete (first)          - Löschen der ersten Unterhaltung im aktuellen Chat
+      /delete all              -  Löschen aller Nachrichten und Unterhaltungen im aktuellen Chat
+      /version                 - Zeigen der Lokal- und der Fernersion von gpt-term an
+      /lang \[new_language]     - Sprache umschalten
+      /help                    - Zeigen dieser Hilfemeldung an
+      /exit                    - Beenden der Anwendung

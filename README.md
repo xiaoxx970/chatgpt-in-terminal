@@ -21,6 +21,13 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
 
 ## Changelog
 
+### 2023-05-18
+
+- Added multi-language support: English, Chinese, Japanese, German, follow the system language by default, now you can use `/lang` to switch languages
+
+<details>
+  <summary>More Change log</summary>
+
 ### 2023-05-11
 
 - Find the command the user most likely intended to enter when typing an unrecognized command
@@ -30,9 +37,6 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
 - Add `/rand` command to set temperature parameter
 
 - Add overflow mode switch for `/stream` command, now you can run command `/stream visible` to switch to always visible mode. In this mode, the content that exceeds the screen will be scrolled up, and the new content will be output until it is completed
-
-<details>
-  <summary>More Change log</summary>
 
 ### 2023-04-23
 Released `gpt-term` on [Pypi](https://pypi.org/project/gpt-term/), started version control. No need to clone the project locally anymore, simply use the `pip` command to install gpt-term.
@@ -150,6 +154,7 @@ Here are some common shortcut keys (also shortcut keys for the shell):
 | --set-gentitle BOOL     | Set whether to auto-generate a title for the chat        | `gpt-term --set-gentitle True`   |
 | --set-saveperfix PERFIX | Set the save prefix for chat history files               | `gpt-term --set-saveperfix chat_history_` |
 | --set-loglevel LEVEL    | Set the log level: DEBUG, INFO, WARNING, ERROR, CRITICAL | `gpt-term --set-loglevel DEBUG`  |
+| --set-lang LANG    | Set the language: en, zh_CN, jp, de | `gpt-term --set-lang en` |
 
 > Multi-line mode and raw mode can be used simultaneously
 
@@ -176,6 +181,9 @@ CHAT_SAVE_PERFIX=./chat_history_
 
 # Log level, default is INFO, available value: DEBUG, INFO, WARNING, ERROR, CRITICAL
 LOG_LEVEL=INFO
+
+# Set the language of the program, the default is empty, it will follow the system language
+LANGUAGE=
 ```
 
 ### Available Commands

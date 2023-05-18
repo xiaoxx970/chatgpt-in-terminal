@@ -1,0 +1,150 @@
+en:
+  welcome: "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands."
+  exit: "Exiting..."
+  spent_token: "[bright_magenta]Total tokens spent: [bold]%{total_tokens_spent}"
+  save_api_key: "Save API Key to config file?"
+  input_api_key: "OpenAI API Key not found, please input: "
+  config_key_to_shell_key : "Config item `[bright_magenta]%{key_word}[/]` is set to [green]%{val}[/]"
+  log_level_error: "[dim]Invalid log level: %{e}, check config.ini file. Set log level to INFO."
+  system_prompt: "System prompt: "
+  new_temperature: "New Randomness: "
+  #
+  load_chat_history: "[dim]Chat history successfully loaded from: [bright_magenta]%{load}"
+  #
+  code_not_found: "[dim]No code found"
+  code_too_many_found: "[dim]There are more than one code in ChatGPT's last reply"
+  code_num: "[yellow]Code %{code_num}:"
+  code_select: "Please select which code to copy: "
+  code_index_must_int: "[red]Code index must be an Integer"
+  code_index_out_range_one: "[red]Index out of range: There is only one code in ChatGPT's last reply"
+  code_index_out_range_many: "[red]Index out of range: You should input an Integer in range 1 ~%{len_code_list}"
+  code_copy: "[dim]Code copied to Clipboard"
+  code_last_copy: "[dim]Last reply copied to Clipboard"
+  code_copy_fail: "[dim]Nothing to do. Available copy command: `[bright_magenta]/copy code \\[index][/]` or `[bright_magenta]/copy all[/]`"
+  #
+  raw_mode_enabled: "[dim]Raw mode [green]enabled[/], use `[bright_magenta]/last[/]` to display the last answer."
+  raw_mode_disabled: "[dim]Raw mode [bright_red]disabled[/], use `[bright_magenta]/last[/]` to display the last answer."
+  #
+  stream_mode_enabled: "[dim]Stream mode [green]enabled[/], the answer will start outputting as soon as the first response arrives."
+  stream_mode_disabled: "[dim]Stream mode [bright_red]disabled[/], the answer is being displayed after the server finishes responding."
+  stream_overflow_modified: "[dim]Stream overflow option has been modified from '%{old_overflow}' to '%{new_overflow}'."
+  stream_overflow_visible: "[dim]Note that in this mode the terminal will not properly clean up off-screen content."
+  stream_overflow_no_changed: "[dim]No such Stream overflow option, remain '%{old_overflow}' unchanged."
+  #
+  tokens_title: "token_summary"
+  tokens_used: "[bold bright_magenta]Total Tokens Spent:[/]\t%{total_tokens_spent}\n[bold green]Current Tokens:[/]\t\t%{current_tokens}/[bold]%{tokens_limit}"
+  #
+  usage_getting: "[cyan]Getting credit usage..."
+  usage_granted: "[bold green]Total Granted:[/]\t\t$%{credit_total_granted}"
+  usage_used_month: "[bold cyan]Used This Month:[/]\t$%{credit_used_this_month}"
+  usage_total: "[bold blue]Used Total:[/]\t\t$%{credit_total_used}"
+  usage_title: "Credit Summary"
+  usage_plan: "[bright_blue]Plan: %{credit_plan}"
+  #
+  model_set: "[dim]Empty input, the model remains '%{old_model}'."
+  model_changed: "[dim]Model has been set from '%{old_model}' to '%{new_model}'."
+  #
+  multi_line_enabled: "[dim]Multi-line mode [green]enabled[/], press [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] to submit."
+  multi_line_disabled: "[dim]Multi-line mode [bright_red]disabled[/]."
+  #
+  ChatGPT_thinking: "[bold cyan]ChatGPT is thinking..."
+  #
+  Aborted: "[bold cyan]Aborted."
+  Error_message: "[red]Error: %{error_msg}"
+  Error_timeout: "[red]Error: API read timed out (%{timeout}s). You can retry or increase the timeout."
+  Error_look_log: "[red]Error: %{error_msg}. Check log for more information"
+  Error_get_url: "[red]Get %{url} Error: %{error_msg}"
+  Error_input_number: "[red]Input must be a number"
+  Error_input_least: "Input must be at least %{min_value}"
+  Error_input_most: "Input must be at most %{max_value}"
+  No_change: "[dim]No change."
+  Error_input_int: "Please input an Integer!"
+  #
+  system_prompt_modified: "[dim]System prompt has been modified from '%{old_content}' to '%{new_content}'."
+  system_prompt_note: "[dim]Note this is not a new chat, modifications to the system prompt have limited impact on answers."
+  system_prompt_found: "[dim]No system prompt found in messages."
+  #
+  title_waiting_gen: "[bold cyan]Waiting last generation to finish..."
+  title_gening: "[bold cyan]Generating title... [/](Ctrl-C to skip)"
+  title_skip_gen: "[bold cyan]Skip wait."
+  title_gen_fail: "[red]Failed to generate title."
+  title_changed: "[dim]CLI Title changed to '%{title}'"
+  title_auto_gen_fail: "[red]Background Title auto-generation Error: %{error_msg}. Check log for more information"
+  #
+  save_history_success: "[dim]Chat history saved to: [bright_magenta]%{filename}"
+  save_history_urgent_success: "[dim]Chat history urgently saved to: [bright_magenta]%{filename}"
+  #
+  timeout_prompt: "OpenAI API timeout: "
+  timeout_changed: "[dim]API timeout set to [green]%{timeout}s[/]."
+  #
+  undo_removed: "[dim]Last question: '%{truncated_question}' and it's answer has been removed."
+  undo_nothing: "[dim]Nothing to undo."
+  #
+  temperature_must_between: "[red]Input must be a number between 0 and 2"
+  temperature_set: "[dim]Randomness set to [green]%{temperature}[/]."
+  #
+  delete_first_conversation_yes: "[dim]First question: '%{truncated_question}' and it's answer has been deleted, saved tokens: %{tokens_saved}"
+  delete_first_conversation_no: "[red]No conversations yet."
+  delete_all: "[dim]Current chat cleared."
+  delete_nothing: "[dim]Nothing to do. Avaliable delete command: `[bright_magenta]/delete first[/]` or `[bright_magenta]/delete all[/]`"
+  #
+  version_all: "[bold blue]Local Version:[/]\tv%{local_version}\n[bold green]Remote Version:[/]\tv%{remote_version}"
+  version_name: "Version"
+  #
+  tokens_reached: "Reached tokens limit, do you want me to forget the earliest message of current chat?"
+  tokens_approaching : "[dim]Approaching the tokens limit: %{token_left} tokens left"
+  #
+  load_file_not: "[bright_red]File not found: %{file_path}"
+  load_json_error: "[bright_red]Invalid JSON format in file: %{file_path}"
+  #
+  new_lang_prompt: "Language: "
+  lang_switch: "[dim]Language switched to [bright_magenta]English[/]."
+  lang_config_unsupport: "[red]Unsupported language `%{config_lang}` in config, use user local language."
+  lang_unsupport: "[red]Unsupported language `%{new_lang}`."
+  #
+  upgrade_title: "New Version Available: [red]v%{local_version}[/] -> [green]v%{remote_version}[/]"
+  upgrade_use_command: "Use `pip install --upgrade gpt-term` to upgrade."
+  upgrade_see_git: "Visit our [GitHub Site](https://github.com/xiaoxx970/chatgpt-in-terminal) to see what have been changed!"
+  #
+  help_description: "Use ChatGPT in terminal"
+  help_help: "show this help message and exit"
+  help_v: "show program's version number and exit"
+  help_load: "Load chat history from file"
+  help_key: "Choose the name of API key in config file to load"
+  help_model: "Choose the AI model to use"
+  help_m: "Enable multi-line mode"
+  help_r: "Enable raw mode"
+  help_lang: "Choose language"
+  help_set_key: "Set API key for OpenAI"
+  help_set_timeout: "Set maximum waiting time for API requests"
+  help_set_gentitle: "Set whether to automatically generate a title for chat"
+  help_set_lang: "Set language"
+  help_set_saveperfix: "Set chat history file's save perfix"
+  help_set_loglevel: "Set log level:"
+  #
+  help_use_help: "Use `[bright magenta]/help[/]` to see all available slash commands"
+  help_uncommand: "Unrecognized Slash Command `[bold red]%{command}[/]`"
+  help_mean_command: "Do you mean `[bright magenta]%{most_similar_command}[/]`?"
+  help_text: |
+    [bold]Available commands:[/]
+      /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)
+      /multi                   - Toggle multi-line mode (allow multi-line input)
+      /stream \[overflow_mode]  - Toggle stream output mode (flow print the answer)
+      /tokens                  - Show the total tokens spent and the tokens for the current conversation
+      /usage                   - Show total credits and current credits used
+      /last                    - Display last ChatGPT's reply
+      /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
+      /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
+      /save \[filename_or_path] - Save the chat history to a file, suggest title if filename_or_path not provided
+      /model \[model_name]      - Change AI model
+      /system \[new_prompt]     - Modify the system prompt
+      /rand \[randomness]       - Set Model sampling temperature (0~2)
+      /title \[new_title]       - Set title for this chat, if new_title is not provided, a new title will be generated
+      /timeout \[new_timeout]   - Modify the api timeout
+      /undo                    - Undo the last question and remove its answer
+      /delete (first)          - Delete the first conversation in current chat
+      /delete all              - Clear all messages and conversations current chat
+      /version                 - Show gpt-term local and remote version
+      /lang \[new_language]     - Switch language
+      /help                    - Show this help message
+      /exit                    - Exit the application"

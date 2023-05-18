@@ -1,0 +1,150 @@
+zh_CN:
+  welcome: "[dim]你好, 欢迎和 GPT 聊天. 输入`[bright_magenta]/help[/]` 显示可用命令."
+  exit: "退出中..."
+  spent_token: "[bright_magenta]已花费的 Token总数:[bold]%{total_tokens_spent}" 
+  save_api_key: "将 API Key 保存到配置文件中?" 
+  input_api_key: "未找到 OpenAI API Key, 请输入:"
+  config_key_to_shell_key: "配置项 `[bright_magenta]%{key_word}[/]` 已设置为 [green]%{val}[/]"
+  log_level_error: "[dim]无效的日志级别: %{e}，请检查 config.ini文件. 日志级别将设置为 INFO."
+  system_prompt: "系统提示词: "
+  new_temperature: "新随机值: "
+  #
+  load_chat_history: "[dim]聊天记录已成功加载: [bright_magenta]%{load}"
+  #
+  code_not_found: "[dim]未找到代码"
+  code_too_many_found: "[dim]ChatGPT 的上一条回复中有多个代码"
+  code_num: "[yellow]代码 %{code_num}:"
+  code_select: "请选择要复制的代码: "
+  code_index_must_int: "[red]代码索引必须是整数"
+  code_index_out_range_one: "[red]索引超出范围: ChatGPT 的上一条回复中只有一个代码"
+  code_index_out_range_many: "[red]索引超出范围: 请输入一个在 1~%{len_code_list} 范围内的整数"
+  code_copy: "[dim]代码已复制到剪贴板"
+  code_last_copy: "[dim]上一条回复已复制到剪贴板"
+  code_copy_fail: "[dim]无操作可执行. 可用的复制命令为: `[bright_magenta]/copy code \\[index][/]` 或 `[bright_magenta]/copy all[/]`"
+  #
+  raw_mode_enabled: "[dim]原始模式[green]已启用[/], 使用 `[bright_magenta]/last[/]` 来显示最后一个回答."
+  raw_mode_disabled: "[dim]原始模式[bright_red]已关闭[/], 使用 `[bright_magenta]/last[/]` 来显示最后一个回答."
+  #
+  stream_mode_enabled: "[dim]流式传输[green]已启用[/], 回复将在第一个响应到达时开始输出."
+  stream_mode_disabled: "[dim]流式传输[bright_red]已禁用[/], 回复将在服务器完成响应后显示."
+  stream_overflow_modified: "[dim]输出模式已从 '%{old_overflow}' 修改为 '%{new_overflow}'."
+  stream_overflow_visible: "[dim]请注意，该模式下终端不会正确清除屏幕外的内容."
+  stream_overflow_no_changed: "[dim]没有此类输出模式，保持 '%{old_overflow}' 不变."
+  #
+  tokens_title: "token 摘要"
+  tokens_used: "[bold bright_magenta]总消耗 token: [/]\t%{total_tokens_spent}\n[bold green]当前 token: [/]\t%{current_tokens}/[bold]%{tokens_limit}"
+  #
+  usage_getting: "[cyan]正在获取额度使用情况..."
+  usage_granted: "[bold green]总授权额度: [/]\t\t$%{credit_total_granted}"
+  usage_used_month: "[bold cyan]本月已用: [/]\t\t$%{credit_used_this_month}"
+  usage_total: "[bold blue]累计使用: [/]\t\t$%{credit_total_used}"
+  usage_title: "额度摘要"
+  usage_plan: "[bright_blue]计划: %{credit_plan}"
+  #
+  model_set: "[dim]输入为空，模型保持为 '%{old_model}'."
+  model_changed: "[dim]模型已从 '%{old_model}' 修改为 '%{new_model}'."
+  #
+  multi_line_enabled: "[dim]多行模式[green]已启用[/]，按 [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] 提交." 
+  multi_line_disabled: "[dim]多行模式[bright_red]已禁用[/]."
+  #
+  ChatGPT_thinking: "[bold cyan]ChatGPT 正在思考..."
+  #
+  Aborted: "[bold cyan]中断."
+  Error_message: "[red]错误: %{error_msg}"
+  Error_timeout: "[red]错误: API读取超时(%{timeout}s). 您可以重试或增加超时时间."
+  Error_look_log: "[red]错误: %{error_msg}. 请查看日志获取更多信息."
+  Error_get_url: "[red]获取 %{url} 错误: %{error_msg}"
+  Error_input_number: "[red]输入必须是数字"
+  Error_input_least: "输入必须至少为 %{min_value}" 
+  Error_input_most: "输入必须最多为 %{max_value}"
+  No_change: "[dim]未修改."
+  Error_input_int: "请输入整数!"
+  #
+  system_prompt_modified: "[dim]系统提示已从 '%{old_content}' 修改为 '%{new_content}'."
+  system_prompt_note: "[dim]请注意，这不是一个新的聊天，系统提示的修改对回答的影响有限."
+  system_prompt_found: "[dim]未在消息中找到系统提示."
+  #
+  title_waiting_gen: "[bold cyan]等待上一次生成完成..."
+  title_gening: "[bold cyan]正在生成标题... [/]（按 Ctrl-C 跳过）"
+  title_skip_gen: "[bold cyan]跳过等待."
+  title_gen_fail: "[red]生成标题失败."
+  title_changed: "[dim]CLI标题已更改为'%{title}'"
+  title_auto_gen_fail: "[red]后台标题自动生成错误: %{error_msg}.查看日志获取更多信息."
+  #
+  save_history_success: "[dim]聊天记录已保存至: [bright_magenta]%{filename}"
+  save_history_urgent_success: "[dim]聊天记录已紧急保存至: [bright_magenta]%{filename}"
+  #
+  timeout_prompt: "OpenAI API 超时时间: "
+  timeout_changed: "[dim]API 超时时间已设置为: [green]%{timeout}s[/]."
+  #
+  undo_removed: "[dim]上一个问题: '%{truncated_question}' 及其回复已被删除."
+  undo_nothing: "[dim]无撤消可操作."
+  #
+  temperature_must_between: "[red]输入必须为 0 到 2 之间的数字"
+  temperature_set: "[dim]随机性已设置为[green]%{temperature}[/]."
+  #
+  delete_first_conversation_yes: "[dim]第一个问题: '%{truncated_question}'及其回复已被删除，已节约 toke: %{tokens_saved}"
+  delete_first_conversation_no: "[red]还没有对话."
+  delete_all: "[dim]当前聊天已清除."
+  delete_nothing: "[dim]无操作可执行. 可用的删除命令: [bright_magenta]/delete first[/] 或 [bright_magenta]/delete all[/]."
+  #
+  version_all: "[bold blue]本地版本: [/]\tv%{local_version}\n[bold green]远程版本: [/]\tv%{remote_version}" 
+  version_name: "版本"
+  #
+  tokens_reached: "已达到 token 限制, 您是否要删除当前聊天中最早的消息?"
+  tokens_approaching: "[dim]接近 token 限制: %{token_left}个 token 剩余"
+  #
+  load_file_not: "[bright_red]未找到文件: %{file_path}"
+  load_json_error: "[bright_red]文件格式无效: %{file_path}"
+  #
+  new_lang_prompt: "语言: "
+  lang_switch: "[dim]已经切换至[bright_magenta]简体中文[/]."
+  lang_config_unsupport: "[red]配置中不支持的语言 `%{config_lang}`, 将使用用户本地语言."
+  lang_unsupport: "[red]不支持的语言 `%{new_lang}`."
+  #
+  upgrade_title: "新版本可用: [red]v%{local_version}[/] -> [green]v%{remote_version}[/]"
+  upgrade_use_command: "使用 `pip install --upgrade gpt-term` 命令来升级."
+  upgrade_see_git: "访问我们的[GitHub仓库](https://github.com/xiaoxx970/chatgpt-in-terminal)以查看更新内容！"
+  #
+  help_description: "在终端中使用 ChatGPT"
+  help_help: "显示此帮助信息并退出"
+  help_v: "显示程序的版本号并退出"
+  help_load: "从文件中加载聊天历史记录"
+  help_key: "选择要从配置文件加载的API密钥名称"
+  help_model: "选择要使用的AI模型"
+  help_m: "启用多行模式"
+  help_r: "启用原始模式"
+  help_lang: "选择语言"
+  help_set_key: "设置OpenAI的API密钥"
+  help_set_timeout: "设置API请求的最大等待时间"
+  help_set_gentitle: "设置是否自动生成聊天标题"
+  help_set_lang: "设置语言"
+  help_set_saveperfix: "设置聊天历史记录文件的保存前缀"
+  help_set_loglevel: "设置日志级别: "
+  #
+  help_use_help: "使用 `[bright magenta]/help[/]` 查看所有可用的斜杠命令"
+  help_uncommand: "无法识别的斜杠命令 `[bold red]%{command}[/]`"
+  help_mean_command: "您是否指的是 `[bright magenta]%{most_similar_command}[/]`?"
+  help_text: |
+    [bold]可用命令: [/]
+      /raw                     - 切换原始模式 (显示 ChatGPT 回复的原始文本)
+      /multi                   - 切换多行模式 (允许多行输入)
+      /stream \[overflow_mode]  - 切换流输出模式 (连续显示回复)
+      /tokens                  - 显示已使用的总 token 数和当前对话的 token 数
+      /usage                   - 显示总额度和已使用的当前额度
+      /last                    - 显示 ChatGPT 上次的回复
+      /copy (all)              - 将 ChatGPT 的上次回复的所有文本复制到剪贴板
+      /copy code \[index]       - 复制 ChatGPT 上次回复中的代码到剪贴板
+      /save \[filename_or_path] - 将聊天记录保存到文件中, 如果未提供 filename_or_path 则建议标题
+      /model\[model_name]       - 更改AI模型
+      /system \[new_prompt]     - 修改系统提示
+      /rand \[randomness]       - 设置模型采样温度 (0〜2)
+      /title \[new_title]       - 为此聊天设置标题, 如果未提供 new_title, 则将生成新标题
+      /timeout \[new_timeout]   - 修改 api 超时时间
+      /undo                    - 撤消上次提问并删除其回复
+      /delete (first)          - 删除当前聊天中的第一个对话
+      /delete all              - 清除当前聊天中的所有消息和对话
+      /version                 - 显示 gpt-term 的本地和远程版本
+      /lang \[new_language]     - 切换语言
+      /help                    - 显示此帮助消息
+      /exit                    - 退出应用程序

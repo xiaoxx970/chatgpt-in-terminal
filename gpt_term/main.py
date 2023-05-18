@@ -37,6 +37,8 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 
 from . import __version__
+from .locale import set_lang, get_lang
+import locale
 
 data_dir = Path.home() / '.gpt-term'
 data_dir.mkdir(parents=True, exist_ok=True)
@@ -70,27 +72,29 @@ class ChatMode:
     @classmethod
     def toggle_raw_mode(cls):
         cls.raw_mode = not cls.raw_mode
-        console.print(
-            f"[dim]Raw mode {'[green]enabled[/]' if cls.raw_mode else '[bright_red]disabled[/]'}, use `[bright_magenta]/last[/]` to display the last answer.")
+        if cls.raw_mode:
+            console.print(_("gpt_term.raw_mode_enabled"))
+        else:
+            console.print(_("gpt_term.raw_mode_disabled"))
 
     @classmethod
     def toggle_stream_mode(cls):
         cls.stream_mode = not cls.stream_mode
         if cls.stream_mode:
             console.print(
-                f"[dim]Stream mode [green]enabled[/], the answer will start outputting as soon as the first response arrives.")
+                _("gpt_term.stream_mode_enabled"))
         else:
             console.print(
-                f"[dim]Stream mode [bright_red]disabled[/], the answer is being displayed after the server finishes responding.")
+                _("gpt_term.stream_mode_disabled"))
 
     @classmethod
     def toggle_multi_line_mode(cls):
         cls.multi_line_mode = not cls.multi_line_mode
         if cls.multi_line_mode:
             console.print(
-                f"[dim]Multi-line mode [green]enabled[/], press [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] to submit.")
+                _("gpt_term.multi_line_enabled"))
         else:
-            console.print(f"[dim]Multi-line mode [bright_red]disabled[/].")
+            console.print(_("gpt_term.multi_line_disabled"))
 
 
 class ChatGPT:
@@ -129,27 +133,27 @@ class ChatGPT:
 
     def send_request(self, data):
         try:
-            with console.status(f"[bold cyan]ChatGPT is thinking..."):
+            with console.status(_("gpt_term.ChatGPT_thinking")):
                 response = requests.post(
                     self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=ChatMode.stream_mode)
             # 匹配4xx错误，显示服务器返回的具体原因
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
-                console.print(f"[red]Error: {error_msg}")
+                console.print(_("gpt_term.Error_message",error_msg=error_msg))
                 log.error(error_msg)
                 return None
 
             response.raise_for_status()
             return response
         except KeyboardInterrupt:
-            console.print("[bold cyan]Aborted.")
+            console.print(_("gpt_term.Aborted"))
             raise
         except requests.exceptions.ReadTimeout as e:
             console.print(
-                f"[red]Error: API read timed out ({self.timeout}s). You can retry or increase the timeout.", highlight=False)
+                _("gpt_term.Error_timeout",timeout=self.timeout), highlight=False)
             return None
         except requests.exceptions.RequestException as e:
-            console.print(f"[red]Error: {str(e)}")
+            console.print(_("gpt_term.Error_message",error_msg=str(e)))
             log.exception(e)
             return None
 
@@ -195,7 +199,7 @@ class ChatGPT:
                             live.update(Markdown(reply), refresh=True)
             except KeyboardInterrupt:
                 live.stop()
-                console.print("Aborted.", style="bold cyan")
+                console.print(_('gpt_term.Aborted'))
             finally:
                 return {'role': 'assistant', 'content': reply}
 
@@ -226,9 +230,9 @@ class ChatGPT:
             self.current_tokens = new_tokens
 
             console.print(
-                f"[dim]First question: '{truncated_question}' and it's answer has been deleted, saved tokens: {tokens_saved}")
+                _('gpt_term.delete_first_conversation_yes',truncated_question=truncated_question,tokens_saved=tokens_saved))
         else:
-            console.print("[red]No conversations yet.")
+            console.print(_('gpt_term.delete_first_conversation_no'))
     
     def delete_all_conversation(self):
         del self.messages[1:]
@@ -236,7 +240,7 @@ class ChatGPT:
         # recount current tokens
         self.current_tokens = count_token(self.messages)
         os.system('cls' if os.name == 'nt' else 'clear')
-        console.print("[dim]Current chat cleared.")
+        console.print(_('gpt_term.delete_all'))
 
     def handle(self, message: str):
         try:
@@ -251,7 +255,7 @@ class ChatGPT:
             if response is None:
                 self.messages.pop()
                 if self.current_tokens >= self.tokens_limit:
-                    if confirm("Reached tokens limit, do you want me to forget the earliest message of current chat?"):
+                    if confirm(_('gpt_term.tokens_reached')):
                         self.delete_first_conversation()
                 return
 
@@ -267,12 +271,12 @@ class ChatGPT:
 
                 if self.tokens_limit - self.current_tokens in range(1, 500):
                     console.print(
-                        f"[dim]Approaching the tokens limit: {self.tokens_limit - self.current_tokens} tokens left")
+                        _("gpt_term.tokens_approaching",token_left=self.tokens_limit - self.current_tokens))
                 # approaching tokens limit (less than 500 left), show info
 
         except Exception as e:
             console.print(
-                f"[red]Error: {str(e)}. Check log for more information")
+                _("chat_term.Error_look_log",error_msg=str(e)))
             log.exception(e)
             self.save_chat_history_urgent()
             raise EOFError
@@ -286,7 +290,7 @@ class ChatGPT:
             return
 
         try:
-            with console.status("[bold cyan]Waiting last generationg to finish..."):
+            with console.status(_("gpt_term.title_waiting_gen")):
                 self.gen_title_messages.join()
             if self.title and not force:
                 return self.title
@@ -295,10 +299,10 @@ class ChatGPT:
 
             content_this_time = self.messages[1]['content']
             self.gen_title_messages.put(content_this_time)
-            with console.status("[bold cyan]Generating title... [/](Ctrl-C to skip)"):
+            with console.status(_("gpt_term.title_gening")):
                 self.gen_title_messages.join()
         except KeyboardInterrupt:
-            console.print("Skip wait.", style="bold cyan")
+            console.print(_("gpt_term.title_skip_gen"))
             raise
 
         return self.title
@@ -347,8 +351,8 @@ class ChatGPT:
                 log.debug("Title Generation Daemon Thread: Pause")
 
             except Exception as e:
-                console.print(
-                    f"[red]Background Title auto-generation Error: {str(e)}. Check log for more information")
+                console.print(_("gpt_term.title_auto_gen_fail",error_msg=str(e))
+                    )
                 log.exception(e)
                 self.save_chat_history_urgent()
                 while self.gen_title_messages.unfinished_tasks:
@@ -361,10 +365,10 @@ class ChatGPT:
             with open(f"{filename}", 'w', encoding='utf-8') as f:
                 json.dump(self.messages, f, ensure_ascii=False, indent=4)
             console.print(
-                f"[dim]Chat history saved to: [bright_magenta]{filename}", highlight=False)
+                _("gpt_term.save_history_success",filename=filename), highlight=False)
         except Exception as e:
             console.print(
-                f"[red]Error: {str(e)}. Check log for more information")
+                _("gpt_term.Error_look_log"))
             log.exception(e)
             self.save_chat_history_urgent()
             return
@@ -374,7 +378,7 @@ class ChatGPT:
         with open(f"{filename}", 'w', encoding='utf-8') as f:
             json.dump(self.messages, f, ensure_ascii=False, indent=4)
         console.print(
-            f"[dim]Chat history urgently saved to: [bright_magenta]{filename}", highlight=False)
+            _("gpt_term.save_history_urgent_success",filename=filename), highlight=False)
 
     def send_get(self, url, params=None):
         try:
@@ -383,20 +387,20 @@ class ChatGPT:
         # 匹配4xx错误，显示服务器返回的具体原因
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
-                console.print(f"[red]Get {url} Error: {error_msg}")
+                console.print(_("gpt_term.Error_get_url",url=url,error_msg=error_msg))
                 log.error(error_msg)
                 return None
             response.raise_for_status()
             return response
         except KeyboardInterrupt:
-            console.print("[bold cyan]Aborted.")
+            console.print(_("gpt_term.Aborted"))
             raise
         except requests.exceptions.ReadTimeout as e:
             console.print(
-                f"[red]Error: API read timed out ({self.timeout}s). You can retry or increase the timeout.", highlight=False)
+                _("gpt_term.Error_timeot",timeout=self.timeout), highlight=False)
             return None
         except requests.exceptions.RequestException as e:
-            console.print(f"[red]Error: {str(e)}")
+            console.print(_("gpt_term.Error_message",error_msg=str(e)))
             log.exception(e)
             return None
 
@@ -462,11 +466,11 @@ class ChatGPT:
             self.credit_total_used = credit_total_used_cent / 100
 
         except KeyboardInterrupt:
-            console.print("[bold cyan]Aborted.")
+            console.print(_("gpt_term.Aborted"))
             raise
         except Exception as e:
             console.print(
-                f"[red]Error: {str(e)}. Check log for more information")
+                _("gpt_term.Error_message",error_msg=str(e)))
             log.exception(e)
             self.save_chat_history_urgent()
             raise EOFError
@@ -477,15 +481,15 @@ class ChatGPT:
             old_content = self.messages[0]['content']
             self.messages[0]['content'] = new_content
             console.print(
-                f"[dim]System prompt has been modified from '{old_content}' to '{new_content}'.")
+                _("gpt_term.system_prompt_moodified",old_content=old_content,new_content=new_content))
             self.current_tokens = count_token(self.messages)
             # recount current tokens
             if len(self.messages) > 1:
                 console.print(
-                    "[dim]Note this is not a new chat, modifications to the system prompt have limited impact on answers.")
+                    _("gpt_term.system_prompt_note"))
         else:
             console.print(
-                f"[dim]No system prompt found in messages.")
+                _("gpt_term.system_prompt_found"))
 
     def set_stream_overflow(self, new_overflow: str):
         # turn on stream if not
@@ -493,25 +497,25 @@ class ChatGPT:
             ChatMode.toggle_stream_mode()
 
         if new_overflow == self.stream_overflow:
-            console.print("[dim]No change.")
+            console.print(_("gpt_term.No_change"))
             return
 
         old_overflow = self.stream_overflow
         if new_overflow == 'ellipsis' or new_overflow == 'visible':
             self.stream_overflow = new_overflow
             console.print(
-                f"[dim]Stream overflow option has been modified from '{old_overflow}' to '{new_overflow}'.")
+                _("gpt_term.stream_overflow_modified",old_overflow=old_overflow,new_overflow=new_overflow))
             if new_overflow == 'visible':
-                console.print("[dim]Note that in this mode the terminal will not properly clean up off-screen content.")
+                console.print(_("gpt_term.stream_overflow_visible"))
         else:
-            console.print(f"[dim]No such Stream overflow option, remain '{old_overflow}' unchanged.")
+            console.print(_("gpt_term.stream_overflow_no_changed",old_overflow=old_overflow))
         
 
     def set_model(self, new_model: str):
         old_model = self.model
         if not new_model:
             console.print(
-                f"[dim]Empty input, the model remains '{old_model}'.")
+                _("gpt_term.model_set"),old_model=old_model)
             return
         self.model = str(new_model)
         if "gpt-4-32k" in self.model:
@@ -523,27 +527,27 @@ class ChatGPT:
         else:
             self.tokens_limit = float('nan')
         console.print(
-            f"[dim]Model has been set from '{old_model}' to '{new_model}'.")
+            _("gpt_term.model_changed",old_model=old_model,new_model=new_model))
 
     def set_timeout(self, timeout):
         try:
             self.timeout = float(timeout)
         except ValueError:
-            console.print("[red]Input must be a number")
+            console.print(_("gpt_term.Error_input_number"))
             return
-        console.print(f"[dim]API timeout set to [green]{timeout}s[/].")
+        console.print(_("gpt_term.timeput_changed",timeout=timeout))
 
     def set_temperature(self, temperature):
         try:
             new_temperature = float(temperature)
         except ValueError:
-            console.print("[red]Input must be a number between 0 and 2")
+            console.print(_("gpt_term.temperature_must_between"))
             return
         if new_temperature > 2 or new_temperature < 0:
-            console.print("[red]Input must be a number between 0 and 2")
+            console.print(_("gpt_term.temperature_must_between"))
             return
         self.temperature = new_temperature
-        console.print(f"[dim]Randomness set to [green]{temperature}[/].")
+        console.print(_("gpt_term.temperature_set",temperature=temperature))
 
 
 class CommandCompleter(Completer):
@@ -572,6 +576,7 @@ class CommandCompleter(Completer):
             '/undo': None,
             '/delete': {"first", "all"},
             '/reset': None,
+            '/lang' : {"zh_CN","en","jp","de"},
             '/version': None,
             '/help': None,
             '/exit': None,
@@ -611,7 +616,7 @@ class NumberValidator(Validator):
     def validate(self, document):
         text = document.text
         if not text.isdigit():
-            raise ValidationError(message="Please input an Integer!",
+            raise ValidationError(message=_("gpt_term.Error_input_int"),
                                   cursor_position=len(text))
 
 class FloatRangeValidator(Validator):
@@ -623,12 +628,12 @@ class FloatRangeValidator(Validator):
         try:
             value = float(document.text)
         except ValueError:
-            raise ValidationError(message='Input must be a number')
+            raise ValidationError(message=_('gpt_term.Error_input_number'))
 
         if self.min_value is not None and value < self.min_value:
-            raise ValidationError(message=f'Input must be at least {self.min_value}')
+            raise ValidationError(message=_("gpt_term.Error_input_least",min_value=self.min_value))
         if self.max_value is not None and value > self.max_value:
-            raise ValidationError(message=f'Input must be at most {self.max_value}')
+            raise ValidationError(message=_("gpt_term.Error_input_most",max_value=self.max_value))
         
 temperature_validator = FloatRangeValidator(min_value=0.0, max_value=2.0)
 
@@ -650,7 +655,7 @@ def copy_code(message: Dict[str, str], select_code_idx: int = None):
     '''Copy the code in ChatGPT's last reply to Clipboard'''
     code_list = re.findall(r'```[\s\S]*?```', message["content"])
     if len(code_list) == 0:
-        console.print("[dim]No code found")
+        console.print(_("gpt_term.code_not_found"))
         return
 
     if len(code_list) == 1 and select_code_idx is None:
@@ -659,28 +664,28 @@ def copy_code(message: Dict[str, str], select_code_idx: int = None):
     else:
         if select_code_idx is None:
             console.print(
-                "[dim]There are more than one code in ChatGPT's last reply")
+                _("gpt_term.code_too_many_found"))
             code_num = 0
             for codes in code_list:
                 code_num += 1
-                console.print(f"[yellow]Code {code_num}:")
+                console.print(_("gpt_term.code_num",code_num=code_num))
                 console.print(Markdown(codes))
 
             select_code_idx = prompt(
-                "Please select which code to copy: ", style=style, validator=NumberValidator())
+                _("gpt_term.code_select"), style=style, validator=NumberValidator())
             # get the number of the selected code
         try:
             selected_code = code_list[int(select_code_idx)-1]
         except ValueError:
-            console.print("[red]Code index must be an Integer")
+            console.print(_("gpt_term.code_index_must_int"))
             return
         except IndexError:
             if len(code_list) == 1:
                 console.print(
-                    "[red]Index out of range: There is only one code in ChatGPT's last reply")
+                    _("gpt_term.code_index_out_range_one"))
             else:
                 console.print(
-                    f"[red]Index out of range: You should input an Integer in range 1 ~ {len(code_list)}")
+                    _("gpt_term.code_index_out_range_many",len(code_list)))
                 # show idx range
                 # use len(code_list) instead of code_num as the max of idx
                 # in order to avoid error 'UnboundLocalError: local variable 'code_num' referenced before assignment' when inputing select_code_idx directly
@@ -690,7 +695,7 @@ def copy_code(message: Dict[str, str], select_code_idx: int = None):
     epos = selected_code.rfind('```')  # code end pos.
     pyperclip.copy(''.join(selected_code[bpos+1:epos-1]))
     # erase code begin and end sign
-    console.print("[dim]Code copied to Clipboard")
+    console.print(_("gpt_term.code_copy"))
 
 
 def change_CLI_title(new_title: str):
@@ -723,6 +728,7 @@ def get_levenshtein_distance(s1: str, s2: str):
 
 def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, chat_save_perfix: str):
     '''处理斜杠(/)命令'''
+    global _
     if command == '/raw':
         ChatMode.toggle_raw_mode()
     elif command == '/multi':
@@ -737,19 +743,18 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
 
     elif command == '/tokens':
         chat_gpt.threadlock_total_tokens_spent.acquire()
-        console.print(Panel(f"[bold bright_magenta]Total Tokens Spent:[/]\t{chat_gpt.total_tokens_spent}\n"
-                            f"[bold green]Current Tokens:[/]\t\t{chat_gpt.current_tokens}/[bold]{chat_gpt.tokens_limit}",
-                            title='token_summary', title_align='left', width=40))
+        console.print(Panel(_("gpt_term.tokens_used",total_tokens_spent=chat_gpt.total_tokens_spent,current_tokens=chat_gpt.current_tokens,tokens_limit=chat_gpt.tokens_limit),
+                            title=_("gpt_term.tokens_title"), title_align='left', width=40))
         chat_gpt.threadlock_total_tokens_spent.release()
 
     elif command == '/usage':
-        with console.status("[cyan]Getting credit usage..."):
+        with console.status(_("gpt_term.usage_getting")):
             if not chat_gpt.get_credit_usage():
                 return
-        console.print(Panel(f"[bold green]Total Granted:[/]\t\t${format(chat_gpt.credit_total_granted, '.2f')}\n"
-                            f"[bold cyan]Used This Month:[/]\t${format(chat_gpt.credit_used_this_month, '.2f')}\n"
-                            f"[bold blue]Used Total:[/]\t\t${format(chat_gpt.credit_total_used, '.2f')}",
-                            title="Credit Summary", title_align='left', subtitle=f"[bright_blue]Plan: {chat_gpt.credit_plan}", width=35))
+        console.print(Panel(f'{_("gpt_term.usage_granted",credit_total_granted=format(chat_gpt.credit_total_granted, ".2f"))}\n'
+                            f'{_("gpt_term.usage_used_month",credit_used_this_month=format(chat_gpt.credit_used_this_month, ".2f"))}\n'
+                            f'{_("gpt_term.usage_total",credit_total_used=format(chat_gpt.credit_total_used, ".2f"))}',
+                            title=_("gpt_term.usage_title"), title_align='left', subtitle=_("gpt_term.usage_plan",credit_plan=chat_gpt.credit_plan), width=35))
 
     elif command.startswith('/model'):
         args = command.split()
@@ -761,7 +766,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         if new_model != chat_gpt.model:
             chat_gpt.set_model(new_model)
         else:
-            console.print("[dim]No change.")
+            console.print(_("gpt_term.No_change"))
 
     elif command == '/last':
         reply = chat_gpt.messages[-1]
@@ -773,7 +778,7 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
         if len(args) > 1:
             if args[1] == 'all':
                 pyperclip.copy(reply["content"])
-                console.print("[dim]Last reply copied to Clipboard")
+                console.print(_("gpt_term.code_last_copy"))
             elif args[1] == 'code':
                 if len(args) > 2:
                     copy_code(reply, args[2])
@@ -781,10 +786,10 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
                     copy_code(reply)
             else:
                 console.print(
-                    "[dim]Nothing to do. Available copy command: `[bright_magenta]/copy code \[index][/]` or `[bright_magenta]/copy all[/]`")
+                    _("gpt_term.code_copy_fail"))
         else:
             pyperclip.copy(reply["content"])
-            console.print("[dim]Last reply copied to Clipboard")
+            console.print(_("gpt_term.code_last_copy"))
 
     elif command.startswith('/save'):
         args = command.split()
@@ -808,11 +813,11 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             new_content = ' '.join(args[1:])
         else:
             new_content = prompt(
-                "System prompt: ", default=chat_gpt.messages[0]['content'], style=style, key_bindings=key_bindings)
+                _("gpt_term.system_prompt"), default=chat_gpt.messages[0]['content'], style=style, key_bindings=key_bindings)
         if new_content != chat_gpt.messages[0]['content']:
             chat_gpt.modify_system_prompt(new_content)
         else:
-            console.print("[dim]No change.")
+            console.print(_("gpt_term.No_change"))
 
     elif command.startswith('/rand') or command.startswith('/temperature'):
         args = command.split()
@@ -820,11 +825,11 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             new_temperature = args[1]
         else:
             new_temperature = prompt(
-                "New Randomness: ", default=str(chat_gpt.temperature), style=style, validator=temperature_validator)
+                _("gpt_term.new_temperature"), default=str(chat_gpt.temperature), style=style, validator=temperature_validator)
         if new_temperature != str(chat_gpt.temperature):
             chat_gpt.set_temperature(new_temperature)
         else:
-            console.print("[dim]No change.")            
+            console.print(_("gpt_term.No_change"))            
 
     elif command.startswith('/title'):
         args = command.split()
@@ -835,9 +840,9 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             # generate a new title
             new_title = chat_gpt.gen_title(force=True)
             if not new_title:
-                console.print("[red]Failed to generate title.")
+                console.print(_("gpt_term.title_gen_fail"))
                 return
-        console.print(f"[dim]CLI Title changed to '{chat_gpt.title}'")
+        console.print(_('gpt_term.title_changed',title=chat_gpt.title))
 
     elif command.startswith('/timeout'):
         args = command.split()
@@ -845,11 +850,11 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             new_timeout = args[1]
         else:
             new_timeout = prompt(
-                "OpenAI API timeout: ", default=str(chat_gpt.timeout), style=style)
+                _("gpt_term.timeout_prompt"), default=str(chat_gpt.timeout), style=style)
         if new_timeout != str(chat_gpt.timeout):
             chat_gpt.set_timeout(new_timeout)
         else:
-            console.print("[dim]No change.")
+            console.print(_("gpt_term.No_change"))
 
     elif command == '/undo':
         if len(chat_gpt.messages) > 2:
@@ -860,10 +865,10 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
             if len(question['content']) > len(truncated_question):
                 truncated_question += "..."
             console.print(
-                f"[dim]Last question: '{truncated_question}' and it's answer has been removed.")
+                _("gpt_term.undo_removed",truncated_question=truncated_question))
             chat_gpt.current_tokens = count_token(chat_gpt.messages)
         else:
-            console.print("[dim]Nothing to undo.")
+            console.print(_("gpt_term.undo_nothing"))
 
     elif command.startswith('/reset'):
         chat_gpt.delete_all_conversation()
@@ -877,42 +882,38 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
                 chat_gpt.delete_all_conversation()
             else:
                 console.print(
-                    "[dim]Nothing to do. Avaliable delete command: `[bright_magenta]/delete first[/]` or `[bright_magenta]/delete all[/]`")
+                    _("gpt_term.delete_nothing"))
         else:
             chat_gpt.delete_first_conversation()
 
     elif command == '/version':
         threadlock_remote_version.acquire()
-        console.print(Panel(f"[bold blue]Local Version:[/]\tv{str(local_version)}\n"
-                            f"[bold green]Remote Version:[/]\tv{str(remote_version)}",
-                            title='Version', title_align='left', width=28))
+        string=_("gpt_term.version_all",local_version=str(local_version),remote_version=str(remote_version))
+        console.print(Panel(string,
+                            title=_("gpt_term.version_name"), title_align='left', width=28))
         threadlock_remote_version.release()
+    
+    elif command.startswith('/lang'):
+        args = command.split()
+        if len(args) > 1:
+            new_lang = args[1]
+        else:
+            new_lang = prompt(
+                _("gpt_term.new_lang_prompt"), default=get_lang(), style=style)
+        if new_lang != get_lang():
+            if new_lang in supported_langs:
+                _=set_lang(new_lang)
+                console.print(_("gpt_term.lang_switch"))
+            else:
+                console.print(_("gpt_term.lang_unsupport", new_lang=new_lang))
+        else:
+            console.print(_("gpt_term.No_change"))
 
     elif command == '/exit':
         raise EOFError
 
     elif command == '/help':
-        console.print('''[bold]Available commands:[/]
-    /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)
-    /multi                   - Toggle multi-line mode (allow multi-line input)
-    /stream \[overflow_mode]  - Toggle stream output mode (flow print the answer)
-    /tokens                  - Show the total tokens spent and the tokens for the current conversation
-    /usage                   - Show total credits and current credits used
-    /last                    - Display last ChatGPT's reply
-    /copy (all)              - Copy the full ChatGPT's last reply (raw) to Clipboard
-    /copy code \[index]       - Copy the code in ChatGPT's last reply to Clipboard
-    /save \[filename_or_path] - Save the chat history to a file, suggest title if filename_or_path not provided
-    /model \[model_name]      - Change AI model
-    /system \[new_prompt]     - Modify the system prompt
-    /rand \[randomness]       - Set Model sampling temperature (0~2)
-    /title \[new_title]       - Set title for this chat, if new_title is not provided, a new title will be generated
-    /timeout \[new_timeout]   - Modify the api timeout
-    /undo                    - Undo the last question and remove its answer
-    /delete (first)          - Delete the first conversation in current chat
-    /delete all              - Clear all messages and conversations current chat
-    /version                 - Show gpt-term local and remote version
-    /help                    - Show this help message
-    /exit                    - Exit the application''')
+        console.print(_("gpt_term.help_text"))
         
     else:
         set_command = set(command)
@@ -926,12 +927,12 @@ def handle_command(command: str, chat_gpt: ChatGPT, key_bindings: KeyBindings, c
                     most_similar_command = slash_command
                     min_levenshtein_distance = this_levenshtein_distance
         
-        console.print(f"Unrecognized Slash Command `[bold red]{command}[/]`", end=" ")
+        console.print(_("gpt_term.help_uncommand",command=command), end=" ")
         if most_similar_command:
-            console.print(f"Do you mean `[bright magenta]{most_similar_command}[/]`?")
+            console.print(_("gpt_term.help_mean_command",most_similar_command=most_similar_command))
         else:
             console.print("")
-        console.print("Use `[bright magenta]/help[/]` to see all available slash commands")
+        console.print(_("gpt_term.help_use_help"))
 
 
 def load_chat_history(file_path):
@@ -941,9 +942,9 @@ def load_chat_history(file_path):
             chat_history = json.load(f)
         return chat_history
     except FileNotFoundError:
-        console.print(f"[bright_red]File not found: {file_path}")
+        console.print(_("gpt_term.load_file_not",file_path=file_path))
     except json.JSONDecodeError:
-        console.print(f"[bright_red]Invalid JSON format in file: {file_path}")
+        console.print(_("gpt_term.load_json_error",file_path=file_path))
     return None
 
 
@@ -993,61 +994,87 @@ def write_config(config_ini: ConfigParser):
 
 
 def set_config_by_args(args: argparse.Namespace, config_ini: ConfigParser):
+    global _
     config_need_to_set = {}
     if args.set_apikey:     config_need_to_set.update({"OPENAI_API_KEY"      : args.set_apikey})
     if args.set_timeout:    config_need_to_set.update({"OPENAI_API_TIMEOUT"  : args.set_timeout})
     if args.set_saveperfix: config_need_to_set.update({"CHAT_SAVE_PERFIX"    : args.set_saveperfix})
     if args.set_loglevel:   config_need_to_set.update({"LOG_LEVEL"           : args.set_loglevel})
     if args.set_gentitle:   config_need_to_set.update({"AUTO_GENERATE_TITLE" : args.set_gentitle})
+    # 新的语言设置:
+    if args.set_lang:       config_need_to_set.update({"LANGUAGE"            : args.set_lang})
 
     if len(config_need_to_set) == 0:
         return
     # nothing to set
-
     for key, val in config_need_to_set.items():
         config_ini['DEFAULT'][key] = str(val)
-        console.print(f"Config item `[bright_magenta]{key}[/]` is set to [green]{val}[/]")
+        console.print(_("gpt_term.config_key_to_shell_key",key_word=str(key),val=str(val)))
 
     write_config(config_ini)
     exit(0)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Use ChatGPT in terminal')
-    parser.add_argument('--version', action='version', version=f'%(prog)s v{local_version}')
-    parser.add_argument('--load', metavar='FILE', type=str, help='Load chat history from file')
-    parser.add_argument('--key', type=str, help='Choose the API key to load')
-    parser.add_argument('--model', type=str, help='Choose the AI model to use')
-    parser.add_argument('-m', '--multi', action='store_true', help='Enable multi-line mode')
-    parser.add_argument('-r', '--raw', action='store_true', help='Enable raw mode')
-    # normal function args
-
-    parser.add_argument('--set-apikey', metavar='KEY', type=str, help='Set API key for OpenAI')
-    parser.add_argument('--set-timeout', metavar='SEC', type=int, help='Set maximum waiting time for API requests')
-    parser.add_argument('--set-gentitle', metavar='BOOL', type=str, help='Set whether to automatically generate a title for chat')
-    parser.add_argument('--set-saveperfix', metavar='PERFIX', type=str, help='Set chat history file\'s save perfix')
-    parser.add_argument('--set-loglevel', metavar='LEVEL', type=str, help='Set log level: DEBUG, INFO, WARNING, ERROR, CRITICAL')
-    # setting args
-    args = parser.parse_args()
+    global _, supported_langs
+    supported_langs = ["en","zh_CN","jp","de"]
+    local_lang = locale.getdefaultlocale()[0]
+    if local_lang not in supported_langs:
+        local_lang = "en"
+    _=set_lang(local_lang)
 
     # 读取配置文件
     config_ini = ConfigParser()
     config_ini.read(f'{data_dir}/config.ini', encoding='utf-8')
     config = config_ini['DEFAULT']
 
+    # 读取语言配置
+    config_lang = config.get("language")
+    if config_lang:
+        if config_lang in supported_langs:
+            _=set_lang(config_lang)
+            console.print(_("gpt_term.lang_switch"))
+        else:
+            console.print(_("gpt_term.lang_config_unsupport", config_lang=config_lang))
+
+    parser = argparse.ArgumentParser(description=_("gpt_term.help_description"),add_help=False)
+    parser.add_argument('-h', '--help',action='help', help=_("gpt_term.help_help"))
+    parser.add_argument('-v','--version', action='version', version=f'%(prog)s v{local_version}',help=_("gpt_term.help_v"))
+    parser.add_argument('--load', metavar='FILE', type=str, help=_("gpt_term.help_load"))
+    parser.add_argument('--key', type=str, help=_("gpt_term.help_key"))
+    parser.add_argument('--model', type=str, help=_("gpt_term.help_model"))
+    parser.add_argument('-m', '--multi', action='store_true', help=_("gpt_term.help_m"))
+    parser.add_argument('-r', '--raw', action='store_true', help=_("gpt_term.help_r"))
+    ## 新添加的选项：--lang
+    parser.add_argument('-l','--lang', type=str, choices=['en', 'zh_CN', 'jp', 'de'], help=_("gpt_term.help_lang"))
+    # normal function args
+
+    parser.add_argument('--set-apikey', metavar='KEY', type=str, help=_("gpt_term.help_set_key"))
+    parser.add_argument('--set-timeout', metavar='SEC', type=int, help=_("gpt_term.help_set_timeout"))
+    parser.add_argument('--set-gentitle', metavar='BOOL', type=str, help=_("gpt_term.help_set_gentitle"))
+    ## 新添加的选项：--set-lang
+    parser.add_argument('--set-lang', type=str, choices=['en', 'zh_CN', 'jp', 'de'], help=_("gpt_term.help_set_lang"))
+    parser.add_argument('--set-saveperfix', metavar='PERFIX', type=str, help=_("gpt_term.help_set_saveperfix"))
+    parser.add_argument('--set-loglevel', metavar='LEVEL', type=str, help=_("gpt_term.help_set_loglevel")+'DEBUG, INFO, WARNING, ERROR, CRITICAL')
+    # setting args
+    args = parser.parse_args()
+
     set_config_by_args(args, config_ini)
+
+    if args.lang:
+        _=set_lang(args.lang)
+        console.print(_("gpt_term.lang_switch"))
 
     try:
         log_level = getattr(logging, config.get("LOG_LEVEL", "INFO").upper())
     except AttributeError as e:
         console.print(
-            f"[dim]Invalid log level: {e}, check config.ini file. Set log level to INFO.")
+            _("gpt_term.log_level_error"))
         log_level = logging.INFO
     log.setLevel(log_level)
     # log level set must be before debug logs, because default log level is INFO, and before new log level being set debug logs will not be written to log file
 
     log.info("GPT-Term start")
-
     log.debug(f"Local version: {str(local_version)}")
     # get local version from pkg resource
 
@@ -1066,8 +1093,8 @@ def main():
 
     if not api_key:
         log.debug("API Key not found, waiting for input")
-        api_key = prompt("OpenAI API Key not found, please input: ")
-        if confirm('Save API Key to config file?'):
+        api_key = prompt(_("gpt_term.input_api_key"))
+        if confirm(_("gpt_term.save_api_key")):
             config["OPENAI_API_KEY"] = api_key
             write_config(config_ini)
 
@@ -1090,9 +1117,6 @@ def main():
     gen_title_daemon_thread.start()
     log.debug("Title generation daemon thread started")
 
-    console.print(
-        "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands.")
-
     if args.model:
         chat_gpt.set_model(args.model)
 
@@ -1112,7 +1136,10 @@ def main():
             chat_gpt.current_tokens = count_token(chat_gpt.messages)
             log.info(f"Chat history successfully loaded from: {args.load}")
             console.print(
-                f"[dim]Chat history successfully loaded from: [bright_magenta]{args.load}", highlight=False)
+                _("gpt_term.load_chat_history",load=args.load), highlight=False)
+
+    console.print(
+        _("gpt_term.welcome"))
 
     session = PromptSession()
 
@@ -1125,7 +1152,7 @@ def main():
                 '> ', completer=command_completer, complete_while_typing=True, key_bindings=key_bindings)
 
             if message.startswith('/'):
-                command = message.strip().lower()
+                command = message.strip()
                 handle_command(command, chat_gpt,
                                key_bindings, chat_save_perfix)
             else:
@@ -1141,19 +1168,19 @@ def main():
         except KeyboardInterrupt:
             continue
         except EOFError:
-            console.print("Exiting...")
+            console.print(_("gpt_term.exit"))
             break
 
     log.info(f"Total tokens spent: {chat_gpt.total_tokens_spent}")
     console.print(
-        f"[bright_magenta]Total tokens spent: [bold]{chat_gpt.total_tokens_spent}")
+        _("gpt_term.spent_token",total_tokens_spent=chat_gpt.total_tokens_spent))
     
     threadlock_remote_version.acquire()
     if remote_version and remote_version > local_version:
         console.print(Panel(Group(
-            Markdown("Use `pip install --upgrade gpt-term` to upgrade."),
-            Markdown("Visit our [GitHub Site](https://github.com/xiaoxx970/chatgpt-in-terminal) to see what have been changed!")),
-            title=f"New Version Available: [red]v{str(local_version)}[/] -> [green]v{str(remote_version)}[/]",
+            Markdown(_("gpt_term.upgrade_use_command")),
+            Markdown(_("gpt_term.upgrade_see_git"))),
+            title=_("gpt_term.upgrade_title",local_version=str(local_version),remote_version=str(remote_version)),
             width=58, style="blue", title_align="left"))
     threadlock_remote_version.release()
 
