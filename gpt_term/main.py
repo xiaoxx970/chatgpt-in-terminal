@@ -98,7 +98,7 @@ class ChatMode:
 
 
 class ChatGPT:
-    def __init__(self, api_key: str, timeout: float):
+    def __init__(self, api_key: str, timeout: float = 30):
         self.api_key = api_key
         self.endpoint = "https://api.openai.com/v1/chat/completions"
         self.headers = {
@@ -133,9 +133,8 @@ class ChatGPT:
 
     def send_request(self, data):
         try:
-            with console.status(_("gpt_term.ChatGPT_thinking")):
-                response = requests.post(
-                    self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=ChatMode.stream_mode)
+            response = requests.post(
+                self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout, stream=ChatMode.stream_mode)
             # 匹配4xx错误，显示服务器返回的具体原因
             if response.status_code // 100 == 4:
                 error_msg = response.json()['error']['message']
@@ -180,38 +179,84 @@ class ChatGPT:
             return None
 
     def process_stream_response(self, response: requests.Response):
-        reply: str = ""
         client = sseclient.SSEClient(response)
-        with Live(console=console, auto_refresh=False, vertical_overflow=self.stream_overflow) as live:
-            try:
-                rprint("[bold cyan]ChatGPT: ")
-                for event in client.events():
-                    if event.data == '[DONE]':
-                        # finish_reason = part["choices"][0]['finish_reason']
-                        break
-                    part = json.loads(event.data)
-                    if "content" in part["choices"][0]["delta"]:
-                        content = part["choices"][0]["delta"]["content"]
-                        reply += content
-                        if ChatMode.raw_mode:
-                            rprint(content, end="", flush=True),
-                        else:
-                            live.update(Markdown(reply), refresh=True)
-            except KeyboardInterrupt:
-                live.stop()
-                console.print(_('gpt_term.Aborted'))
-            finally:
-                return {'role': 'assistant', 'content': reply}
+        for event in client.events():
+            if event.data == '[DONE]':
+                # finish_reason = part["choices"][0]['finish_reason']
+                yield '\n'
+                break
+            part = json.loads(event.data)
+            if "content" in part["choices"][0]["delta"]:
+                content = part["choices"][0]["delta"]["content"]
+                yield content
 
     def process_response(self, response: requests.Response):
         if ChatMode.stream_mode:
-            return self.process_stream_response(response)
+            reply_message = {'role': 'assistant', 'content': ""}
+            try:
+                if ChatMode.raw_mode:
+                    for result in self.process_stream_response(response):
+                        reply_message['content'] += result
+                        rprint(result, end="", flush=True)
+                else:
+                    with Live(console=console, auto_refresh=False, vertical_overflow=self.stream_overflow) as live:
+                        rprint("[bold cyan]ChatGPT: ")
+                        for result in self.process_stream_response(response):
+                            reply_message['content'] += result
+                            live.update(Markdown(reply_message['content']), refresh=True)
+            except KeyboardInterrupt:
+                console.print(_('gpt_term.Aborted'))
+            finally:
+                return reply_message
         else:
             response_json = response.json()
             log.debug(f"Response: {response_json}")
-            reply_message: Dict[str, str] = response_json["choices"][0]["message"]
+            reply_message = response_json["choices"][0]["message"]
             print_message(reply_message)
             return reply_message
+
+    def handle(self, message: str):
+        try:
+            self.messages.append({"role": "user", "content": message})
+            data = {
+                "model": self.model,
+                "messages": self.messages,
+                "stream": ChatMode.stream_mode,
+                "temperature": self.temperature
+            }
+            with console.status(_("gpt_term.ChatGPT_thinking")):
+                response = self.send_request(data)
+            if response is None:
+                # 如果没有得到回复（中断或失败）
+                self.messages.pop()
+                if self.current_tokens >= self.tokens_limit:
+                    if confirm(_('gpt_term.tokens_reached')):
+                        self.delete_first_conversation()
+                return
+
+            reply_message = self.process_response(response)
+            if reply_message:
+                log.info(f"ChatGPT: {reply_message['content']}")
+                self.messages.append(reply_message)
+                self.current_tokens = count_token(self.messages)
+                self.add_total_tokens(self.current_tokens)
+
+                if len(self.messages) == 3 and self.auto_gen_title_background_enable:
+                    self.gen_title_messages.put(self.messages[1]['content'])
+
+                if self.tokens_limit - self.current_tokens in range(1, 500):
+                    console.print(
+                        _("gpt_term.tokens_approaching",token_left=self.tokens_limit - self.current_tokens))
+                # approaching tokens limit (less than 500 left), show info
+
+        except Exception as e:
+            console.print(
+                _("chat_term.Error_look_log",error_msg=str(e)))
+            log.exception(e)
+            self.save_chat_history_urgent()
+            raise EOFError
+
+        return reply_message
 
     def delete_first_conversation(self):
         if len(self.messages) >= 3:
@@ -241,47 +286,6 @@ class ChatGPT:
         self.current_tokens = count_token(self.messages)
         os.system('cls' if os.name == 'nt' else 'clear')
         console.print(_('gpt_term.delete_all'))
-
-    def handle(self, message: str):
-        try:
-            self.messages.append({"role": "user", "content": message})
-            data = {
-                "model": self.model,
-                "messages": self.messages,
-                "stream": ChatMode.stream_mode,
-                "temperature": self.temperature
-            }
-            response = self.send_request(data)
-            if response is None:
-                self.messages.pop()
-                if self.current_tokens >= self.tokens_limit:
-                    if confirm(_('gpt_term.tokens_reached')):
-                        self.delete_first_conversation()
-                return
-
-            reply_message = self.process_response(response)
-            if reply_message is not None:
-                log.info(f"ChatGPT: {reply_message['content']}")
-                self.messages.append(reply_message)
-                self.current_tokens = count_token(self.messages)
-                self.add_total_tokens(self.current_tokens)
-
-                if len(self.messages) == 3 and self.auto_gen_title_background_enable:
-                    self.gen_title_messages.put(self.messages[1]['content'])
-
-                if self.tokens_limit - self.current_tokens in range(1, 500):
-                    console.print(
-                        _("gpt_term.tokens_approaching",token_left=self.tokens_limit - self.current_tokens))
-                # approaching tokens limit (less than 500 left), show info
-
-        except Exception as e:
-            console.print(
-                _("chat_term.Error_look_log",error_msg=str(e)))
-            log.exception(e)
-            self.save_chat_history_urgent()
-            raise EOFError
-
-        return reply_message
 
     def gen_title(self, force: bool = False):
         # Empty the title if there is only system message left
