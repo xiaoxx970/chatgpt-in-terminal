@@ -22,6 +22,7 @@ import requests
 import sseclient
 import tiktoken
 from packaging.version import parse as parse_version
+from packaging.version import InvalidVersion
 from prompt_toolkit import PromptSession, prompt
 from prompt_toolkit.completion import (Completer, Completion, NestedCompleter,
                                        PathCompleter)
@@ -60,7 +61,10 @@ style = Style.from_dict({
 })
 
 remote_version = None
-local_version = parse_version(__version__)
+if __version__ == "0.0+unknown":
+    local_version = None
+else:
+    local_version = parse_version(__version__)
 threadlock_remote_version = threading.Lock()
 
 
@@ -1033,9 +1037,9 @@ def main():
     if config_lang:
         if config_lang in supported_langs:
             _=set_lang(config_lang)
-            console.print(_("gpt_term.lang_switch"))
         else:
             console.print(_("gpt_term.lang_config_unsupport", config_lang=config_lang))
+        # if lang set in config is not support, print infos and use default local_lang
 
     parser = argparse.ArgumentParser(description=_("gpt_term.help_description"),add_help=False)
     parser.add_argument('-h', '--help',action='help', help=_("gpt_term.help_help"))
@@ -1176,7 +1180,7 @@ def main():
         _("gpt_term.spent_token",total_tokens_spent=chat_gpt.total_tokens_spent))
     
     threadlock_remote_version.acquire()
-    if remote_version and remote_version > local_version:
+    if remote_version and local_version and remote_version > local_version:
         console.print(Panel(Group(
             Markdown(_("gpt_term.upgrade_use_command")),
             Markdown(_("gpt_term.upgrade_see_git"))),
