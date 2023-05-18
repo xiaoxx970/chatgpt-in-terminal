@@ -23,6 +23,13 @@
 
 ## 更新记录
 
+### 2023-05-18
+
+- 新增多语言支持：英语、中文、日语、德语，默认跟随系统语言，现在可以使用 `/lang` 来切换语言
+
+<details>
+  <summary>更多 Change log</summary>
+
 ### 2023-05-11
 
 - 在输入未被识别的命令时查找用户最可能想输入的命令
@@ -32,9 +39,6 @@
 - 添加`/rand`命令设置temperature参数
 
 - 为 `/stream` 命令添加 overflow 模式切换，现在可以运行命令 `/stream visible` 切换到始终可见模式。在这个模式下，超出屏幕的内容将被向上滚动，新内容会一直输出直到完成
-
-<details>
-  <summary>更多 Change log</summary>
 
 ### 2023-04-23
 
@@ -153,6 +157,7 @@ gpt-term
 | --set-gentitle BOOL     | 设置是否为聊天自动生成标题                          | `gpt-term --set-gentitle True` |
 | --set-saveperfix PERFIX | 设置聊天历史文件的保存前缀                          | `gpt-term --set-saveperfix chat_history_` |
 | --set-loglevel LEVEL    | 设置日志级别：DEBUG, INFO, WARNING, ERROR, CRITICAL | `gpt-term --set-loglevel DEBUG` |
+| --set-lang LANG    | 设置语言：en, zh_CN, jp, de | `gpt-term --set-lang en` |
 
 > 多行模式与 raw 模式可以同时使用
 
@@ -179,6 +184,9 @@ CHAT_SAVE_PERFIX=./chat_history_
 
 # 日志级别，默认为INFO，可选值：DEBUG、INFO、WARNING、ERROR、CRITICAL
 LOG_LEVEL=INFO
+
+# 设置程序的语言，默认为空，将跟随系统语言
+LANGUAGE=
 ```
 
 ### 可用命令

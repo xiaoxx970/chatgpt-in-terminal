@@ -106,20 +106,19 @@ en:
   upgrade_use_command: "Use `pip install --upgrade gpt-term` to upgrade."
   upgrade_see_git: "Visit our [GitHub Site](https://github.com/xiaoxx970/chatgpt-in-terminal) to see what have been changed!"
   #
-  help_description: 'Use ChatGPT in terminal'
-  help_help: "show this help message and exit" 
-  v: '%(prog)s v%{local_version}'
+  help_description: "Use ChatGPT in terminal"
+  help_help: "show this help message and exit"
   help_v: "show program's version number and exit"
-  help_load: 'Load chat history from file'
-  help_key: "Choose the API key to load"
-  help_model: 'Choose the AI model to use'
-  help_m: 'Enable multi-line mode'
-  help_r: 'Enable raw mode'
+  help_load: "Load chat history from file"
+  help_key: "Choose the name of API key in config file to load"
+  help_model: "Choose the AI model to use"
+  help_m: "Enable multi-line mode"
+  help_r: "Enable raw mode"
   help_lang: "Choose language"
-  help_set_key: 'Set API key for OpenAI'
-  help_set_timeout: 'Set maximum waiting time for API requests'
-  help_set_gentitle: 'Set whether to automatically generate a title for chat'
-  help_set_lang: 'Set language'
+  help_set_key: "Set API key for OpenAI"
+  help_set_timeout: "Set maximum waiting time for API requests"
+  help_set_gentitle: "Set whether to automatically generate a title for chat"
+  help_set_lang: "Set language"
   help_set_saveperfix: "Set chat history file's save perfix"
   help_set_loglevel: "Set log level:"
   #

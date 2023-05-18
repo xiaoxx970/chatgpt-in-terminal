@@ -1,5 +1,5 @@
 zh_CN:
-  welcome: "[dim]你好, 欢迎和GPT聊天. 输入`[bright_magenta]/help[/]` 显示可用命令."
+  welcome: "[dim]你好, 欢迎和 GPT 聊天. 输入`[bright_magenta]/help[/]` 显示可用命令."
   exit: "退出中..."
   spent_token: "[bright_magenta]已花费的 Token总数:[bold]%{total_tokens_spent}" 
   save_api_key: "将 API Key 保存到配置文件中?" 
@@ -47,7 +47,7 @@ zh_CN:
   multi_line_enabled: "[dim]多行模式[green]已启用[/]，按 [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] 提交." 
   multi_line_disabled: "[dim]多行模式[bright_red]已禁用[/]."
   #
-  ChatGPT_thinking: "[bold cyan]ChatGPT正在思考..."
+  ChatGPT_thinking: "[bold cyan]ChatGPT 正在思考..."
   #
   Aborted: "[bold cyan]中断."
   Error_message: "[red]错误: %{error_msg}"
@@ -106,12 +106,11 @@ zh_CN:
   upgrade_use_command: "使用 `pip install --upgrade gpt-term` 命令来升级."
   upgrade_see_git: "访问我们的[GitHub仓库](https://github.com/xiaoxx970/chatgpt-in-terminal)以查看更新内容！"
   #
-  help_description: "在终端中使用ChatGPT"
+  help_description: "在终端中使用 ChatGPT"
   help_help: "显示此帮助信息并退出"
-  v: '%(prog)s v%{local_version}'
   help_v: "显示程序的版本号并退出"
   help_load: "从文件中加载聊天历史记录"
-  help_key: "选择要加载的API密钥"
+  help_key: "选择要从配置文件加载的API密钥名称"
   help_model: "选择要使用的AI模型"
   help_m: "启用多行模式"
   help_r: "启用原始模式"
@@ -141,7 +140,7 @@ zh_CN:
       /system \[new_prompt]     - 修改系统提示
       /rand \[randomness]       - 设置模型采样温度 (0〜2)
       /title \[new_title]       - 为此聊天设置标题, 如果未提供 new_title, 则将生成新标题
-      /timeout \[new_timeout]   - 修改api超时时间
+      /timeout \[new_timeout]   - 修改 api 超时时间
       /undo                    - 撤消上次提问并删除其回复
       /delete (first)          - 删除当前聊天中的第一个对话
       /delete all              - 清除当前聊天中的所有消息和对话

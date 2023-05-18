@@ -1021,6 +1021,7 @@ def main():
     local_lang = locale.getdefaultlocale()[0]
     if local_lang not in supported_langs:
         local_lang = "en"
+    _=set_lang(local_lang)
 
     # 读取配置文件
     config_ini = ConfigParser()
@@ -1028,17 +1029,17 @@ def main():
     config = config_ini['DEFAULT']
 
     # 读取语言配置
-    config_lang = config.get("language", local_lang)
-    if config_lang in supported_langs:
-        _=set_lang(config_lang)
-        console.print(_("gpt_term.lang_switch"))
-    else:
-        _=set_lang(local_lang)
-        console.print(_("gpt_term.lang_config_unsupport", config_lang=config_lang))
+    config_lang = config.get("language")
+    if config_lang:
+        if config_lang in supported_langs:
+            _=set_lang(config_lang)
+            console.print(_("gpt_term.lang_switch"))
+        else:
+            console.print(_("gpt_term.lang_config_unsupport", config_lang=config_lang))
 
     parser = argparse.ArgumentParser(description=_("gpt_term.help_description"),add_help=False)
     parser.add_argument('-h', '--help',action='help', help=_("gpt_term.help_help"))
-    parser.add_argument('-v','--version', action='version', version=_("gpt_term.v",local_version=local_version),help=_("gpt_term.help_v"))
+    parser.add_argument('-v','--version', action='version', version=f'%(prog)s v{local_version}',help=_("gpt_term.help_v"))
     parser.add_argument('--load', metavar='FILE', type=str, help=_("gpt_term.help_load"))
     parser.add_argument('--key', type=str, help=_("gpt_term.help_key"))
     parser.add_argument('--model', type=str, help=_("gpt_term.help_model"))

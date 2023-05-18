@@ -108,20 +108,19 @@ jp:
   upgrade_use_command: "`pip install --upgrade gpt-term`\nを使用してアップグレードしてください。"
   upgrade_see_git: "変更内容を確認するには、[GitHubサイト](https://github.com/xiaoxx970/chatgpt-in-terminal)を訪問してください！"
   #
-  help_description: 'ターミナルでChatGPTを使用する'
+  help_description: "ターミナルでChatGPTを使用する"
   help_help: "このヘルプメッセージを表示して終了する"
-  v: '%(prog)s v%{local_version}'
   help_v: "プログラムのバージョン番号を表示して終了する"
-  help_load: 'チャット履歴をファイルから読み込む'
-  help_key: "読み込むAPIキーを選択します"
-  help_model: '使用するAIモデルを選択する'
-  help_m: 'マルチラインモードを有効にする'
-  help_r: 'ロー モードを有効にする'
+  help_load: "チャット履歴をファイルから読み込む"
+  help_key: "設定ファイルから読み込む API キーの名前を選択してください。"
+  help_model: "使用するAIモデルを選択する"
+  help_m: "マルチラインモードを有効にする"
+  help_r: "ロー モードを有効にする"
   help_lang: "言語を選択する"
-  help_set_key: 'OpenAIのAPIキーを設定する'
-  help_set_timeout: 'APIリクエストの最大待ち時間を設定する'
-  help_set_gentitle: 'チャットのタイトルを自動生成するかどうかを設定する'
-  help_set_lang: '言語を設定する'
+  help_set_key: "OpenAIのAPIキーを設定する"
+  help_set_timeout: "APIリクエストの最大待ち時間を設定する"
+  help_set_gentitle: "チャットのタイトルを自動生成するかどうかを設定する"
+  help_set_lang: "言語を設定する"
   help_set_saveperfix: "チャット履歴ファイルの保存プレフィックスを設定する"
   help_set_loglevel: "ログレベルを設定する:"
   #

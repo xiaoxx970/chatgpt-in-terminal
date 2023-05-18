@@ -107,20 +107,19 @@ de:
   upgrade_use_command: "Verwenden `pip install --upgrade gpt-term` zum Upgrade."
   upgrade_see_git: "Sehen unsere [GitHub Site](https://github.com/xiaoxx970/chatgpt-in-terminal) um zu sehen, was geändert wurde!"
   #
-  help_description: 'Verwenden ChatGPT im Terminal'
-  help_help: "Zeigt diese Hilfemeldung an und beendet sich" 
-  v: '%(prog)s v%{local_version}'
+  help_description: "Verwenden ChatGPT im Terminal"
+  help_help: "Zeigt diese Hilfemeldung an und beendet sich"
   help_v: "Zeigt die Version des Programms an und beenden"
-  help_load: 'Chatverlauf aus Datei laden'
-  help_key: "Wählen den zu ladenden API-Schlüssel"
-  help_model: 'Wählen das zu verwendende AI-Modell'
-  help_m: 'Aktivieren den Multi-Linie-Mode'
-  help_r: 'Aktivieren den Rhomode'
+  help_load: "Chatverlauf aus Datei laden"
+  help_key: "Wählen Sie den Namen des API-Schlüssels aus, der aus der Konfigurationsdatei geladen werden soll."
+  help_model: "Wählen das zu verwendende AI-Modell"
+  help_m: "Aktivieren den Multi-Linie-Mode"
+  help_r: "Aktivieren den Rhomode"
   help_lang: "Sprache wählen"
-  help_set_key: 'API-Schlüssel für OpenAI einstellen'
-  help_set_timeout: 'Maximale Wartezeit für API-Anfragen einstellen'
-  help_set_gentitle: 'Festlegen, ob automatisch ein Titel für den Chat generiert werden soll'
-  help_set_lang: 'Sprache einstellen'
+  help_set_key: "API-Schlüssel für OpenAI einstellen"
+  help_set_timeout: "Maximale Wartezeit für API-Anfragen einstellen"
+  help_set_gentitle: "Festlegen, ob automatisch ein Titel für den Chat generiert werden soll"
+  help_set_lang: "Sprache einstellen"
   help_set_saveperfix: "Speicherperfix für die Chatverlaufsdatei einstellen"
   help_set_loglevel: "Log-Stufe einstellen:"
   #
