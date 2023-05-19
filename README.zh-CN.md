@@ -21,6 +21,12 @@
 
 默认使用 [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) 模型，也就是 ChatGPT(免费版) 所使用的模型。
 
+### 相关项目
+
+[C/C++实现的GPTerm](https://github.com/Ace-Radom/cGPTerm) by @Ace-Radom
+
+[可以调用 POE API 的 gpt-term](https://github.com/Lemon-2333/chatgpt-in-terminal-Poe-Api) by @Lemon-2333
+
 ## 更新记录
 
 ### 2023-05-18
@@ -93,6 +99,8 @@
 
 2. [Python](https://www.python.org/downloads/) 3.7 或更高版本
 
+   **注意：尽量不要使用系统自带的 Python（包括Windows11 的应用商店版 Python 和 MacOS 的预装 Python），否则会出现安装好后gpt-term 命令找不到的情况 ([#38](https://github.com/xiaoxx970/chatgpt-in-terminal/issues/38))**
+
 ## 安装
 
 1. 使用 `pip` 安装 `GPT-Term`
@@ -126,6 +134,12 @@ pip3 install --upgrade gpt-term
 
 ```shell
 gpt-term
+```
+
+或者：
+
+```shell
+python3 -m gpt_term
 ```
 
 在默认的单行模式下输入提问时，使用 `Esc` + `Enter` 换行，`Enter` 提交

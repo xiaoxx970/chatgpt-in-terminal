@@ -19,6 +19,12 @@ Supports saving chat messages to a JSON file and loading them from the file.
 
 Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-completions-beta) model, which is the same model used by ChatGPT (Free Edition), as default.
 
+### Related Projects
+
+[GPTerm implemented in C/C++](https://github.com/Ace-Radom/cGPTerm) by @Ace-Radom
+
+[gpt-term that can call POE API](https://github.com/Lemon-2333/chatgpt-in-terminal-Poe-Api) by @Lemon-2333
+
 ## Changelog
 
 ### 2023-05-18
@@ -90,6 +96,8 @@ Released `gpt-term` on [Pypi](https://pypi.org/project/gpt-term/), started versi
 
 2. [Python](https://www.python.org/downloads/) version 3.7 or higher.
 
+   **Attention: Try not to use the Python that comes with the system (including Windows 11 app store version and MacOS pre-installed Python), otherwise the gpt-term command will not be found after installation ([#38](https://github.com/xiaoxx970/chatgpt-in-terminal/issues/38))**
+
 ## Installation
 
 
@@ -123,6 +131,12 @@ Run with the following command:
 
 ```shell
 gpt-term
+```
+
+Or:
+
+```shell
+python3 -m gpt_term
 ```
 
 When entering a question in single-line mode, use `Esc` + `Enter` to start a new line, and use `Enter` to submit the question.

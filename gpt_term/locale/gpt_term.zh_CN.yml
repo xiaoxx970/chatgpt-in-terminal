@@ -1,7 +1,7 @@
 zh_CN:
   welcome: "[dim]你好, 欢迎和 GPT 聊天. 输入`[bright_magenta]/help[/]` 显示可用命令."
   exit: "退出中..."
-  spent_token: "[bright_magenta]已花费的 Token总数:[bold]%{total_tokens_spent}" 
+  spent_token: "[bright_magenta]已花费的 token 总数:[bold]%{total_tokens_spent}" 
   save_api_key: "将 API Key 保存到配置文件中?" 
   input_api_key: "未找到 OpenAI API Key, 请输入:"
   config_key_to_shell_key: "配置项 `[bright_magenta]%{key_word}[/]` 已设置为 [green]%{val}[/]"
