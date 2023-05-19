@@ -479,6 +479,7 @@ class ChatGPT:
     
     def set_host(self, host: str):
         self.host = host
+        self.endpoint = self.host + "/v1/chat/completions"
 
     def modify_system_prompt(self, new_content: str):
         if self.messages[0]['role'] == 'system':
