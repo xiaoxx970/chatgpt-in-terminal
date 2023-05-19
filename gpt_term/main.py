@@ -1033,9 +1033,9 @@ def main():
     if config_lang:
         if config_lang in supported_langs:
             _=set_lang(config_lang)
-            console.print(_("gpt_term.lang_switch"))
         else:
             console.print(_("gpt_term.lang_config_unsupport", config_lang=config_lang))
+        # if lang set in config is not support, print infos and use default local_lang
 
     parser = argparse.ArgumentParser(description=_("gpt_term.help_description"),add_help=False)
     parser.add_argument('-h', '--help',action='help', help=_("gpt_term.help_help"))
