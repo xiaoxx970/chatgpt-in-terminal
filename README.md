@@ -27,6 +27,10 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
 
 ## Changelog
 
+### 2023-05-20
+
+- Added host configuration support, which is very useful when using self-built API reverse proxy server ([#49](https://github.com/xiaoxx970/chatgpt-in-terminal/issues/49)), you can now use `gpt-term --set-host HOST` to configure host, the default is https://api.openai.com
+
 ### 2023-05-18
 
 - Added multi-language support: English, Chinese, Japanese, German, follow the system language by default, now you can use `/lang` to switch languages
@@ -155,20 +159,23 @@ Here are some common shortcut keys (also shortcut keys for the shell):
 
 ### Available Arguments
 
-| Arguments     | Description                     | Example                                       |
-| ------------- | ------------------------------- | --------------------------------------------- |
-| -h, --help    | show this help message and exit | `gpt-term --help`                             |
-| --load FILE   | Load chat history from file     | `gpt-term --load chat_history_code_check.json` |
-| --key API_KEY | choose the API key to load      | `gpt-term --key OPENAI_API_KEY1`              |
-| --model MODEL | choose the AI model to use      | `gpt-term --model gpt-3.5-turbo`              |
-| -m, --multi   | Enable multi-line mode          | `gpt-term --multi`                            |
-| -r, --raw     | Enable raw mode                 | `gpt-term --raw`                              |
-| --set-apikey KEY        | Set the OpenAI API key                                   | `gpt-term --set-apikey sk-xxx`   |
-| --set-timeout SEC       | Set the maximum wait time for API requests               | `gpt-term --set-timeout 10`      |
-| --set-gentitle BOOL     | Set whether to auto-generate a title for the chat        | `gpt-term --set-gentitle True`   |
-| --set-saveperfix PERFIX | Set the save prefix for chat history files               | `gpt-term --set-saveperfix chat_history_` |
-| --set-loglevel LEVEL    | Set the log level: DEBUG, INFO, WARNING, ERROR, CRITICAL | `gpt-term --set-loglevel DEBUG`  |
-| --set-lang LANG    | Set the language: en, zh_CN, jp, de | `gpt-term --set-lang en` |
+| Arguments | Description | Examples |
+| ------------- | --------------------------------- | - ----------------------------------------------- |
+| -h, --help | show this help message and exit | `gpt-term --help` |
+| --load FILE | Load chat history from file | `gpt-term --load chat_history_code_check.json` |
+| --key API_KEY | Select the API key to use in the config.ini file | `gpt-term --key OPENAI_API_KEY1` |
+| --model MODEL | Select AI model to use | `gpt-term --model gpt-3.5-turbo` |
+| --host HOST | Set the API Host address used in this run (this is usually used to configure proxy) | `gpt-term --host https://closeai.deno.dev` |
+| -m, --multi | Enable multiline mode | `gpt-term --multi` |
+| -r, --raw | Enable raw mode | `gpt-term --raw` |
+| -l, --lang LANG | Set the current running language: en, zh_CN, jp, de | `gpt-term --lang en` |
+| --set-host HOST | Set API Host address (this is usually used to configure proxy) | `gpt-term --set-host https://closeai.deno.dev` |
+| --set-apikey KEY | Set OpenAI API key | `gpt-term --set-apikey sk-xxx` |
+| --set-timeout SEC | Set the maximum wait time for API requests | `gpt-term --set-timeout 10` |
+| --set-gentitle BOOL | Set whether to auto-generate title for chat | `gpt-term --set-gentitle True` |
+| --set-saveperfix PERFIX | Set the save prefix for chat history files | `gpt-term --set-saveperfix chat_history_` |
+| --set-loglevel LEVEL | Set log level: DEBUG, INFO, WARNING, ERROR, CRITICAL | `gpt-term --set-loglevel DEBUG` |
+| --set-lang LANG | Set language: en, zh_CN, jp, de | `gpt-term --set-lang en` |
 
 > Multi-line mode and raw mode can be used simultaneously
 
