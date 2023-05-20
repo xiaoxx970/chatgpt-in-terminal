@@ -1130,7 +1130,7 @@ def main():
 
     if args.host:
         chat_gpt.set_host(args.host)
-        console.print(_("gpt_term.model_set", model=args.host))
+        console.print(_("gpt_term.host_set", new_host=args.host))
 
     if args.model:
         chat_gpt.set_model(args.model)

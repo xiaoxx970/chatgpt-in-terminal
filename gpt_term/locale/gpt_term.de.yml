@@ -41,6 +41,8 @@ de:
   usage_title: "Kredit Statistik"
   usage_plan: "[bright_blue]Plan: %{credit_plan}"
   #
+  host_set: "[dim]API Host wurde auf '%{new_host}' gesetzt."
+  #
   model_set: "[dim]Leere Eingabe, erhält das Modell '%{old_model}' unverändert."
   model_changed: "[dim]Das Modell wurde von '%{old_model}' auf '%{new_model}' geändert."
   #
@@ -101,7 +103,6 @@ de:
   lang_switch: "[dim]Wechselt zu [bright_magenta]Deutsch[/]."
   lang_config_unsupport: "[red]Nicht unterstützte Sprache in der Konfiguration `%{config_lang}`. Die Sprache des Benutzers wird verwendet."
   lang_unsupport: "[red]Nicht unterstützte Sprache `%{new_lang}`."
-
   #
   upgrade_title: "Neue Version verfügbar: [red]v%{local_version}[/] -> [green]v%{remote_version}[/]"
   upgrade_use_command: "Verwenden `pip install --upgrade gpt-term` zum Upgrade."
@@ -113,9 +114,11 @@ de:
   help_load: "Chatverlauf aus Datei laden"
   help_key: "Wählen Sie den Namen des API-Schlüssels aus, der aus der Konfigurationsdatei geladen werden soll."
   help_model: "Wählen das zu verwendende AI-Modell"
+  help_host: "Stellen den API Host ein, der in diesem Lauf verwendet werden (wird normalerweise zur Konfiguration des Proxys verwendet)"
   help_m: "Aktivieren den Multi-Linie-Mode"
   help_r: "Aktivieren den Rhomode"
   help_lang: "Sprache wählen"
+  help_set_host: "API Host einstellen (wird normalerweise zur Konfiguration des Proxys verwendet)"
   help_set_key: "API-Schlüssel für OpenAI einstellen"
   help_set_timeout: "Maximale Wartezeit für API-Anfragen einstellen"
   help_set_gentitle: "Festlegen, ob automatisch ein Titel für den Chat generiert werden soll"

@@ -41,6 +41,8 @@ en:
   usage_title: "Credit Summary"
   usage_plan: "[bright_blue]Plan: %{credit_plan}"
   #
+  host_set: "[dim]API Host set to '%{new_host}'."
+  #
   model_set: "[dim]Empty input, the model remains '%{old_model}'."
   model_changed: "[dim]Model has been set from '%{old_model}' to '%{new_model}'."
   #
@@ -112,9 +114,11 @@ en:
   help_load: "Load chat history from file"
   help_key: "Choose the name of API key in config file to load"
   help_model: "Choose the AI model to use"
+  help_host: "Set the API Host to use in this run (usually used to configure proxy)"
   help_m: "Enable multi-line mode"
   help_r: "Enable raw mode"
   help_lang: "Choose language"
+  help_set_host: "Set the API Host to use (usually used to configure proxy)"
   help_set_key: "Set API key for OpenAI"
   help_set_timeout: "Set maximum waiting time for API requests"
   help_set_gentitle: "Set whether to automatically generate a title for chat"

@@ -41,6 +41,8 @@ jp:
   usage_title: "クレジットの概要"
   usage_plan: "[bright_blue]プラン： %{credit_plan}"
   #
+  host_set: "[dim]APIホストが '%{new_host}' に設定されました。"
+  #
   model_set: "[dim]空の入力です。モデルは'%{old_model}'のままです。"
   model_changed: "[dim]モデルが'%{old_model}'から'%{new_model}'に変更されました。"
   #
@@ -96,13 +98,11 @@ jp:
   #
   load_file_not: "[bright_red]ファイルが見つかりません：%{file_path}"
   load_json_error: "[bright_red]ファイル内の無効なJSON形式です：%{file_path}"
-  
   #
   new_lang_prompt: "言語："
   lang_switch: "[dim]すでに[bright_magenta]日本語[/]に切り替わっています。"
   lang_config_unsupport: "[red]設定でサポートされていない言語 `%{config_lang}` です。ユーザーのローカル言語が使用されます。"
   lang_unsupport: "[red]サポートされていない言語 `%{new_lang}` です。"
-
   #
   upgrade_title: "新しいバージョンが利用可能です：[red]v%{local_version}[/] -> [green]v%{remote_version}[/]"
   upgrade_use_command: "`pip install --upgrade gpt-term`\nを使用してアップグレードしてください。"
@@ -114,9 +114,11 @@ jp:
   help_load: "チャット履歴をファイルから読み込む"
   help_key: "設定ファイルから読み込む API キーの名前を選択してください。"
   help_model: "使用するAIモデルを選択する"
+  help_host: "この実行で使用するAPIホストを設定する（通常、プロキシを設定するために使用します。）"
   help_m: "マルチラインモードを有効にする"
   help_r: "ロー モードを有効にする"
   help_lang: "言語を選択する"
+  help_set_host: "使用するAPIホストを設定する（通常、プロキシを設定するために使用します。）"
   help_set_key: "OpenAIのAPIキーを設定する"
   help_set_timeout: "APIリクエストの最大待ち時間を設定する"
   help_set_gentitle: "チャットのタイトルを自動生成するかどうかを設定する"
