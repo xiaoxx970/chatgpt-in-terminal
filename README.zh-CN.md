@@ -29,6 +29,10 @@
 
 ## 更新记录
 
+### 2023-05-20
+
+- 新增 host 配置项支持，在使用自建 API 反向代理服务器的时候很有用([#49](https://github.com/xiaoxx970/chatgpt-in-terminal/issues/49))，你现在可以使用 `gpt-term --set-host HOST` 来配置 host，默认为 https://api.openai.com。
+
 ### 2023-05-18
 
 - 新增多语言支持：英语、中文、日语、德语，默认跟随系统语言，现在可以使用 `/lang` 来切换语言
@@ -164,10 +168,13 @@ python3 -m gpt_term
 | --load FILE   | 从文件中加载聊天记录              | `gpt-term --load chat_history_code_check.json` |
 | --key API_KEY | 选择 config.ini 文件中要使用的 API 密钥 | `gpt-term --key OPENAI_API_KEY1`              |
 | --model MODEL | 选择要使用的 AI 模型              | `gpt-term --model gpt-3.5-turbo`              |
+| --host HOST | 设置在本次运行中使用的 API Host 地址（这通常被用来配置代理） | `gpt-term --host https://closeai.deno.dev`              |
 | -m, --multi   | 启用多行模式                      | `gpt-term --multi`                            |
 | -r, --raw     | 启用原始模式                      | `gpt-term --raw`                              |
+| -l, --lang LANG | 设置本次运行语言：en, zh_CN, jp, de | `gpt-term --lang en` |
+| --set-host HOST        | 设置API Host地址（这通常被用来配置代理）              | `gpt-term --set-host https://closeai.deno.dev` |
 | --set-apikey KEY        | 设置 OpenAI 的 API 密钥                          | `gpt-term --set-apikey sk-xxx` |
-| --set-timeout SEC       | 设置 API 请求的最大等待时间                         | `gpt-term --set-timeout 10` |
+| --set-timeout SEC       | 设置 API 请求的最大等待时间                        | `gpt-term --set-timeout 10` |
 | --set-gentitle BOOL     | 设置是否为聊天自动生成标题                          | `gpt-term --set-gentitle True` |
 | --set-saveperfix PERFIX | 设置聊天历史文件的保存前缀                          | `gpt-term --set-saveperfix chat_history_` |
 | --set-loglevel LEVEL    | 设置日志级别：DEBUG, INFO, WARNING, ERROR, CRITICAL | `gpt-term --set-loglevel DEBUG` |

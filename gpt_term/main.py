@@ -100,7 +100,8 @@ class ChatMode:
 class ChatGPT:
     def __init__(self, api_key: str, timeout: float):
         self.api_key = api_key
-        self.endpoint = "https://api.openai.com/v1/chat/completions"
+        self.host = "https://api.openai.com"
+        self.endpoint = self.host + "/v1/chat/completions"
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}"
@@ -405,7 +406,7 @@ class ChatGPT:
             return None
 
     def fetch_credit_total_granted(self):
-        url_subscription = "https://api.openai.com/dashboard/billing/subscription"
+        url_subscription = self.host + "/dashboard/billing/subscription"
         response_subscription = self.send_get(url_subscription)
         if not response_subscription:
             self.credit_total_granted = None
@@ -425,7 +426,7 @@ class ChatGPT:
             "total_usage"] / 100
 
     def get_credit_usage(self):
-        url_usage = "https://api.openai.com/dashboard/billing/usage"
+        url_usage = self.host + "/dashboard/billing/usage"
         try:
             # get response from /dashborad/billing/subscription for total granted credit
             fetch_credit_total_granted_thread = threading.Thread(
@@ -475,6 +476,10 @@ class ChatGPT:
             self.save_chat_history_urgent()
             raise EOFError
         return True
+    
+    def set_host(self, host: str):
+        self.host = host
+        self.endpoint = self.host + "/v1/chat/completions"
 
     def modify_system_prompt(self, new_content: str):
         if self.messages[0]['role'] == 'system':
@@ -996,13 +1001,17 @@ def write_config(config_ini: ConfigParser):
 def set_config_by_args(args: argparse.Namespace, config_ini: ConfigParser):
     global _
     config_need_to_set = {}
+    if args.set_host:       config_need_to_set.update({"OPENAI_HOST"         : args.set_host})
     if args.set_apikey:     config_need_to_set.update({"OPENAI_API_KEY"      : args.set_apikey})
     if args.set_timeout:    config_need_to_set.update({"OPENAI_API_TIMEOUT"  : args.set_timeout})
     if args.set_saveperfix: config_need_to_set.update({"CHAT_SAVE_PERFIX"    : args.set_saveperfix})
     if args.set_loglevel:   config_need_to_set.update({"LOG_LEVEL"           : args.set_loglevel})
     if args.set_gentitle:   config_need_to_set.update({"AUTO_GENERATE_TITLE" : args.set_gentitle})
     # 新的语言设置:
-    if args.set_lang:       config_need_to_set.update({"LANGUAGE"            : args.set_lang})
+    if args.set_lang:       
+        config_need_to_set.update({"LANGUAGE": args.set_lang})
+        _=set_lang(args.set_lang)
+    # here: when set lang is called, set language before printing 'set-successful' messages
 
     if len(config_need_to_set) == 0:
         return
@@ -1043,12 +1052,14 @@ def main():
     parser.add_argument('--load', metavar='FILE', type=str, help=_("gpt_term.help_load"))
     parser.add_argument('--key', type=str, help=_("gpt_term.help_key"))
     parser.add_argument('--model', type=str, help=_("gpt_term.help_model"))
+    parser.add_argument('--host', metavar='HOST', type=str, help=_("gpt_term.help_host"))
     parser.add_argument('-m', '--multi', action='store_true', help=_("gpt_term.help_m"))
     parser.add_argument('-r', '--raw', action='store_true', help=_("gpt_term.help_r"))
     ## 新添加的选项：--lang
     parser.add_argument('-l','--lang', type=str, choices=['en', 'zh_CN', 'jp', 'de'], help=_("gpt_term.help_lang"))
     # normal function args
 
+    parser.add_argument('--set-host', metavar='HOST', type=str, help=_("gpt_term.help_set_host"))
     parser.add_argument('--set-apikey', metavar='KEY', type=str, help=_("gpt_term.help_set_key"))
     parser.add_argument('--set-timeout', metavar='SEC', type=int, help=_("gpt_term.help_set_timeout"))
     parser.add_argument('--set-gentitle', metavar='BOOL', type=str, help=_("gpt_term.help_set_gentitle"))
@@ -1107,6 +1118,9 @@ def main():
     chat_save_perfix = config.get("CHAT_SAVE_PERFIX", "./chat_history_")
 
     chat_gpt = ChatGPT(api_key, api_timeout)
+    
+    if config.get("OPENAI_HOST"):
+        chat_gpt.set_host(config.get("OPENAI_HOST"))
 
     if not config.getboolean("AUTO_GENERATE_TITLE", True):
         chat_gpt.auto_gen_title_background_enable = False
@@ -1116,6 +1130,10 @@ def main():
         target=chat_gpt.auto_gen_title_background, daemon=True)
     gen_title_daemon_thread.start()
     log.debug("Title generation daemon thread started")
+
+    if args.host:
+        chat_gpt.set_host(args.host)
+        console.print(_("gpt_term.host_set", new_host=args.host))
 
     if args.model:
         chat_gpt.set_model(args.model)

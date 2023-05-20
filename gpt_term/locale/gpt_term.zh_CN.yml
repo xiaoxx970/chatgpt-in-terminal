@@ -41,6 +41,8 @@ zh_CN:
   usage_title: "额度摘要"
   usage_plan: "[bright_blue]计划: %{credit_plan}"
   #
+  host_set: "[dim]API主机地址已被设为 '%{new_host}'"
+  #
   model_set: "[dim]输入为空，模型保持为 '%{old_model}'."
   model_changed: "[dim]模型已从 '%{old_model}' 修改为 '%{new_model}'."
   #
@@ -112,9 +114,11 @@ zh_CN:
   help_load: "从文件中加载聊天历史记录"
   help_key: "选择要从配置文件加载的API密钥名称"
   help_model: "选择要使用的AI模型"
+  help_host: "设置在本次运行中使用的API Host地址（这通常被用来配置代理）"
   help_m: "启用多行模式"
   help_r: "启用原始模式"
   help_lang: "选择语言"
+  help_set_host: "设置API Host地址（这通常被用来配置代理）"
   help_set_key: "设置OpenAI的API密钥"
   help_set_timeout: "设置API请求的最大等待时间"
   help_set_gentitle: "设置是否自动生成聊天标题"
