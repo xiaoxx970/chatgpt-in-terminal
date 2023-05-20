@@ -1008,7 +1008,10 @@ def set_config_by_args(args: argparse.Namespace, config_ini: ConfigParser):
     if args.set_loglevel:   config_need_to_set.update({"LOG_LEVEL"           : args.set_loglevel})
     if args.set_gentitle:   config_need_to_set.update({"AUTO_GENERATE_TITLE" : args.set_gentitle})
     # 新的语言设置:
-    if args.set_lang:       config_need_to_set.update({"LANGUAGE"            : args.set_lang})
+    if args.set_lang:       
+        config_need_to_set.update({"LANGUAGE": args.set_lang})
+        _=set_lang(args.set_lang)
+    # here: when set lang is called, set language before printing 'set-successful' messages
 
     if len(config_need_to_set) == 0:
         return
