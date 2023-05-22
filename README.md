@@ -160,7 +160,7 @@ Here are some common shortcut keys (also shortcut keys for the shell):
 ### Available Arguments
 
 | Arguments | Description | Examples |
-| ------------- | --------------------------------- | - ----------------------------------------------- |
+| ------------- | --------------------------------- | ------------------------------------------------ |
 | -h, --help | show this help message and exit | `gpt-term --help` |
 | --load FILE | Load chat history from file | `gpt-term --load chat_history_code_check.json` |
 | --key API_KEY | Select the API key to use in the config.ini file | `gpt-term --key OPENAI_API_KEY1` |
