@@ -486,7 +486,7 @@ class ChatGPT:
             old_content = self.messages[0]['content']
             self.messages[0]['content'] = new_content
             console.print(
-                _("gpt_term.system_prompt_moodified",old_content=old_content,new_content=new_content))
+                _("gpt_term.system_prompt_modified",old_content=old_content,new_content=new_content))
             self.current_tokens = count_token(self.messages)
             # recount current tokens
             if len(self.messages) > 1:
