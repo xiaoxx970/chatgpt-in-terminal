@@ -1,15 +1,15 @@
 en:
-  welcome: "[dim]Hi, welcome to chat with GPT. Type `[bright_magenta]/help[/]` to display available commands."
+  welcome: "[dim]Hi, welcome to chat with GPT. Type `[deep_sky_blue3]/help[/]` to display available commands."
   exit: "Exiting..."
-  spent_token: "[bright_magenta]Total tokens spent: [bold]%{total_tokens_spent}"
+  spent_token: "[deep_sky_blue3]Total tokens spent: [bold]%{total_tokens_spent}"
   save_api_key: "Save API Key to config file?"
   input_api_key: "OpenAI API Key not found, please input: "
-  config_key_to_shell_key : "Config item `[bright_magenta]%{key_word}[/]` is set to [green]%{val}[/]"
+  config_key_to_shell_key : "Config item `[deep_sky_blue3]%{key_word}[/]` is set to [green]%{val}[/]"
   log_level_error: "[dim]Invalid log level: %{e}, check config.ini file. Set log level to INFO."
   system_prompt: "System prompt: "
   new_temperature: "New Randomness: "
   #
-  load_chat_history: "[dim]Chat history successfully loaded from: [bright_magenta]%{load}"
+  load_chat_history: "[dim]Chat history successfully loaded from: [deep_sky_blue3]%{load}"
   #
   code_not_found: "[dim]No code found"
   code_too_many_found: "[dim]There are more than one code in ChatGPT's last reply"
@@ -20,10 +20,10 @@ en:
   code_index_out_range_many: "[red]Index out of range: You should input an Integer in range 1 ~%{len_code_list}"
   code_copy: "[dim]Code copied to Clipboard"
   code_last_copy: "[dim]Last reply copied to Clipboard"
-  code_copy_fail: "[dim]Nothing to do. Available copy command: `[bright_magenta]/copy code \\[index][/]` or `[bright_magenta]/copy all[/]`"
+  code_copy_fail: "[dim]Nothing to do. Available copy command: `[deep_sky_blue3]/copy code \\[index][/]` or `[deep_sky_blue3]/copy all[/]`"
   #
-  raw_mode_enabled: "[dim]Raw mode [green]enabled[/], use `[bright_magenta]/last[/]` to display the last answer."
-  raw_mode_disabled: "[dim]Raw mode [bright_red]disabled[/], use `[bright_magenta]/last[/]` to display the last answer."
+  raw_mode_enabled: "[dim]Raw mode [green]enabled[/], use `[deep_sky_blue3]/last[/]` to display the last answer."
+  raw_mode_disabled: "[dim]Raw mode [bright_red]disabled[/], use `[deep_sky_blue3]/last[/]` to display the last answer."
   #
   stream_mode_enabled: "[dim]Stream mode [green]enabled[/], the answer will start outputting as soon as the first response arrives."
   stream_mode_disabled: "[dim]Stream mode [bright_red]disabled[/], the answer is being displayed after the server finishes responding."
@@ -46,7 +46,7 @@ en:
   model_set: "[dim]Empty input, the model remains '%{old_model}'."
   model_changed: "[dim]Model has been set from '%{old_model}' to '%{new_model}'."
   #
-  multi_line_enabled: "[dim]Multi-line mode [green]enabled[/], press [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] to submit."
+  multi_line_enabled: "[dim]Multi-line mode [green]enabled[/], press [[deep_sky_blue3]Esc[/]] + [[deep_sky_blue3]ENTER[/]] to submit."
   multi_line_disabled: "[dim]Multi-line mode [bright_red]disabled[/]."
   #
   ChatGPT_thinking: "[bold cyan]ChatGPT is thinking..."
@@ -73,8 +73,8 @@ en:
   title_changed: "[dim]CLI Title changed to '%{title}'"
   title_auto_gen_fail: "[red]Background Title auto-generation Error: %{error_msg}. Check log for more information"
   #
-  save_history_success: "[dim]Chat history saved to: [bright_magenta]%{filename}"
-  save_history_urgent_success: "[dim]Chat history urgently saved to: [bright_magenta]%{filename}"
+  save_history_success: "[dim]Chat history saved to: [deep_sky_blue3]%{filename}"
+  save_history_urgent_success: "[dim]Chat history urgently saved to: [deep_sky_blue3]%{filename}"
   #
   timeout_prompt: "OpenAI API timeout: "
   timeout_changed: "[dim]API timeout set to [green]%{timeout}s[/]."
@@ -88,19 +88,19 @@ en:
   delete_first_conversation_yes: "[dim]First question: '%{truncated_question}' and it's answer has been deleted, saved tokens: %{tokens_saved}"
   delete_first_conversation_no: "[red]No conversations yet."
   delete_all: "[dim]Current chat cleared."
-  delete_nothing: "[dim]Nothing to do. Avaliable delete command: `[bright_magenta]/delete first[/]` or `[bright_magenta]/delete all[/]`"
+  delete_nothing: "[dim]Nothing to do. Avaliable delete command: `[deep_sky_blue3]/delete first[/]` or `[deep_sky_blue3]/delete all[/]`"
   #
   version_all: "[bold blue]Local Version:[/]\tv%{local_version}\n[bold green]Remote Version:[/]\tv%{remote_version}"
   version_name: "Version"
   #
-  tokens_reached: "Reached tokens limit, do you want me to forget the earliest message of current chat?"
+  tokens_reached: "The token limit has been reached. To continue the conversation, use `[deep_sky_blue3]/delete first[/]` to delete the oldest conversation, or use `[deep_sky_blue3]/model[/]` to switch to a model with a higher token limit"
   tokens_approaching : "[dim]Approaching the tokens limit: %{token_left} tokens left"
   #
   load_file_not: "[bright_red]File not found: %{file_path}"
   load_json_error: "[bright_red]Invalid JSON format in file: %{file_path}"
   #
   new_lang_prompt: "Language: "
-  lang_switch: "[dim]Language switched to [bright_magenta]English[/]."
+  lang_switch: "[dim]Language switched to [deep_sky_blue3]English[/]."
   lang_config_unsupport: "[red]Unsupported language `%{config_lang}` in config, use user local language."
   lang_unsupport: "[red]Unsupported language `%{new_lang}`."
   #
@@ -126,9 +126,9 @@ en:
   help_set_saveperfix: "Set chat history file's save perfix"
   help_set_loglevel: "Set log level:"
   #
-  help_use_help: "Use `[bright magenta]/help[/]` to see all available slash commands"
+  help_use_help: "Use `[deep_sky_blue3]/help[/]` to see all available slash commands"
   help_uncommand: "Unrecognized Slash Command `[bold red]%{command}[/]`"
-  help_mean_command: "Do you mean `[bright magenta]%{most_similar_command}[/]`?"
+  help_mean_command: "Do you mean `[deep_sky_blue3]%{most_similar_command}[/]`?"
   help_text: |
     [bold]Available commands:[/]
       /raw                     - Toggle raw mode (showing raw text of ChatGPT's reply)

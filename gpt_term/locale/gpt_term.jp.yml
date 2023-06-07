@@ -1,15 +1,15 @@
 jp:
-  welcome: "[dim]こんにちは、GPTとのチャットへようこそ。使用可能なコマンドを表示するには、`[bright_magenta]/help[/]`を入力してください。"
+  welcome: "[dim]こんにちは、GPTとのチャットへようこそ。使用可能なコマンドを表示するには、`[deep_sky_blue3]/help[/]`を入力してください。"
   exit: "終了中..."
-  spent_token: "[bright_magenta]使用されたトークンの合計：[bold]%{total_tokens_spent}"
+  spent_token: "[deep_sky_blue3]使用されたトークンの合計：[bold]%{total_tokens_spent}"
   save_api_key: "APIキーを設定ファイルに保存しますか？"
   input_api_key: "OpenAI APIキーが見つかりませんでした。入力してください："
-  config_key_to_shell_key: "設定項目`[bright_magenta]%{key_word}[/]`は、[green]%{val}[/]に設定されています。"
+  config_key_to_shell_key: "設定項目`[deep_sky_blue3]%{key_word}[/]`は、[green]%{val}[/]に設定されています。"
   log_level_error: "[dim]ログレベルが無効です：%{e}、config.iniファイルを確認してください。ログレベルをINFOに設定します。"
   system_prompt: "システムプロンプト："
   new_temperature: "新しい乱数："
   #
-  load_chat_history: "[dim]チャット履歴が正常に読み込まれました：[bright_magenta]%{load}"
+  load_chat_history: "[dim]チャット履歴が正常に読み込まれました：[deep_sky_blue3]%{load}"
   #
   code_not_found: "[dim]コードが見つかりません"
   code_too_many_found: "[dim]ChatGPTの前回の返信には複数のコードがあります"
@@ -20,10 +20,10 @@ jp:
   code_index_out_range_many: "[red]インデックスが範囲外です：1〜%{len_code_list}の範囲内の整数を入力する必要があります"
   code_copy: "[dim]コードがクリップボードにコピーされました"
   code_last_copy: "[dim]前回の返信がクリップボードにコピーされました"
-  code_copy_fail: "[dim]何もコピーできません。利用可能なコピーコマンドは、`[bright_magenta]/copy code \\[index][/]`または`[bright_magenta]/copy all[/]`です"
+  code_copy_fail: "[dim]何もコピーできません。利用可能なコピーコマンドは、`[deep_sky_blue3]/copy code \\[index][/]`または`[deep_sky_blue3]/copy all[/]`です"
   #
-  raw_mode_enabled: "[dim]ローモードは[green]有効[/]です。`[bright_magenta]/last[/]`を使用して最後の回答を表示します。"
-  raw_mode_disabled: "[dim]ローモードは[bright_red]無効[/]です。`[bright_magenta]/last[/]`を使用して最後の回答を表示します。"
+  raw_mode_enabled: "[dim]ローモードは[green]有効[/]です。`[deep_sky_blue3]/last[/]`を使用して最後の回答を表示します。"
+  raw_mode_disabled: "[dim]ローモードは[bright_red]無効[/]です。`[deep_sky_blue3]/last[/]`を使用して最後の回答を表示します。"
   #
   stream_mode_enabled: "[dim]ストリームモードは[green]有効[/]です。最初の応答が到着すると回答が出力されます。"
   stream_mode_disabled: "[dim]ストリームモードは[bright_red]無効[/]です。サーバーが応答を完了した後に回答が表示されます。"
@@ -46,7 +46,7 @@ jp:
   model_set: "[dim]空の入力です。モデルは'%{old_model}'のままです。"
   model_changed: "[dim]モデルが'%{old_model}'から'%{new_model}'に変更されました。"
   #
-  multi_line_enabled: "[dim][green]マルチラインモードが有効になりました[/]、[[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]]を押して送信してください。"
+  multi_line_enabled: "[dim][green]マルチラインモードが有効になりました[/]、[[deep_sky_blue3]Esc[/]] + [[deep_sky_blue3]ENTER[/]]を押して送信してください。"
   multi_line_disabled: "[dim][bright_red]マルチラインモードが無効になりました[/]。"
   #
   ChatGPT_thinking: "[bold cyan]ChatGPTが考え中です...[/]"
@@ -73,8 +73,8 @@ jp:
   title_changed: "[dim]CLIのタイトルが'%{title}'に変更されました。"
   title_auto_gen_fail: "[red]バックグラウンドのタイトル自動生成エラー：%{error_msg}。詳細についてはログを確認してください。"
   #
-  save_history_success: "[dim]チャット履歴を保存しました：[bright_magenta]%{filename}"
-  save_history_urgent_success: "[dim]緊急時のチャット履歴を保存しました：[bright_magenta]%{filename}"
+  save_history_success: "[dim]チャット履歴を保存しました：[deep_sky_blue3]%{filename}"
+  save_history_urgent_success: "[dim]緊急時のチャット履歴を保存しました：[deep_sky_blue3]%{filename}"
   #
   timeout_prompt: "OpenAI APIのタイムアウト："
   timeout_changed: "[dim]APIタイムアウトが[green]%{timeout}s[/]に設定されました。"
@@ -88,19 +88,19 @@ jp:
   delete_first_conversation_yes: "[dim]最初の質問：'%{truncated_question}'とその回答が削除されました。保存されたトークン：%{tokens_saved}"
   delete_first_conversation_no: "[red]まだ会話がありません。"
   delete_all: "[dim]現在のチャットがクリアされました。"
-  delete_nothing: "[dim]何も削除するものはありません。利用可能な削除コマンド：`[bright_magenta]/delete first[/]`または`[bright_magenta]/delete all[/]`"
+  delete_nothing: "[dim]何も削除するものはありません。利用可能な削除コマンド：`[deep_sky_blue3]/delete first[/]`または`[deep_sky_blue3]/delete all[/]`"
   #
   version_all: "[bold blue]ローカルバージョン：[/]\tv%{local_version}\n[bold green]リモートバージョン：[/]\tv%{remote_version}"
   version_name: "バージョン"
   #
-  tokens_reached: "トークン制限に達しました。現在のチャットの最初のメッセージを忘れてもよろしいですか？"
+  tokens_reached: "トークンの制限に達しました。会話を続ける必要がある場合は、`[deep_sky_blue3]/delete first[/]` を使用して最も古い会話を削除するか、`[deep_sky_blue3]/model[/]` を使用して別の会話に切り替えることができます」トークン上限が高いモデル"
   tokens_approaching : "[dim]トークン制限に近づいています：残り%{token_left}トークン"
   #
   load_file_not: "[bright_red]ファイルが見つかりません：%{file_path}"
   load_json_error: "[bright_red]ファイル内の無効なJSON形式です：%{file_path}"
   #
   new_lang_prompt: "言語："
-  lang_switch: "[dim]すでに[bright_magenta]日本語[/]に切り替わっています。"
+  lang_switch: "[dim]すでに[deep_sky_blue3]日本語[/]に切り替わっています。"
   lang_config_unsupport: "[red]設定でサポートされていない言語 `%{config_lang}` です。ユーザーのローカル言語が使用されます。"
   lang_unsupport: "[red]サポートされていない言語 `%{new_lang}` です。"
   #
@@ -126,9 +126,9 @@ jp:
   help_set_saveperfix: "チャット履歴ファイルの保存プレフィックスを設定する"
   help_set_loglevel: "ログレベルを設定する:"
   #
-  help_use_help: "`[bright magenta]/help[/]`を使用して利用可能なスラッシュコマンドをすべて表示します"
+  help_use_help: "`[deep_sky_blue3]/help[/]`を使用して利用可能なスラッシュコマンドをすべて表示します"
   help_uncommand: "未知のスラッシュコマンド `[bold red]%{command}[/]`"
-  help_mean_command: "`[bright magenta]%{most_similar_command}[/]`を意味しますか？"
+  help_mean_command: "`[deep_sky_blue3]%{most_similar_command}[/]`を意味しますか？"
   help_text: |
     [bold]利用可能なコマンド：[/]
       /raw                     - ローモードを切り替える（ChatGPTの応答の生のテキストを表示する）
