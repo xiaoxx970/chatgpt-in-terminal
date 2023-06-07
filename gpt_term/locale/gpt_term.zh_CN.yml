@@ -1,15 +1,15 @@
 zh_CN:
-  welcome: "[dim]你好, 欢迎和 GPT 聊天. 输入`[bright_magenta]/help[/]` 显示可用命令."
+  welcome: "[dim]你好, 欢迎和 GPT 聊天. 输入`[deep_sky_blue3]/help[/]` 显示可用命令."
   exit: "退出中..."
-  spent_token: "[bright_magenta]已花费的 token 总数:[bold]%{total_tokens_spent}" 
+  spent_token: "[deep_sky_blue3]已花费的 token 总数:[bold]%{total_tokens_spent}" 
   save_api_key: "将 API Key 保存到配置文件中?" 
   input_api_key: "未找到 OpenAI API Key, 请输入:"
-  config_key_to_shell_key: "配置项 `[bright_magenta]%{key_word}[/]` 已设置为 [green]%{val}[/]"
+  config_key_to_shell_key: "配置项 `[deep_sky_blue3]%{key_word}[/]` 已设置为 [green]%{val}[/]"
   log_level_error: "[dim]无效的日志级别: %{e}，请检查 config.ini文件. 日志级别将设置为 INFO."
   system_prompt: "系统提示词: "
   new_temperature: "新随机值: "
   #
-  load_chat_history: "[dim]聊天记录已成功加载: [bright_magenta]%{load}"
+  load_chat_history: "[dim]聊天记录已成功加载: [deep_sky_blue3]%{load}"
   #
   code_not_found: "[dim]未找到代码"
   code_too_many_found: "[dim]ChatGPT 的上一条回复中有多个代码"
@@ -20,10 +20,10 @@ zh_CN:
   code_index_out_range_many: "[red]索引超出范围: 请输入一个在 1~%{len_code_list} 范围内的整数"
   code_copy: "[dim]代码已复制到剪贴板"
   code_last_copy: "[dim]上一条回复已复制到剪贴板"
-  code_copy_fail: "[dim]无操作可执行. 可用的复制命令为: `[bright_magenta]/copy code \\[index][/]` 或 `[bright_magenta]/copy all[/]`"
+  code_copy_fail: "[dim]无操作可执行. 可用的复制命令为: `[deep_sky_blue3]/copy code \\[index][/]` 或 `[deep_sky_blue3]/copy all[/]`"
   #
-  raw_mode_enabled: "[dim]原始模式[green]已启用[/], 使用 `[bright_magenta]/last[/]` 来显示最后一个回答."
-  raw_mode_disabled: "[dim]原始模式[bright_red]已关闭[/], 使用 `[bright_magenta]/last[/]` 来显示最后一个回答."
+  raw_mode_enabled: "[dim]原始模式[green]已启用[/], 使用 `[deep_sky_blue3]/last[/]` 来显示最后一个回答."
+  raw_mode_disabled: "[dim]原始模式[bright_red]已关闭[/], 使用 `[deep_sky_blue3]/last[/]` 来显示最后一个回答."
   #
   stream_mode_enabled: "[dim]流式传输[green]已启用[/], 回复将在第一个响应到达时开始输出."
   stream_mode_disabled: "[dim]流式传输[bright_red]已禁用[/], 回复将在服务器完成响应后显示."
@@ -46,7 +46,7 @@ zh_CN:
   model_set: "[dim]输入为空，模型保持为 '%{old_model}'."
   model_changed: "[dim]模型已从 '%{old_model}' 修改为 '%{new_model}'."
   #
-  multi_line_enabled: "[dim]多行模式[green]已启用[/]，按 [[bright_magenta]Esc[/]] + [[bright_magenta]ENTER[/]] 提交." 
+  multi_line_enabled: "[dim]多行模式[green]已启用[/]，按 [[deep_sky_blue3]Esc[/]] + [[deep_sky_blue3]ENTER[/]] 提交." 
   multi_line_disabled: "[dim]多行模式[bright_red]已禁用[/]."
   #
   ChatGPT_thinking: "[bold cyan]ChatGPT 正在思考..."
@@ -73,8 +73,8 @@ zh_CN:
   title_changed: "[dim]CLI标题已更改为'%{title}'"
   title_auto_gen_fail: "[red]后台标题自动生成错误: %{error_msg}.查看日志获取更多信息."
   #
-  save_history_success: "[dim]聊天记录已保存至: [bright_magenta]%{filename}"
-  save_history_urgent_success: "[dim]聊天记录已紧急保存至: [bright_magenta]%{filename}"
+  save_history_success: "[dim]聊天记录已保存至: [deep_sky_blue3]%{filename}"
+  save_history_urgent_success: "[dim]聊天记录已紧急保存至: [deep_sky_blue3]%{filename}"
   #
   timeout_prompt: "OpenAI API 超时时间: "
   timeout_changed: "[dim]API 超时时间已设置为: [green]%{timeout}s[/]."
@@ -88,19 +88,19 @@ zh_CN:
   delete_first_conversation_yes: "[dim]第一个问题: '%{truncated_question}'及其回复已被删除，已节约 toke: %{tokens_saved}"
   delete_first_conversation_no: "[red]还没有对话."
   delete_all: "[dim]当前聊天已清除."
-  delete_nothing: "[dim]无操作可执行. 可用的删除命令: [bright_magenta]/delete first[/] 或 [bright_magenta]/delete all[/]."
+  delete_nothing: "[dim]无操作可执行. 可用的删除命令: `[deep_sky_blue3]/delete first[/]` 或 `[deep_sky_blue3]/delete all[/]`."
   #
   version_all: "[bold blue]本地版本: [/]\tv%{local_version}\n[bold green]远程版本: [/]\tv%{remote_version}" 
   version_name: "版本"
   #
-  tokens_reached: "已达到 token 限制, 您是否要删除当前聊天中最早的消息?"
+  tokens_reached: "已达到 token 限制, 如需继续对话，可使用 `[deep_sky_blue3]/delete first[/]` 删除最早对话，或者使用 `[deep_sky_blue3]/model[/]` 切换 token 上限更高的模型"
   tokens_approaching: "[dim]接近 token 限制: %{token_left}个 token 剩余"
   #
   load_file_not: "[bright_red]未找到文件: %{file_path}"
   load_json_error: "[bright_red]文件格式无效: %{file_path}"
   #
   new_lang_prompt: "语言: "
-  lang_switch: "[dim]已经切换至[bright_magenta]简体中文[/]."
+  lang_switch: "[dim]已经切换至[deep_sky_blue3]简体中文[/]."
   lang_config_unsupport: "[red]配置中不支持的语言 `%{config_lang}`, 将使用用户本地语言."
   lang_unsupport: "[red]不支持的语言 `%{new_lang}`."
   #
@@ -126,9 +126,9 @@ zh_CN:
   help_set_saveperfix: "设置聊天历史记录文件的保存前缀"
   help_set_loglevel: "设置日志级别: "
   #
-  help_use_help: "使用 `[bright magenta]/help[/]` 查看所有可用的斜杠命令"
-  help_uncommand: "无法识别的斜杠命令 `[bold red]%{command}[/]`"
-  help_mean_command: "您是否指的是 `[bright magenta]%{most_similar_command}[/]`?"
+  help_use_help: "使用 `[deep_sky_blue3]/help[/]` 查看所有可用命令"
+  help_uncommand: "无法识别命令 `[bold red]%{command}[/]`"
+  help_mean_command: "您是否指的是 `[deep_sky_blue3]%{most_similar_command}[/]`?"
   help_text: |
     [bold]可用命令: [/]
       /raw                     - 切换原始模式 (显示 ChatGPT 回复的原始文本)

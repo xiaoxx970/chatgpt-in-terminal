@@ -256,8 +256,7 @@ class ChatGPT:
             if response is None:
                 self.messages.pop()
                 if self.current_tokens >= self.tokens_limit:
-                    if confirm(_('gpt_term.tokens_reached')):
-                        self.delete_first_conversation()
+                    console.print(_('gpt_term.tokens_reached'))
                 return
 
             reply_message = self.process_response(response)
@@ -1105,12 +1104,14 @@ def main():
     if not api_key:
         log.debug("API Key not found, waiting for input")
         api_key = prompt(_("gpt_term.input_api_key"))
-        if confirm(_("gpt_term.save_api_key")):
+        if confirm(_("gpt_term.save_api_key"), suffix=" (y/N) "):
             config["OPENAI_API_KEY"] = api_key
             write_config(config_ini)
 
     api_key_log = api_key[:3] + '*' * (len(api_key) - 7) + api_key[-4:]
     log.debug(f"Loaded API Key: {api_key_log}")
+
+    console.print(_("gpt_term.welcome"))
 
     api_timeout = config.getfloat("OPENAI_API_TIMEOUT", 30)
     log.debug(f"API Timeout set to {api_timeout}")
@@ -1155,9 +1156,6 @@ def main():
             log.info(f"Chat history successfully loaded from: {args.load}")
             console.print(
                 _("gpt_term.load_chat_history",load=args.load), highlight=False)
-
-    console.print(
-        _("gpt_term.welcome"))
 
     session = PromptSession()
 
