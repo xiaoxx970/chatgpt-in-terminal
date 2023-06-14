@@ -526,6 +526,8 @@ class ChatGPT:
             self.tokens_limit = 32768
         elif "gpt-4" in self.model:
             self.tokens_limit = 8192
+        elif "gpt-3.5-turbo-16k" in self.model:
+            self.tokens_limit = 16384
         elif "gpt-3.5-turbo" in self.model:
             self.tokens_limit = 4096
         else:
@@ -565,12 +567,14 @@ class CommandCompleter(Completer):
             '/last': None,
             '/copy': {"code", "all"},
             '/model': {
-                "gpt-3.5-turbo",
-                "gpt-3.5-turbo-0301",
-                "gpt-4",
-                "gpt-4-0314",
-                "gpt-4-32k",
-                "gpt-4-32k-031"},
+                "gpt-4", 
+                "gpt-4-0613", 
+                "gpt-4-32k", 
+                "gpt-4-32k-0613", 
+                "gpt-3.5-turbo", 
+                "gpt-3.5-turbo-0613", 
+                "gpt-3.5-turbo-16k", 
+                "gpt-3.5-turbo-16k-0613"},
             '/save': PathCompleter(file_filter=self.path_filter),
             '/system': None,
             '/rand': None,
@@ -580,7 +584,7 @@ class CommandCompleter(Completer):
             '/undo': None,
             '/delete': {"first", "all"},
             '/reset': None,
-            '/lang' : {"zh_CN","en","jp","de"},
+            '/lang' : {"zh_CN", "en", "jp", "de"},
             '/version': None,
             '/help': None,
             '/exit': None,
