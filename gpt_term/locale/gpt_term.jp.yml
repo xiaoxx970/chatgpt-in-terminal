@@ -125,6 +125,7 @@ jp:
   help_set_lang: "言語を設定する"
   help_set_saveperfix: "チャット履歴ファイルの保存プレフィックスを設定する"
   help_set_loglevel: "ログレベルを設定する:"
+  help_direct_query: "GPT への直接クエリ"
   #
   help_use_help: "`[deep_sky_blue3]/help[/]`を使用して利用可能なスラッシュコマンドをすべて表示します"
   help_uncommand: "未知のスラッシュコマンド `[bold red]%{command}[/]`"

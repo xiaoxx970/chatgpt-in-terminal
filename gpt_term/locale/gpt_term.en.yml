@@ -125,6 +125,7 @@ en:
   help_set_lang: "Set language"
   help_set_saveperfix: "Set chat history file's save perfix"
   help_set_loglevel: "Set log level:"
+  help_direct_query: "The direct query to GPT"
   #
   help_use_help: "Use `[deep_sky_blue3]/help[/]` to see all available slash commands"
   help_uncommand: "Unrecognized Slash Command `[bold red]%{command}[/]`"

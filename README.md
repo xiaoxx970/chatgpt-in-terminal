@@ -27,6 +27,24 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
 
 ## Changelog
 
+### 2023-06-21
+
+- Added direct query mode, now you can run `gpt-term` with the content of the question as a parameter to conduct a single question and answer
+
+  ```sh
+  gpt-term "What's the weather like today?"
+  ```
+
+  The answer will be printed directly, or piped into a variable
+
+  ```sh
+  gpt-term "What's the weather like today" | read answer
+  echo $answer
+  ```
+
+<details>
+  <summary>More Change log</summary>
+
 ### 2023-05-20
 
 - Added host configuration support, which is very useful when using self-built API reverse proxy server ([#49](https://github.com/xiaoxx970/chatgpt-in-terminal/issues/49)), you can now use `gpt-term --set-host HOST` to configure host, the default is https://api.openai.com
@@ -34,10 +52,6 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
 ### 2023-05-18
 
 - Added multi-language support: English, Chinese, Japanese, German, follow the system language by default, now you can use `/lang` to switch languages
-
-<details>
-  <summary>More Change log</summary>
-
 ### 2023-05-11
 
 - Find the command the user most likely intended to enter when typing an unrecognized command
@@ -49,6 +63,7 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
 - Add overflow mode switch for `/stream` command, now you can run command `/stream visible` to switch to always visible mode. In this mode, the content that exceeds the screen will be scrolled up, and the new content will be output until it is completed
 
 ### 2023-04-23
+
 Released `gpt-term` on [Pypi](https://pypi.org/project/gpt-term/), started version control. No need to clone the project locally anymore, simply use the `pip` command to install gpt-term.
 
 ### 2023-04-15
@@ -141,6 +156,12 @@ Or:
 
 ```shell
 python3 -m gpt_term
+```
+
+Quick query:
+
+```sh
+gpt-term "What's the weather like today?"
 ```
 
 When entering a question in single-line mode, use `Esc` + `Enter` to start a new line, and use `Enter` to submit the question.

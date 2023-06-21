@@ -160,8 +160,6 @@ class ChatGPT:
 
     def send_request_silent(self, data):
         # this is a silent sub function, for sending request without outputs (silently)
-        # it SHOULD NOT be triggered or used by not-silent functions
-        # it is only used by gen_title_silent now
         try:
             response = requests.post(
                 self.endpoint, headers=self.headers, data=json.dumps(data), timeout=self.timeout)
@@ -242,6 +240,19 @@ class ChatGPT:
         self.current_tokens = count_token(self.messages)
         os.system('cls' if os.name == 'nt' else 'clear')
         console.print(_('gpt_term.delete_all'))
+
+    def handle_simple(self, message: str):
+        self.messages.append({"role": "user", "content": message})
+        data = {
+            "model": self.model,
+            "messages": self.messages,
+            "temperature": self.temperature
+        }
+        response = self.send_request_silent(data)
+        if response:
+            response_json = response.json()
+            log.debug(f"Response: {response_json}")
+            print(response_json["choices"][0]["message"]["content"])
 
     def handle(self, message: str):
         try:
@@ -1070,6 +1081,8 @@ def main():
     parser.add_argument('--set-lang', type=str, choices=['en', 'zh_CN', 'jp', 'de'], help=_("gpt_term.help_set_lang"))
     parser.add_argument('--set-saveperfix', metavar='PERFIX', type=str, help=_("gpt_term.help_set_saveperfix"))
     parser.add_argument('--set-loglevel', metavar='LEVEL', type=str, help=_("gpt_term.help_set_loglevel")+'DEBUG, INFO, WARNING, ERROR, CRITICAL')
+    # Query without parameter
+    parser.add_argument("query", nargs="*", help=_("gpt_term.help_direct_query"))
     # setting args
     args = parser.parse_args()
 
@@ -1115,8 +1128,6 @@ def main():
     api_key_log = api_key[:3] + '*' * (len(api_key) - 7) + api_key[-4:]
     log.debug(f"Loaded API Key: {api_key_log}")
 
-    console.print(_("gpt_term.welcome"))
-
     api_timeout = config.getfloat("OPENAI_API_TIMEOUT", 30)
     log.debug(f"API Timeout set to {api_timeout}")
 
@@ -1160,6 +1171,18 @@ def main():
             log.info(f"Chat history successfully loaded from: {args.load}")
             console.print(
                 _("gpt_term.load_chat_history",load=args.load), highlight=False)
+            
+    if args.query:
+        query_text = " ".join(args.query)
+        log.info(f"> {query_text}")
+        is_stdout_tty = os.isatty(sys.stdout.fileno())
+        if is_stdout_tty:
+            chat_gpt.handle(query_text)
+        else:  # Running in pipe/stream mode
+            chat_gpt.handle_simple(query_text)
+        return
+    else:
+        console.print(_("gpt_term.welcome"))
 
     session = PromptSession()
 

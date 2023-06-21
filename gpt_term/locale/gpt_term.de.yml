@@ -125,6 +125,7 @@ de:
   help_set_lang: "Sprache einstellen"
   help_set_saveperfix: "Speicherperfix für die Chatverlaufsdatei einstellen"
   help_set_loglevel: "Log-Stufe einstellen:"
+  help_direct_query: "Die direkte Anfrage an GPT"
   #
   help_use_help: "Verwenden `[deep_sky_blue3]/help[/]`, um alle verfügbaren Slash-Befehle zu sehen"
   help_uncommand: "Unerkannter Slash-Befehl `[bold red]%{command}[/]`"

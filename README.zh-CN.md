@@ -29,6 +29,24 @@
 
 ## 更新记录
 
+### 2023-06-21
+
+- 新增直接询问模式，现在你可以运行 `gpt-term` 加上要提问的内容作为参数来进行单次提问和回答
+
+  ```sh
+  gpt-term 今天天气怎么样
+  ```
+
+  回答将直接被打印，或者使用管道存放于变量中
+
+  ```sh
+  gpt-term 今天天气怎么样 | read answer
+  echo $answer
+  ```
+
+<details>
+  <summary>更多 Change log</summary>
+
 ### 2023-05-20
 
 - 新增 host 配置项支持，在使用自建 API 反向代理服务器的时候很有用([#49](https://github.com/xiaoxx970/chatgpt-in-terminal/issues/49))，你现在可以使用 `gpt-term --set-host HOST` 来配置 host，默认为 https://api.openai.com。
@@ -36,9 +54,6 @@
 ### 2023-05-18
 
 - 新增多语言支持：英语、中文、日语、德语，默认跟随系统语言，现在可以使用 `/lang` 来切换语言
-
-<details>
-  <summary>更多 Change log</summary>
 
 ### 2023-05-11
 
@@ -144,6 +159,12 @@ gpt-term
 
 ```shell
 python3 -m gpt_term
+```
+
+单次提问：
+
+```sh
+gpt-term 今天天气怎么样
 ```
 
 在默认的单行模式下输入提问时，使用 `Esc` + `Enter` 换行，`Enter` 提交
