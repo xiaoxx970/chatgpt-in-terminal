@@ -125,6 +125,7 @@ zh_CN:
   help_set_lang: "设置语言"
   help_set_saveperfix: "设置聊天历史记录文件的保存前缀"
   help_set_loglevel: "设置日志级别: "
+  help_direct_query: "直接向GPT提问的内容"
   #
   help_use_help: "使用 `[deep_sky_blue3]/help[/]` 查看所有可用命令"
   help_uncommand: "无法识别命令 `[bold red]%{command}[/]`"
