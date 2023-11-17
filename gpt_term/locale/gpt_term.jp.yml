@@ -118,6 +118,7 @@ jp:
   help_m: "マルチラインモードを有効にする"
   help_r: "ロー モードを有効にする"
   help_lang: "言語を選択する"
+  help_set_model: "使用するAIモデルを設定する"
   help_set_host: "使用するAPIホストを設定する（通常、プロキシを設定するために使用します。）"
   help_set_key: "OpenAIのAPIキーを設定する"
   help_set_timeout: "APIリクエストの最大待ち時間を設定する"

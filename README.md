@@ -27,6 +27,12 @@ Uses the [gpt-3.5-turbo](https://platform.openai.com/docs/guides/chat/chat-compl
 
 ## Changelog
 
+### 2023-11-17
+
+- Added the feature of setting the default model. Now you can use `gpt-term --set-model MODEL_NAME` to set the default model. This setting will be written into the configuration file and will take effect every time it is started.
+
+- Added new model candidates: `gpt-4-1106-preview`, `gpt-4-vision-preview`, `gpt-3.5-turbo-1106`.
+
 ### 2023-06-21
 
 - Added direct query mode, now you can run `gpt-term` with the content of the question as a parameter to conduct a single question and answer
@@ -190,6 +196,7 @@ Here are some common shortcut keys (also shortcut keys for the shell):
 | -m, --multi | Enable multiline mode | `gpt-term --multi` |
 | -r, --raw | Enable raw mode | `gpt-term --raw` |
 | -l, --lang LANG | Set the current running language: en, zh_CN, jp, de | `gpt-term --lang en` |
+| --set-model HOST | Set the AI model to use | `gpt-term --set-model gpt-4-1106-preview` |
 | --set-host HOST | Set API Host address (this is usually used to configure proxy) | `gpt-term --set-host https://closeai.deno.dev` |
 | --set-apikey KEY | Set OpenAI API key | `gpt-term --set-apikey sk-xxx` |
 | --set-timeout SEC | Set the maximum wait time for API requests | `gpt-term --set-timeout 10` |
@@ -226,6 +233,13 @@ LOG_LEVEL=INFO
 
 # Set the language of the program, the default is empty, it will follow the system language
 LANGUAGE=
+
+# 设置api的host，默认为https://api.openai.com
+OPENAI_HOST=
+
+# 设置使用的模型，默认为gpt-3.5-turbo
+# 可用模型: https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo, https://platform.openai.com/docs/models/gpt-3-5
+OPENAI_MODEL=
 ```
 
 ### Available Commands

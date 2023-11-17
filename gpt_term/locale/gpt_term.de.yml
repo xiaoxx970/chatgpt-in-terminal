@@ -118,6 +118,7 @@ de:
   help_m: "Aktivieren den Multi-Linie-Mode"
   help_r: "Aktivieren den Rhomode"
   help_lang: "Sprache wählen"
+  help_set_model: "Legen Sie das zu verwendende KI-Modell fest"
   help_set_host: "API Host einstellen (wird normalerweise zur Konfiguration des Proxys verwendet)"
   help_set_key: "API-Schlüssel für OpenAI einstellen"
   help_set_timeout: "Maximale Wartezeit für API-Anfragen einstellen"

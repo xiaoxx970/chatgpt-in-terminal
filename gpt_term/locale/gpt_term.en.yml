@@ -118,6 +118,7 @@ en:
   help_m: "Enable multi-line mode"
   help_r: "Enable raw mode"
   help_lang: "Choose language"
+  help_set_model: "Set the AI model to use"
   help_set_host: "Set the API Host to use (usually used to configure proxy)"
   help_set_key: "Set API key for OpenAI"
   help_set_timeout: "Set maximum waiting time for API requests"

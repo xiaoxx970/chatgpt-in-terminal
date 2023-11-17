@@ -118,6 +118,7 @@ zh_CN:
   help_m: "启用多行模式"
   help_r: "启用原始模式"
   help_lang: "选择语言"
+  help_set_model: "设置要使用的AI模型"
   help_set_host: "设置API Host地址（这通常被用来配置代理）"
   help_set_key: "设置OpenAI的API密钥"
   help_set_timeout: "设置API请求的最大等待时间"

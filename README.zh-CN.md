@@ -29,6 +29,15 @@
 
 ## 更新记录
 
+### 2023-11-17
+
+- 新增设置默认模型功能，现在你可以使用 `gpt-term --set-model 模型名称` 来设置默认模型，这个设置将写入配置文件，每次启动都能生效。
+
+- 新增 model 候选项: `gpt-4-1106-preview`, `gpt-4-vision-preview`, `gpt-3.5-turbo-1106`。
+
+<details>
+  <summary>更多 Change log</summary>
+
 ### 2023-06-21
 
 - 新增直接询问模式，现在你可以运行 `gpt-term` 加上要提问的内容作为参数来进行单次提问和回答
@@ -43,9 +52,6 @@
   gpt-term 今天天气怎么样 | read answer
   echo $answer
   ```
-
-<details>
-  <summary>更多 Change log</summary>
 
 ### 2023-05-20
 
@@ -188,11 +194,12 @@ gpt-term 今天天气怎么样
 | -h, --help    | 显示此帮助信息并退出              | `gpt-term --help`                             |
 | --load FILE   | 从文件中加载聊天记录              | `gpt-term --load chat_history_code_check.json` |
 | --key API_KEY | 选择 config.ini 文件中要使用的 API 密钥 | `gpt-term --key OPENAI_API_KEY1`              |
-| --model MODEL | 选择要使用的 AI 模型              | `gpt-term --model gpt-3.5-turbo`              |
+| --model MODEL | 选择本次运行中使用的 AI 模型              | `gpt-term --model gpt-3.5-turbo`              |
 | --host HOST | 设置在本次运行中使用的 API Host 地址（这通常被用来配置代理） | `gpt-term --host https://closeai.deno.dev`              |
 | -m, --multi   | 启用多行模式                      | `gpt-term --multi`                            |
 | -r, --raw     | 启用原始模式                      | `gpt-term --raw`                              |
 | -l, --lang LANG | 设置本次运行语言：en, zh_CN, jp, de | `gpt-term --lang en` |
+| --set-model MODEL        | 设置要使用的 AI 模型              | `gpt-term --set-model gpt-4-1106-preview` |
 | --set-host HOST        | 设置API Host地址（这通常被用来配置代理）              | `gpt-term --set-host https://closeai.deno.dev` |
 | --set-apikey KEY        | 设置 OpenAI 的 API 密钥                          | `gpt-term --set-apikey sk-xxx` |
 | --set-timeout SEC       | 设置 API 请求的最大等待时间                        | `gpt-term --set-timeout 10` |

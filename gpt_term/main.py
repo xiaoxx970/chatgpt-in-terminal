@@ -415,77 +415,10 @@ class ChatGPT:
             log.exception(e)
             return None
 
-    def fetch_credit_total_granted(self):
-        url_subscription = self.host + "/dashboard/billing/subscription"
-        response_subscription = self.send_get(url_subscription)
-        if not response_subscription:
-            self.credit_total_granted = None
-        response_subscription_json = response_subscription.json()
-        self.credit_total_granted = response_subscription_json["hard_limit_usd"]
-        self.credit_plan = response_subscription_json["plan"]["title"]
-
-    def fetch_credit_monthly_used(self, url_usage):
-        usage_get_params_monthly = {
-            "start_date": str(date.today().replace(day=1)),
-            "end_date": str(date.today() + timedelta(days=1))}
-        response_monthly_usage = self.send_get(
-            url_usage, params=usage_get_params_monthly)
-        if not response_monthly_usage:
-            self.credit_used_this_month = None
-        self.credit_used_this_month = response_monthly_usage.json()[
-            "total_usage"] / 100
-
     def get_credit_usage(self):
-        url_usage = self.host + "/dashboard/billing/usage"
-        try:
-            # get response from /dashborad/billing/subscription for total granted credit
-            fetch_credit_total_granted_thread = threading.Thread(
-                target=self.fetch_credit_total_granted)
-            fetch_credit_total_granted_thread.start()
-
-            # get usage this month
-            fetch_credit_monthly_used_thread = threading.Thread(
-                target=self.fetch_credit_monthly_used, args=(url_usage,))
-            fetch_credit_monthly_used_thread.start()
-
-            # start with 2023-01-01, get 99 days' data per turn
-            usage_get_start_date = date(2023, 1, 1)
-            usage_get_end_date = usage_get_start_date + timedelta(days=99)
-            # 创建线程池，设置最大线程数为5
-            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                # 提交任务到线程池列表
-                futures = []
-                while usage_get_start_date < date.today():
-                    usage_get_params = {
-                        "start_date": str(usage_get_start_date),
-                        "end_date": str(usage_get_end_date)}
-                    futures.append(executor.submit(
-                        self.send_get, url_usage, usage_get_params))
-                    usage_get_start_date = usage_get_end_date
-                    usage_get_end_date = usage_get_start_date + timedelta(days=99)
-
-            fetch_credit_total_granted_thread.join()
-            fetch_credit_monthly_used_thread.join()
-
-            credit_total_used_cent = 0
-            # 获取所有线程池任务的返回值
-            for future in futures:
-                result = future.result()
-                if result:
-                    credit_total_used_cent += result.json()["total_usage"]
-            # get all usage info from 2023-01-01 to now
-            self.credit_total_used = credit_total_used_cent / 100
-
-        except KeyboardInterrupt:
-            console.print(_("gpt_term.Aborted"))
-            raise
-        except Exception as e:
-            console.print(
-                _("gpt_term.Error_message",error_msg=str(e)))
-            log.exception(e)
-            self.save_chat_history_urgent()
-            raise EOFError
-        return True
+        url_usage = "https://platform.openai.com/usage"
+        console.print(f"Please go to {url_usage} to check usage.")
+        return False
     
     def set_host(self, host: str):
         self.host = host
@@ -533,12 +466,18 @@ class ChatGPT:
                 _("gpt_term.model_set"),old_model=old_model)
             return
         self.model = str(new_model)
-        if "gpt-4-32k" in self.model:
+        if "gpt-4-1106-preview" in self.model:
+            self.tokens_limit = 128000
+        elif "gpt-4-vision-preview" in self.model:
+            self.tokens_limit = 128000
+        elif "gpt-4-32k" in self.model:
             self.tokens_limit = 32768
         elif "gpt-4" in self.model:
             self.tokens_limit = 8192
         elif "gpt-3.5-turbo-16k" in self.model:
-            self.tokens_limit = 16384
+            self.tokens_limit = 16385
+        elif "gpt-3.5-turbo-1106" in self.model:
+            self.tokens_limit = 16385
         elif "gpt-3.5-turbo" in self.model:
             self.tokens_limit = 4096
         else:
@@ -578,10 +517,13 @@ class CommandCompleter(Completer):
             '/last': None,
             '/copy': {"code", "all"},
             '/model': {
+                "gpt-4-1106-preview", 
+                "gpt-4-vision-preview", 
                 "gpt-4", 
                 "gpt-4-0613", 
                 "gpt-4-32k", 
                 "gpt-4-32k-0613", 
+                "gpt-3.5-turbo-1106", 
                 "gpt-3.5-turbo", 
                 "gpt-3.5-turbo-0613", 
                 "gpt-3.5-turbo-16k", 
@@ -1015,6 +957,7 @@ def write_config(config_ini: ConfigParser):
 def set_config_by_args(args: argparse.Namespace, config_ini: ConfigParser):
     global _
     config_need_to_set = {}
+    if args.set_model:      config_need_to_set.update({"OPENAI_MODEL"         : args.set_model})
     if args.set_host:       config_need_to_set.update({"OPENAI_HOST"         : args.set_host})
     if args.set_apikey:     config_need_to_set.update({"OPENAI_API_KEY"      : args.set_apikey})
     if args.set_timeout:    config_need_to_set.update({"OPENAI_API_TIMEOUT"  : args.set_timeout})
@@ -1073,6 +1016,7 @@ def main():
     parser.add_argument('-l','--lang', type=str, choices=['en', 'zh_CN', 'jp', 'de'], help=_("gpt_term.help_lang"))
     # normal function args
 
+    parser.add_argument('--set-model', metavar='MODEL', type=str, help=_("gpt_term.help_set_model"))
     parser.add_argument('--set-host', metavar='HOST', type=str, help=_("gpt_term.help_set_host"))
     parser.add_argument('--set-apikey', metavar='KEY', type=str, help=_("gpt_term.help_set_key"))
     parser.add_argument('--set-timeout', metavar='SEC', type=int, help=_("gpt_term.help_set_timeout"))
@@ -1137,6 +1081,9 @@ def main():
     
     if config.get("OPENAI_HOST"):
         chat_gpt.set_host(config.get("OPENAI_HOST"))
+    
+    if config.get("OPENAI_MODEL"):
+        chat_gpt.set_model(config.get("OPENAI_MODEL"))
 
     if not config.getboolean("AUTO_GENERATE_TITLE", True):
         chat_gpt.auto_gen_title_background_enable = False
