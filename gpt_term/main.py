@@ -107,7 +107,7 @@ class ChatGPT:
             "Authorization": f"Bearer {api_key}"
         }
         self.messages = [
-            {"role": "system", "content": f"You are a helpful assistant.\nKnowledge cutoff: 2021-09\nCurrent date: {datetime.now().strftime('%Y-%m-%d')}"}]
+            {"role": "system", "content": f"You are a helpful assistant.\nCurrent date: {datetime.now().strftime('%Y-%m-%d')}"}]
         self.model = 'gpt-3.5-turbo'
         self.tokens_limit = 4096
         # as default: gpt-3.5-turbo has a tokens limit as 4096
