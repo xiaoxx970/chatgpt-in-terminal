@@ -358,13 +358,18 @@ This project exists thanks to all the people who contribute.
 .
 ├── LICENSE                   # License
 ├── README.md                 # Documentation
+├── README.zh-CN.md           # Chinese documentation
+├── README.assets             # Documentation resources
 ├── chat.py                   # Script entry point
 ├── gpt_term                  # Project package folder
 │   ├── __init__.py
+│   ├── __main__.py
 │   ├── config.ini            # API key storage and other settings
+│   ├── locale                # Localization files
+│   ├── locale.py
 │   └── main.py               # Main program
-├── requirements.txt          # List of dependencies
-└── setup.py
+├── pyproject.toml            # Project metadata
+└── requirements.txt          # List of dependencies
 ```
 
 ## License
