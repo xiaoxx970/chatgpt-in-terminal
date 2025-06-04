@@ -408,7 +408,7 @@ class ChatGPT:
             raise
         except requests.exceptions.ReadTimeout as e:
             console.print(
-                _("gpt_term.Error_timeot",timeout=self.timeout), highlight=False)
+                _("gpt_term.Error_timeout", timeout=self.timeout), highlight=False)
             return None
         except requests.exceptions.RequestException as e:
             console.print(_("gpt_term.Error_message",error_msg=str(e)))
